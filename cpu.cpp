@@ -22,13 +22,13 @@ void CPU::define_opcodes() {
         uint8_t c = i & 0x3;
         switch(b) {
             case 1:
-                this->addrmodes[i] = zpg;
+                this->addrmodes[i] = &zpg;
             case 3:
-                this->addrmodes[i] = abs;
+                this->addrmodes[i] = &abs;
             case 5:
-                this->addrmodes[i] = zpgx;
+                this->addrmodes[i] = &zpgx;
             case 7:
-                this->addrmodes[i] = absx;
+                this->addrmodes[i] = &absx;
         }
         switch(c) {
             case 0:
@@ -37,120 +37,121 @@ void CPU::define_opcodes() {
                         if (a=0||a==2||a==3) {
                             this->addrmodes[i] = nullptr;
                         } else if (a>4) {
-                            this->addrmodes[i] = imm;
+                            this->addrmodes[i] = &imm;
                         } else if (a=1) {
-                            this->addrmodes[i] = abs;
-                            this->opcodes[i] = JSR;
+                            this->addrmodes[i] = &abs;
+                            this->opcodes[i] = &JSR;
                         }
                         switch(a) {
                             case 0:
-                                this->opcodes[i] = BRK;
+                                this->opcodes[i] = &BRK;
                             case 2:
-                                this->opcodes[i] = RTI;
+                                this->opcodes[i] = &RTI;
                             case 3:
-                                this->opcodes[i] = RTS;
+                                this->opcodes[i] = &RTS;
                             case 5:
-                                this->opcodes[i] = LDY;
+                                this->opcodes[i] = &LDY;
                             case 6:
-                                this->opcodes[i] = CPY;
+                                this->opcodes[i] = &CPY;
                             case 7:
-                                this->opcodes[i] = CPX;
+                                this->opcodes[i] = &CPX;
                         }
+                    //continue here
                     case 2:
                         this->addrmodes[i] = nullptr;
                     case 3:
                         if (a==3) {
-                            this->addrmodes[i]=ind;
+                            this->addrmodes[i] = &ind;
                         }
                     case 4:
-                        this->addrmodes[i] = rel;
+                        this->addrmodes[i] = &rel;
                     case 6:
                         this->addrmodes[i] = nullptr;
                 }
             case 1:
                 switch(a) {
                     case 0:
-                        this->opcodes[i] = ORA;
+                        this->opcodes[i] = &ORA;
                     case 1:
-                        this->opcodes[i] = AND;
+                        this->opcodes[i] = &AND;
                     case 2:
-                        this->opcodes[i] = EOR;
+                        this->opcodes[i] = &EOR;
                     case 3:
-                        this->opcodes[i] = ADC;
+                        this->opcodes[i] = &ADC;
                     case 4:
-                        this->opcodes[i] = STA;
+                        this->opcodes[i] = &STA;
                     case 5:
-                        this->opcodes[i] = LDA;
+                        this->opcodes[i] = &LDA;
                     case 6:
-                        this->opcodes[i] = CMP;
+                        this->opcodes[i] = &CMP;
                     case 7:
-                        this->opcodes[i] = SBC;
+                        this->opcodes[i] = &SBC;
                 }
                 switch(b) {
                     case 0:
-                        this->addrmodes[i] = xind;
+                        this->addrmodes[i] = &xind;
                     case 2:
-                        this->addrmodes[i] = imm;
+                        this->addrmodes[i] = &imm;
                     case 4:
-                        this->addrmodes[i] = indy;
+                        this->addrmodes[i] = &indy;
                     case 6:
-                        this->addrmodes[i] = absy;
+                        this->addrmodes[i] = &absy;
                 }
             case 2:
                 switch(a) {
                     case 0:
-                        this->opcodes[i] = ASL;
+                        this->opcodes[i] = &ASL;
                     case 1:
-                        this->opcodes[i] = ROL;
+                        this->opcodes[i] = &ROL;
                     case 2:
-                        this->opcodes[i] = LSR;
+                        this->opcodes[i] = &LSR;
                     case 3:
-                        this->opcodes[i] = ROR;
+                        this->opcodes[i] = &ROR;
                     case 4:
                         if (b==2) {
-                            this->opcodes[i]=TXA;
+                            this->opcodes[i] = &TXA;
                         } else if (b==6) {
-                            this->opcodes[i]=TXS;
+                            this->opcodes[i] = &TXS;
                         } else {
-                            this->opcodes[i]=STX;
+                            this->opcodes[i] = &STX;
                         }
                     case 5:
                         if (b==2) {
-                            this->opcodes[i]==TAX;
+                            this->opcodes[i] = &TAX;
                         } else if (b==6) {
-                            this->opcodes[i]==TSX;
+                            this->opcodes[i] = &TSX;
                         } else {
-                            this->opcodes[i] = LDX;
+                            this->opcodes[i] = &LDX;
                         }
                     case 6:
                         if (b==2) {
-                            this->opcodes[i] = DEX;
+                            this->opcodes[i] = &DEX;
                         } else {
-                            this->opcodes[i] = DEC;
+                            this->opcodes[i] = &DEC;
                         }
                     case 7:
                         if (b==2) {
-                            this->opcodes[i] = NOP;
+                            this->opcodes[i] = &NOP;
                         } else {
-                            this->opcodes[i] = INC;
+                            this->opcodes[i] = &INC;
                         }
                 }
                 switch(b) {
                     case 0:
-                        this->addrmodes[i] = imm;
+                        this->addrmodes[i] = &imm;
                     case 2:
                         this->addrmodes[i] = nullptr;
                     case 5:
                         if (a==4||a==5) {
-                            this->addrmodes[i] = zpgy;
+                            this->addrmodes[i] = &zpgy;
                         }
                     case 6:
                         this->addrmodes[i] = nullptr;
                     case 7:
                         if (a==5) {
-                            this->addrmodes[i] = absy;
+                            this->addrmodes[i] = &absy;
                 }
-                
+            }   
         }
     }
 }

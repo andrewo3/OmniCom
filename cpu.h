@@ -1,7 +1,5 @@
 #include <stdint.h>
 
-typedef uint8_t* (CPU::*addressing_mode) (uint8_t*);
-typedef void (CPU::*instruction) (uint8_t*);
 class CPU {
     public:
         int CLOCK_SPEED = 1789773;
@@ -15,6 +13,8 @@ class CPU {
         const uint16_t RESET = 0xFFFC;
         const uint16_t IRQ = 0xFFFE;
         void reset();
+        typedef uint8_t* (CPU::*addressing_mode) (uint8_t*);
+        typedef void (CPU::*instruction) (uint8_t*);
         addressing_mode addrmodes[256];
         instruction opcodes[256];
     private:
