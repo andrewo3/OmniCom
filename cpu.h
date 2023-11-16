@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+typedef uint8_t* (CPU::*addressing_mode) (uint8_t*);
+typedef void (CPU::*instruction) (uint8_t*);
 class CPU {
     public:
         int CLOCK_SPEED = 1789773;
@@ -61,6 +63,8 @@ class CPU {
         void CLV(uint8_t* args);
         void CLD(uint8_t* args);
         void SED(uint8_t* args);
+        void PHP(uint8_t* args);
+        void BPL(uint8_t* args);
         uint8_t* xind(uint8_t* args);
         uint8_t* indy(uint8_t* args);
         uint8_t* zpg(uint8_t* args);
@@ -75,5 +79,3 @@ class CPU {
         uint16_t get_addr(uint8_t* ptr);
         uint8_t memory[0xFFFF];
 };
-typedef uint8_t* (CPU::*addressing_mode) (uint8_t* args);
-typedef void (CPU::*instruction) (uint8_t* args);
