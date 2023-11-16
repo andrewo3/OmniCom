@@ -1,10 +1,15 @@
+#include <stdint.h>
+
 class CPU {
+    typedef uint8_t (*addressing_mode) (uint8_t* args);
     public:
         int CLOCK_SPEED = 1789773;
         void instruction(uint8_t* ins);
         uint8_t accumulator;
         uint8_t x;
         uint8_t y;
+        uint16_t pc;
+        uint8_t flags = 0x20; // bits: NV1BDIZC
     private:
         void ADC(uint8_t* args);
         void AND(uint8_t* args);
@@ -48,4 +53,15 @@ class CPU {
         void CLV(uint8_t* args);
         void CLD(uint8_t* args);
         void SED(uint8_t* args);
+        uint8_t* xind(uint8_t* args);
+        uint8_t* indy(uint8_t* args);
+        uint8_t* zpg(uint8_t* args);
+        uint8_t* zpgx(uint8_t* args);
+        uint8_t* zpgy(uint8_t* args);
+        uint8_t* abs(uint8_t* args);
+        uint8_t* absx(uint8_t* args);
+        uint8_t* absy(uint8_t* args);
+        uint8_t* ind(uint8_t* args);
+        uint8_t* rel(uint8_t* args);
+        uint8_t memory[0xFFFF];
 };
