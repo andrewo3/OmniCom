@@ -40,7 +40,7 @@ void CPU::define_opcodes() {
                     addrmodes[i] = absx;
             }
             switch(a) {
-                
+                cas
             }
 
         }
