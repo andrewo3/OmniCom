@@ -56,15 +56,79 @@ void CPU::define_opcodes() {
                             case 7:
                                 this->opcodes[i] = &CPX;
                         }
-                    //continue here
+
+                    case 1:
+                        switch(a) {
+                            case 1:
+                                this->opcodes[i] = &BIT;
+                            case 4:
+                                this->opcodes[i] = &STY;
+                            case 5:
+                                this->opcodes[i] = &LDY;
+                            case 6:
+                                this->opcodes[i] = &CPY;
+                            case 7:
+                                this->opcodes[i] = &CPX;
+                        }
                     case 2:
                         this->addrmodes[i] = nullptr;
+                        switch(a) {
+                            case 0:
+                                this->opcodes[i] = &PHP;
+                            case 1:
+                                this->opcodes[i] = &PLP;
+                            case 2:
+                                this->opcodes[i] = &PHA;
+                            case 3:
+                                this->opcodes[i] = &PLA;
+                            case 4:
+                                this->opcodes[i] = &DEY;
+                            case 5:
+                                this->opcodes[i] = &TAY;
+                            case 6:
+                                this->opcodes[i] = &INY;
+                            case 7:
+                                this->opcodes[i] = &INX;
+
+                        }
                     case 3:
-                        if (a==3) {
-                            this->addrmodes[i] = &ind;
+                        switch(a) {
+                            case 1:
+                                this->opcodes[i] = &BIT;
+                            case 2:
+                                this->opcodes[i] = &JMP;
+                            case 3:
+                                this->opcodes[i] = &JMP;
+                                this->addrmodes[i] = &ind;
+                            case 4:
+                                this->opcodes[i] = &STY;
+                            case 5:
+                                this->opcodes[i] = &LDY;
+                            case 6:
+                                this->opcodes[i] = &CPY;
+                            case 7:
+                                this->opcodes[i] = &CPX;
                         }
                     case 4:
                         this->addrmodes[i] = &rel;
+                        switch(a) {
+                            case 0:
+                                this->opcodes[i] = &BPL;
+                            case 1:
+                                this->opcodes[i] = &BMI;
+                            case 2:
+                                this->opcodes[i] = &BVC;
+                            case 3:
+                                this->opcodes[i] = &BVS;
+                            case 4:
+                                this->opcodes[i] = &BCC;
+                            case 5:
+                                this->opcodes[i] = &BCS;
+                            case 6:
+                                this->opcodes[i] = &BNE;
+                            case 7:
+                                this->opcodes[i] = &BEQ;
+                        }
                     case 6:
                         this->addrmodes[i] = nullptr;
                 }

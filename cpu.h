@@ -18,6 +18,8 @@ class CPU {
         addressing_mode addrmodes[256];
         instruction opcodes[256];
     private:
+
+        //---- instructions ----
         void define_opcodes();
         void ADC(uint8_t* args);
         void AND(uint8_t* args);
@@ -65,6 +67,13 @@ class CPU {
         void SED(uint8_t* args);
         void PHP(uint8_t* args);
         void BPL(uint8_t* args);
+        void PLP(uint8_t* args);
+        void PLP(uint8_t* args);
+        void PHA(uint8_t* args);
+        void PLA(uint8_t* args);
+
+        //----addressing modes----
+
         uint8_t* xind(uint8_t* args);
         uint8_t* indy(uint8_t* args);
         uint8_t* zpg(uint8_t* args);
