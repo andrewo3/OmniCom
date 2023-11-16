@@ -1,16 +1,22 @@
 #include <stdint.h>
 
 class CPU {
-    typedef uint8_t (*addressing_mode) (uint8_t* args);
     public:
         int CLOCK_SPEED = 1789773;
-        void instruction(uint8_t* ins);
+        void clock(uint8_t* ins);
         uint8_t accumulator;
         uint8_t x;
         uint8_t y;
-        uint16_t pc;
+        uint8_t* pc;
         uint8_t flags = 0x20; // bits: NV1BDIZC
+        const uint16_t NMI = 0xFFFA;
+        const uint16_t RESET = 0xFFFC;
+        const uint16_t IRQ = 0xFFFE;
+        void reset();
+        addressing_mode addrmodes[256];
+        instruction opcodes[256];
     private:
+        void define_opcodes();
         void ADC(uint8_t* args);
         void AND(uint8_t* args);
         void ASL(uint8_t* args);
@@ -63,5 +69,9 @@ class CPU {
         uint8_t* absy(uint8_t* args);
         uint8_t* ind(uint8_t* args);
         uint8_t* rel(uint8_t* args);
+        uint8_t* imm(uint8_t* args) {return &args[0];}
+        uint16_t get_addr(uint8_t* ptr);
         uint8_t memory[0xFFFF];
 };
+typedef uint8_t* (CPU::*addressing_mode) (uint8_t* args);
+typedef void (CPU::*instruction) (uint8_t* args);

@@ -1,13 +1,6 @@
 #include "cpu.h"
 #include <stdint.h>
 
-
-CPU::CPU() {
-    addressing_mode lookup[8] = {
-        
-        
-    };
-}
 // description of addressing modes:
 // https://blogs.oregonstate.edu/ericmorgan/2022/01/21/6502-addressing-modes/
 //Addressing modes more in depth: https://wiki.cdot.senecacollege.ca/wiki/6502_Addressing_Modes
@@ -15,32 +8,49 @@ CPU::CPU() {
 //Memory Map: https://www.nesdev.org/wiki/CPU_memory_map
 //Opcode Table: https://www.masswerk.at/6502/6502_instruction_set.html#layout
 //Instruction Descriptions: https://www.nesdev.org/obelisk-6502-guide/reference.html
-void CPU::instruction(uint8_t* ins) {
-    uint8_t a = (ins[0] & 0xE0)>>5;
-    uint8_t b = (ins[0] & 0x1C)>>2;
-    uint8_t c = ins[0] & 0x3;
-    if (c==1) {
-        uint8_t* addr;
-        switch(b) {
-            case 0: //X, ind
-                addr = xind(&ins[1]);
-            case 1: //zpg
-                addr = zpg(&ins[1]);
-            case 2: //#
-                addr = &ins[1];
-            case 3: //abs
-                addr = abs(&ins[1]);
-            case 4: //ind, y
-                addr = indy(&ins[1]);
-            case 5: //zpg,X
-                addr = zpgx(&ins[1]);
-            case 6: //abs,y
-                addr = absy(&ins[1]);
-            case 7:
-                addr = absreg(&ins[1],&y);
-        }
+//program execution steps: https://www.middle-engine.com/blog/posts/2020/06/23/programming-the-nes-the-6502-in-detail
 
+CPU::CPU() {
+    define_opcodes();
+    reset();
+}
+
+void CPU::define_opcodes() {
+    for (int i=0; i<0xFF; i++) {
+        uint8_t a = (i & 0xE0)>>5;
+        uint8_t b = (i & 0x1C)>>2;
+        uint8_t c = i & 0x3;
+        if (c==1) {
+            uint8_t* addr;
+            switch(b) {
+                case 0: //X, ind
+                    addr = xind;
+                case 1: //zpg
+                    addr = zpg(&ins[1]);
+                case 2: //#
+                    addr = &ins[1];
+                case 3: //abs
+                    addr = abs(&ins[1]);
+                case 4: //ind, y
+                    addr = indy(&ins[1]);
+                case 5: //zpg,X
+                    addr = zpgx(&ins[1]);
+                case 6: //abs,y
+                    addr = absy(&ins[1]);
+                case 7: //abs,x
+                    addr = absx(&ins[1]);
+            }
+
+        }
     }
+}
+
+void CPU::clock(uint8_t* ins) {
+
+}
+
+void CPU::reset() {
+    pc = &memory[RESET];
 }
 
 uint8_t* CPU::xind(uint8_t* args) {
@@ -81,7 +91,11 @@ uint8_t* CPU::ind(uint8_t* args) {
 }
 
 uint8_t* CPU::rel(uint8_t* args) {
-    return &memory[pc+(int8_t)args[0]];
+    return &memory[get_addr(pc)+(int8_t)args[0]];
+}
+
+uint16_t CPU::get_addr(uint8_t* ptr) {
+    return ptr-memory;
 }
 
 void CPU::ORA(uint8_t* args) {
