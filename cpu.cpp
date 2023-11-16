@@ -21,24 +21,26 @@ void CPU::define_opcodes() {
         uint8_t b = (i & 0x1C)>>2;
         uint8_t c = i & 0x3;
         if (c==1) {
-            uint8_t* addr;
             switch(b) {
-                case 0: //X, ind
-                    addr = xind;
-                case 1: //zpg
-                    addr = zpg(&ins[1]);
-                case 2: //#
-                    addr = &ins[1];
-                case 3: //abs
-                    addr = abs(&ins[1]);
-                case 4: //ind, y
-                    addr = indy(&ins[1]);
-                case 5: //zpg,X
-                    addr = zpgx(&ins[1]);
-                case 6: //abs,y
-                    addr = absy(&ins[1]);
-                case 7: //abs,x
-                    addr = absx(&ins[1]);
+                case 0:
+                    addrmodes[i] = xind;
+                case 1:
+                    addrmodes[i] = zpg;
+                case 2:
+                    addrmodes[i] = imm;
+                case 3:
+                    addrmodes[i] = abs;
+                case 4:
+                    addrmodes[i] = indy;
+                case 5:
+                    addrmodes[i] = zpgx;
+                case 6:
+                    addrmodes[i] = absy;
+                case 7:
+                    addrmodes[i] = absx;
+            }
+            switch(a) {
+                
             }
 
         }
