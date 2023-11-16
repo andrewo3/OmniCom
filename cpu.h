@@ -46,6 +46,8 @@ class CPU {
         void STY(uint8_t* args);
         void TAX(uint8_t* args);
         void TXA(uint8_t* args);
+        void TSX(uint8_t* args);
+        void TXS(uint8_t* args);
         void DEX(uint8_t* args);
         void INX(uint8_t* args);
         void TAY(uint8_t* args);

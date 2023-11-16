@@ -20,29 +20,63 @@ void CPU::define_opcodes() {
         uint8_t a = (i & 0xE0)>>5;
         uint8_t b = (i & 0x1C)>>2;
         uint8_t c = i & 0x3;
-        if (c==1) {
-            switch(b) {
-                case 0:
-                    addrmodes[i] = xind;
-                case 1:
-                    addrmodes[i] = zpg;
-                case 2:
-                    addrmodes[i] = imm;
-                case 3:
-                    addrmodes[i] = abs;
-                case 4:
-                    addrmodes[i] = indy;
-                case 5:
-                    addrmodes[i] = zpgx;
-                case 6:
-                    addrmodes[i] = absy;
-                case 7:
-                    addrmodes[i] = absx;
-            }
-            switch(a) {
-                cas
-            }
-
+        switch(c) {
+            case 1:
+                switch(a) {
+                    case 0:
+                        opcodes[i] = ORA;
+                    case 1:
+                        opcodes[i] = AND;
+                    case 2:
+                        opcodes[i] = EOR;
+                    case 3:
+                        opcodes[i] = ADC;
+                    case 4:
+                        opcodes[i] = STA;
+                    case 5:
+                        opcodes[i] = LDA;
+                    case 6:
+                        opcodes[i] = CMP;
+                    case 7:
+                        opcodes[i] = SBC;
+                }
+                switch(b) {
+                    case 0:
+                        addrmodes[i] = xind;
+                    case 1:
+                        addrmodes[i] = zpg;
+                    case 2:
+                        addrmodes[i] = imm;
+                    case 3:
+                        addrmodes[i] = abs;
+                    case 4:
+                        addrmodes[i] = indy;
+                    case 5:
+                        addrmodes[i] = zpgx;
+                    case 6:
+                        addrmodes[i] = absy;
+                    case 7:
+                        addrmodes[i] = absx;
+                }
+            case 2:
+                switch(a) {
+                    case 0:
+                        opcodes[i] = ASL;
+                    case 1:
+                        opcodes[i] = ROL;
+                    case 2:
+                        opcodes[i] = LSR;
+                    case 3:
+                        opcodes[i] = ROR;
+                    case 4:
+                        if (b&1) {
+                            opcodes[i]=STX;
+                        } else if (b==2) {
+                            opcodes[i]=TXA;
+                        } else if (b==6) {
+                            opcodes[i]=TXS;
+                        }
+                }
         }
     }
 }
