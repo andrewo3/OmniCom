@@ -394,6 +394,10 @@ int8_t CPU::stack_pull(void) {
     return memory[0x0100+sp]; 
 }
 
+void CPU::loadRom(ROM rom) {
+    rom.prg;
+}
+
 void CPU::ADC(int8_t* args) {
     uint16_t unwrapped = (uint8_t)accumulator+
                         (uint8_t)*args+
