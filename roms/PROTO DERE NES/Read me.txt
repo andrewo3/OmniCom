@@ -1,0 +1,28 @@
+The two ROMs are the exact same game with changes for emulator compatibility.
+Test both to see which one would work for your emulator.
+
+To play this game on your home computer, we recommend using FCEUX and opening the NES file in the 'Default ROM' folder.
+
+Description:
+
+This game is not for the faint of heart!
+
+In ‘PROTO DERE .NES’, you play as a character trying to escape a burning underground mine.
+Use your athletic prowess to jump over fires and climb over ladders to reach the exit.
+From the ashes of dread, a new life is born.
+
+High Quality Graphics
+Four Channel Sound
+Unique Characters
+Endless Fun
+Do you have what it takes to survive? Find out in PROTO DERE .NES!
+
+ _______  _______  _______  _______ _________ _______ 
+(  ___  )(  ____ )(  ____ )(  ____ \\__   __/(  ____ )
+| (   ) || (    )|| (    )|| (    \/   ) (   | (    )|
+| (___) || (____)|| (____)|| (_____    | |   | (____)|
+|  ___  ||  _____)|  _____)(_____  )   | |   |     __)
+| (   ) || (      | (            ) |   | |   | (\ (   
+| )   ( || )      | )      /\____) |___) (___| ) \ \__
+|/     \||/       |/       \_______)\_______/|/   \__/
+                                                      

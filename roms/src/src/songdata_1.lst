@@ -1,0 +1,428 @@
+ca65 V2.13.3 - (C) Copyright 1998-2012 Ullrich von Bassewitz
+Main file   : /mnt/ntfs_e/projects/nes/utaco/src/songdata_1.s
+Current file: /mnt/ntfs_e/projects/nes/utaco/src/songdata_1.s
+
+000000r 1               
+000000r 1               .include "src/globals.inc"
+000000r 2               FontOffset=$80
+000000r 2               
+000000r 1               .include "src/songdata_1.inc"
+000000r 2               .global songdata1_musicdata
+000000r 2               
+000000r 2               
+000000r 2               .include "romdata/first_stage_beats.inc"
+000000r 2               
+000000r 3               .global first_stage_beats_pI
+000000r 3               .global first_stage_beats_beats
+000000r 3               .global first_stage_beats_points
+000000r 3               .global first_stage_beats_points_minus
+000000r 3               .global first_stage_beats_strings_lo
+000000r 3               .global first_stage_beats_strings_hi
+000000r 3               .global first_stage_beats_commands
+000000r 3               
+000000r 1               
+000000r 1               .segment "SBANK_1"
+000000r 1               
+000000r 1               songdata1_musicdata:
+000000r 1  53 02 9A 01  	.incbin "romdata/music/first_stage_music.bin"
+000004r 1  49 02 4F 02  
+000008r 1  00 10 0E B8  
+00241Cr 1               
+00241Cr 1               .include "romdata/first_stage_beats.s"
+00241Cr 2               ;Beat definitions for first_stage_beats
+00241Cr 2  00 06 00     first_stage_beats_pI: .byte $0,$6,$0
+00241Fr 2               first_stage_beats_beats:
+00241Fr 2  7F           	.byte $7f
+002420r 2  7F           	.byte $7f
+002421r 2  7F           	.byte $7f
+002422r 2  36           	.byte $36
+002423r 2  8A           	.byte $8a
+002424r 2  05           	.byte $05
+002425r 2  85           	.byte $85
+002426r 2  0A           	.byte $0a
+002427r 2  8A           	.byte $8a
+002428r 2  05           	.byte $05
+002429r 2  8A           	.byte $8a
+00242Ar 2  05           	.byte $05
+00242Br 2  8A           	.byte $8a
+00242Cr 2  85           	.byte $85
+00242Dr 2  8A           	.byte $8a
+00242Er 2  94           	.byte $94
+00242Fr 2  8A           	.byte $8a
+002430r 2  05           	.byte $05
+002431r 2  85           	.byte $85
+002432r 2  05           	.byte $05
+002433r 2  85           	.byte $85
+002434r 2  8A           	.byte $8a
+002435r 2  85           	.byte $85
+002436r 2  8A           	.byte $8a
+002437r 2  85           	.byte $85
+002438r 2  8A           	.byte $8a
+002439r 2  05           	.byte $05
+00243Ar 2  85           	.byte $85
+00243Br 2  05           	.byte $05
+00243Cr 2  85           	.byte $85
+00243Dr 2  8A           	.byte $8a
+00243Er 2  94           	.byte $94
+00243Fr 2  8A           	.byte $8a
+002440r 2  32           	.byte $32
+002441r 2  8A           	.byte $8a
+002442r 2  05           	.byte $05
+002443r 2  8A           	.byte $8a
+002444r 2  85           	.byte $85
+002445r 2  8A           	.byte $8a
+002446r 2  94           	.byte $94
+002447r 2  8A           	.byte $8a
+002448r 2  05           	.byte $05
+002449r 2  85           	.byte $85
+00244Ar 2  05           	.byte $05
+00244Br 2  85           	.byte $85
+00244Cr 2  8A           	.byte $8a
+00244Dr 2  85           	.byte $85
+00244Er 2  8F           	.byte $8f
+00244Fr 2  99           	.byte $99
+002450r 2  5F           	.byte $5f
+002451r 2  8A           	.byte $8a
+002452r 2  05           	.byte $05
+002453r 2  8A           	.byte $8a
+002454r 2  85           	.byte $85
+002455r 2  8A           	.byte $8a
+002456r 2  94           	.byte $94
+002457r 2  8A           	.byte $8a
+002458r 2  05           	.byte $05
+002459r 2  8A           	.byte $8a
+00245Ar 2  85           	.byte $85
+00245Br 2  8A           	.byte $8a
+00245Cr 2  85           	.byte $85
+00245Dr 2  8A           	.byte $8a
+00245Er 2  85           	.byte $85
+00245Fr 2  8A           	.byte $8a
+002460r 2  05           	.byte $05
+002461r 2  8A           	.byte $8a
+002462r 2  85           	.byte $85
+002463r 2  8A           	.byte $8a
+002464r 2  94           	.byte $94
+002465r 2  8A           	.byte $8a
+002466r 2  32           	.byte $32
+002467r 2  8A           	.byte $8a
+002468r 2  05           	.byte $05
+002469r 2  8A           	.byte $8a
+00246Ar 2  85           	.byte $85
+00246Br 2  8A           	.byte $8a
+00246Cr 2  94           	.byte $94
+00246Dr 2  8F           	.byte $8f
+00246Er 2  8F           	.byte $8f
+00246Fr 2  8A           	.byte $8a
+002470r 2  85           	.byte $85
+002471r 2  8F           	.byte $8f
+002472r 2  99           	.byte $99
+002473r 2  5F           	.byte $5f
+002474r 2  8A           	.byte $8a
+002475r 2  14           	.byte $14
+002476r 2  8A           	.byte $8a
+002477r 2  14           	.byte $14
+002478r 2  8A           	.byte $8a
+002479r 2  23           	.byte $23
+00247Ar 2  8A           	.byte $8a
+00247Br 2  05           	.byte $05
+00247Cr 2  8F           	.byte $8f
+00247Dr 2  8A           	.byte $8a
+00247Er 2  05           	.byte $05
+00247Fr 2  8A           	.byte $8a
+002480r 2  85           	.byte $85
+002481r 2  0A           	.byte $0a
+002482r 2  85           	.byte $85
+002483r 2  3C           	.byte $3c
+002484r 2  8A           	.byte $8a
+002485r 2  14           	.byte $14
+002486r 2  8A           	.byte $8a
+002487r 2  14           	.byte $14
+002488r 2  8A           	.byte $8a
+002489r 2  23           	.byte $23
+00248Ar 2  8A           	.byte $8a
+00248Br 2  05           	.byte $05
+00248Cr 2  8F           	.byte $8f
+00248Dr 2  8A           	.byte $8a
+00248Er 2  05           	.byte $05
+00248Fr 2  8A           	.byte $8a
+002490r 2  85           	.byte $85
+002491r 2  8A           	.byte $8a
+002492r 2  94           	.byte $94
+002493r 2  2D           	.byte $2d
+002494r 2  8A           	.byte $8a
+002495r 2  05           	.byte $05
+002496r 2  8A           	.byte $8a
+002497r 2  05           	.byte $05
+002498r 2  8A           	.byte $8a
+002499r 2  05           	.byte $05
+00249Ar 2  8A           	.byte $8a
+00249Br 2  05           	.byte $05
+00249Cr 2  8A           	.byte $8a
+00249Dr 2  05           	.byte $05
+00249Er 2  8A           	.byte $8a
+00249Fr 2  85           	.byte $85
+0024A0r 2  0A           	.byte $0a
+0024A1r 2  94           	.byte $94
+0024A2r 2  8A           	.byte $8a
+0024A3r 2  05           	.byte $05
+0024A4r 2  8A           	.byte $8a
+0024A5r 2  05           	.byte $05
+0024A6r 2  8A           	.byte $8a
+0024A7r 2  05           	.byte $05
+0024A8r 2  8A           	.byte $8a
+0024A9r 2  05           	.byte $05
+0024AAr 2  99           	.byte $99
+0024ABr 2  0F           	.byte $0f
+0024ACr 2  85           	.byte $85
+0024ADr 2  8A           	.byte $8a
+0024AEr 2  85           	.byte $85
+0024AFr 2  8A           	.byte $8a
+0024B0r 2  14           	.byte $14
+0024B1r 2  8A           	.byte $8a
+0024B2r 2  14           	.byte $14
+0024B3r 2  8A           	.byte $8a
+0024B4r 2  14           	.byte $14
+0024B5r 2  8A           	.byte $8a
+0024B6r 2  14           	.byte $14
+0024B7r 2  8A           	.byte $8a
+0024B8r 2  1E           	.byte $1e
+0024B9r 2  85           	.byte $85
+0024BAr 2  8A           	.byte $8a
+0024BBr 2  8F           	.byte $8f
+0024BCr 2  32           	.byte $32
+0024BDr 2  8A           	.byte $8a
+0024BEr 2  14           	.byte $14
+0024BFr 2  8A           	.byte $8a
+0024C0r 2  14           	.byte $14
+0024C1r 2  8A           	.byte $8a
+0024C2r 2  23           	.byte $23
+0024C3r 2  8A           	.byte $8a
+0024C4r 2  05           	.byte $05
+0024C5r 2  8F           	.byte $8f
+0024C6r 2  8A           	.byte $8a
+0024C7r 2  05           	.byte $05
+0024C8r 2  8A           	.byte $8a
+0024C9r 2  85           	.byte $85
+0024CAr 2  0A           	.byte $0a
+0024CBr 2  85           	.byte $85
+0024CCr 2  3C           	.byte $3c
+0024CDr 2  8A           	.byte $8a
+0024CEr 2  14           	.byte $14
+0024CFr 2  8A           	.byte $8a
+0024D0r 2  14           	.byte $14
+0024D1r 2  8A           	.byte $8a
+0024D2r 2  23           	.byte $23
+0024D3r 2  8A           	.byte $8a
+0024D4r 2  05           	.byte $05
+0024D5r 2  8F           	.byte $8f
+0024D6r 2  8A           	.byte $8a
+0024D7r 2  05           	.byte $05
+0024D8r 2  8A           	.byte $8a
+0024D9r 2  85           	.byte $85
+0024DAr 2  8A           	.byte $8a
+0024DBr 2  94           	.byte $94
+0024DCr 2  2D           	.byte $2d
+0024DDr 2  8A           	.byte $8a
+0024DEr 2  05           	.byte $05
+0024DFr 2  8A           	.byte $8a
+0024E0r 2  05           	.byte $05
+0024E1r 2  8A           	.byte $8a
+0024E2r 2  05           	.byte $05
+0024E3r 2  8A           	.byte $8a
+0024E4r 2  05           	.byte $05
+0024E5r 2  8A           	.byte $8a
+0024E6r 2  05           	.byte $05
+0024E7r 2  8A           	.byte $8a
+0024E8r 2  85           	.byte $85
+0024E9r 2  0A           	.byte $0a
+0024EAr 2  94           	.byte $94
+0024EBr 2  8A           	.byte $8a
+0024ECr 2  05           	.byte $05
+0024EDr 2  8A           	.byte $8a
+0024EEr 2  05           	.byte $05
+0024EFr 2  8A           	.byte $8a
+0024F0r 2  05           	.byte $05
+0024F1r 2  8A           	.byte $8a
+0024F2r 2  05           	.byte $05
+0024F3r 2  99           	.byte $99
+0024F4r 2  0F           	.byte $0f
+0024F5r 2  85           	.byte $85
+0024F6r 2  8A           	.byte $8a
+0024F7r 2  85           	.byte $85
+0024F8r 2  8A           	.byte $8a
+0024F9r 2  14           	.byte $14
+0024FAr 2  8A           	.byte $8a
+0024FBr 2  14           	.byte $14
+0024FCr 2  8A           	.byte $8a
+0024FDr 2  23           	.byte $23
+0024FEr 2  8A           	.byte $8a
+0024FFr 2  85           	.byte $85
+002500r 2  8A           	.byte $8a
+002501r 2  7F           	.byte $7f
+002502r 2  7F           	.byte $7f
+002503r 2  7F           	.byte $7f
+002504r 2  7F           	.byte $7f
+002505r 2  16           	.byte $16
+002506r 2  00           	.byte $0
+002507r 2  80 07 00     first_stage_beats_points: .byte $80,$7,$0
+00250Ar 2  80 F8 FF     first_stage_beats_points_minus: .byte $80,$f8,$ff
+00250Dr 2  C0 C0 C0 C0  first_stage_beats_string_0:.byte ($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+002511r 2  C0 C0 C0 C0  
+002515r 2  C0 C0 C0 C0  
+00252Br 2               $40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+00252Br 2               $40+FontOffset),($40+FontOffset)
+00252Br 2  D4 C7 D4 F0  first_stage_beats_string_1:.byte ($54+FontOffset),($47+FontOffset),($54+FontOffset),($70+FontOffset),($47+FontOffset),($40+FontOffset),($4e+FontOffset),($46+FontOffset),($42+FontOffset),($40+FontOffset),($5a+FontOffset),($40+FontOffset),($4d+FontOffset),(
+00252Fr 2  C7 C0 CE C6  
+002533r 2  C2 C0 DA C0  
+002549r 2               $5d+FontOffset),($70+FontOffset),($53+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+002549r 2               $40+FontOffset),($40+FontOffset)
+002549r 2  C1 EE CA C8  first_stage_beats_string_2:.byte ($41+FontOffset),($6e+FontOffset),($4a+FontOffset),($48+FontOffset),($40+FontOffset),($56+FontOffset),($40+FontOffset),($55+FontOffset),($52+FontOffset),($53+FontOffset),($69+FontOffset),($40+FontOffset),($49+FontOffset),(
+00254Dr 2  C0 D6 C0 D5  
+002551r 2  D2 D3 E9 C0  
+002567r 2               $6a+FontOffset),($54+FontOffset),($70+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+002567r 2               $40+FontOffset),($40+FontOffset)
+002567r 2  C2 D2 E3 C0  first_stage_beats_string_3:.byte ($42+FontOffset),($52+FontOffset),($63+FontOffset),($40+FontOffset),($4d+FontOffset),($48+FontOffset),($44+FontOffset),($69+FontOffset),($40+FontOffset),($5b+FontOffset),($54+FontOffset),($40+FontOffset),($46+FontOffset),(
+00256Br 2  CD C8 C4 E9  
+00256Fr 2  C0 DB D4 C0  
+002585r 2               $70+FontOffset),($40+FontOffset),($42+FontOffset),($69+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+002585r 2               $40+FontOffset),($40+FontOffset)
+002585r 2  CE C2 C7 F0  first_stage_beats_string_4:.byte ($4e+FontOffset),($42+FontOffset),($47+FontOffset),($70+FontOffset),($40+FontOffset),($6d+FontOffset),($40+FontOffset),($5f+FontOffset),($63+FontOffset),($69+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+002589r 2  C0 ED C0 DF  
+00258Dr 2  E3 E9 C0 C0  
+0025A3r 2               $40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+0025A3r 2               $40+FontOffset),($40+FontOffset)
+0025A3r 2  D4 F0 CC F0  first_stage_beats_string_5:.byte ($54+FontOffset),($70+FontOffset),($4c+FontOffset),($70+FontOffset),($40+FontOffset),($4e+FontOffset),($6e+FontOffset),($4c+FontOffset),($40+FontOffset),($4f+FontOffset),($4c+FontOffset),($53+FontOffset),($40+FontOffset),(
+0025A7r 2  C0 CE EE CC  
+0025ABr 2  C0 CF CC D3  
+0025C1r 2               $45+FontOffset),($6e+FontOffset),($55+FontOffset),($59+FontOffset),($4a+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+0025C1r 2               $40+FontOffset),($40+FontOffset)
+0025C1r 2  E0 EE D5 C0  first_stage_beats_string_6:.byte ($60+FontOffset),($6e+FontOffset),($55+FontOffset),($40+FontOffset),($59+FontOffset),($40+FontOffset),($50+FontOffset),($62+FontOffset),($40+FontOffset),($56+FontOffset),($40+FontOffset),($43+FontOffset),($50+FontOffset),(
+0025C5r 2  D9 C0 D0 E2  
+0025C9r 2  C0 D6 C0 C3  
+0025DFr 2               $42+FontOffset),($50+FontOffset),($42+FontOffset),($66+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+0025DFr 2               $40+FontOffset),($40+FontOffset)
+0025DFr 2  94 C0 93 80  first_stage_beats_string_7:.byte ($14+FontOffset),($40+FontOffset),($13+FontOffset),($00+FontOffset),($40+FontOffset),($02+FontOffset),($0e+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+0025E3r 2  C0 82 8E C0  
+0025E7r 2  C0 C0 C0 C0  
+0025FDr 2               $40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+0025FDr 2               $40+FontOffset),($40+FontOffset)
+0025FDr 2  C3 D0 C3 C0  first_stage_beats_string_8:.byte ($43+FontOffset),($50+FontOffset),($43+FontOffset),($40+FontOffset),($54+FontOffset),($47+FontOffset),($40+FontOffset),($56+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+002601r 2  D4 C7 C0 D6  
+002605r 2  C0 C0 C0 C0  
+00261Br 2               $40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+00261Br 2               $40+FontOffset),($40+FontOffset)
+00261Br 2  D1 C0 C6 C0  first_stage_beats_string_9:.byte ($51+FontOffset),($40+FontOffset),($46+FontOffset),($40+FontOffset),($67+FontOffset),($40+FontOffset),($41+FontOffset),($5c+FontOffset),($6a+FontOffset),($53+FontOffset),($42+FontOffset),($69+FontOffset),($58+FontOffset),(
+00261Fr 2  E7 C0 C1 DC  
+002623r 2  EA D3 C2 E9  
+002639r 2               $40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),(
+002639r 2               $40+FontOffset),($40+FontOffset)
+002639r 2  E6 E9 C0 D9  first_stage_beats_string_10:.byte ($66+FontOffset),($69+FontOffset),($40+FontOffset),($59+FontOffset),($40+FontOffset),($5e+FontOffset),($4c+FontOffset),($40+FontOffset),($46+FontOffset),($70+FontOffset),($40+FontOffset),($54+FontOffset),($48+FontOffset),
+00263Dr 2  C0 DE CC C0  
+002641r 2  C6 F0 C0 D4  
+002657r 2               ($40+FontOffset),($56+FontOffset),($40+FontOffset),($46+FontOffset),($46+FontOffset),($70+FontOffset),($64+FontOffset),($48+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),
+002657r 2               ($40+FontOffset),($40+FontOffset)
+002657r 2  CA CA EB C0  first_stage_beats_string_11:.byte ($4a+FontOffset),($4a+FontOffset),($6b+FontOffset),($40+FontOffset),($46+FontOffset),($67+FontOffset),($40+FontOffset),($47+FontOffset),($66+FontOffset),($43+FontOffset),($40+FontOffset),($63+FontOffset),($40+FontOffset),
+00265Br 2  C6 E7 C0 C7  
+00265Fr 2  E6 C3 C0 E3  
+002675r 2               ($50+FontOffset),($50+FontOffset),($46+FontOffset),($43+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),
+002675r 2               ($40+FontOffset),($40+FontOffset)
+002675r 2  94 C0 93 80  first_stage_beats_string_12:.byte ($14+FontOffset),($40+FontOffset),($13+FontOffset),($00+FontOffset),($40+FontOffset),($02+FontOffset),($0e+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),
+002679r 2  C0 82 8E C0  
+00267Dr 2  C0 C0 C0 C0  
+002693r 2               ($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),
+002693r 2               ($40+FontOffset),($40+FontOffset)
+002693r 2  C3 D0 C0 D9  first_stage_beats_string_13:.byte ($43+FontOffset),($50+FontOffset),($40+FontOffset),($59+FontOffset),($40+FontOffset),($61+FontOffset),($4d+FontOffset),($62+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),
+002697r 2  C0 E1 CD E2  
+00269Br 2  C0 C0 C0 C0  
+0026B1r 2               ($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),
+0026B1r 2               ($40+FontOffset),($40+FontOffset)
+0026B1r 2  D8 C0 C6 F0  first_stage_beats_string_14:.byte ($58+FontOffset),($40+FontOffset),($46+FontOffset),($70+FontOffset),($40+FontOffset),($42+FontOffset),($40+FontOffset),($46+FontOffset),($55+FontOffset),($44+FontOffset),($69+FontOffset),($40+FontOffset),($46+FontOffset),
+0026B5r 2  C0 C2 C0 C6  
+0026B9r 2  D5 C4 E9 C0  
+0026CFr 2               ($55+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),
+0026CFr 2               ($40+FontOffset),($40+FontOffset)
+0026CFr 2  C1 CC D0 C0  first_stage_beats_string_15:.byte ($41+FontOffset),($4c+FontOffset),($50+FontOffset),($40+FontOffset),($6d+FontOffset),($40+FontOffset),($45+FontOffset),($6e+FontOffset),($46+FontOffset),($70+FontOffset),($48+FontOffset),($40+FontOffset),($56+FontOffset),
+0026D3r 2  ED C0 C5 EE  
+0026D7r 2  C6 F0 C8 C0  
+0026EDr 2               ($40+FontOffset),($4d+FontOffset),($69+FontOffset),($40+FontOffset),($50+FontOffset),($62+FontOffset),($40+FontOffset),($56+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),
+0026EDr 2               ($40+FontOffset),($40+FontOffset)
+0026EDr 2  C1 CB C0 DF  first_stage_beats_string_16:.byte ($41+FontOffset),($4b+FontOffset),($40+FontOffset),($5f+FontOffset),($53+FontOffset),($70+FontOffset),($40+FontOffset),($46+FontOffset),($70+FontOffset),($6e+FontOffset),($5a+FontOffset),($70+FontOffset),($68+FontOffset),
+0026F1r 2  D3 F0 C0 C6  
+0026F5r 2  F0 EE DA F0  
+00270Br 2               ($5f+FontOffset),($4c+FontOffset),($66+FontOffset),($43+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),($40+FontOffset),
+00270Br 2               ($40+FontOffset),($40+FontOffset)
+00270Br 2               first_stage_beats_strings_lo:
+00270Br 2  rr           	.byte <first_stage_beats_string_0
+00270Cr 2  rr           	.byte <first_stage_beats_string_1
+00270Dr 2  rr           	.byte <first_stage_beats_string_2
+00270Er 2  rr           	.byte <first_stage_beats_string_3
+00270Fr 2  rr           	.byte <first_stage_beats_string_4
+002710r 2  rr           	.byte <first_stage_beats_string_5
+002711r 2  rr           	.byte <first_stage_beats_string_6
+002712r 2  rr           	.byte <first_stage_beats_string_7
+002713r 2  rr           	.byte <first_stage_beats_string_8
+002714r 2  rr           	.byte <first_stage_beats_string_9
+002715r 2  rr           	.byte <first_stage_beats_string_10
+002716r 2  rr           	.byte <first_stage_beats_string_11
+002717r 2  rr           	.byte <first_stage_beats_string_12
+002718r 2  rr           	.byte <first_stage_beats_string_13
+002719r 2  rr           	.byte <first_stage_beats_string_14
+00271Ar 2  rr           	.byte <first_stage_beats_string_15
+00271Br 2  rr           	.byte <first_stage_beats_string_16
+00271Cr 2               first_stage_beats_strings_hi:
+00271Cr 2  rr           	.byte >first_stage_beats_string_0
+00271Dr 2  rr           	.byte >first_stage_beats_string_1
+00271Er 2  rr           	.byte >first_stage_beats_string_2
+00271Fr 2  rr           	.byte >first_stage_beats_string_3
+002720r 2  rr           	.byte >first_stage_beats_string_4
+002721r 2  rr           	.byte >first_stage_beats_string_5
+002722r 2  rr           	.byte >first_stage_beats_string_6
+002723r 2  rr           	.byte >first_stage_beats_string_7
+002724r 2  rr           	.byte >first_stage_beats_string_8
+002725r 2  rr           	.byte >first_stage_beats_string_9
+002726r 2  rr           	.byte >first_stage_beats_string_10
+002727r 2  rr           	.byte >first_stage_beats_string_11
+002728r 2  rr           	.byte >first_stage_beats_string_12
+002729r 2  rr           	.byte >first_stage_beats_string_13
+00272Ar 2  rr           	.byte >first_stage_beats_string_14
+00272Br 2  rr           	.byte >first_stage_beats_string_15
+00272Cr 2  rr           	.byte >first_stage_beats_string_16
+00272Dr 2               first_stage_beats_commands:
+00272Dr 2  7F 7F 7F 36  	.byte $7f,$7f,$7f,$36,$81,$01
+002731r 2  81 01        
+002733r 2  7F 08 82 02  	.byte $7f,$08,$82,$02,$81,$02,$82,$00
+002737r 2  81 02 82 00  
+00273Br 2  64 81 00     	.byte $64,$81,$00
+00273Er 2  32 81 03     	.byte $32,$81,$03
+002741r 2  7F 12 81 00  	.byte $7f,$12,$81,$00
+002745r 2  5F 81 04     	.byte $5f,$81,$04
+002748r 2  55 82 05 81  	.byte $55,$82,$05,$81,$05,$82,$00
+00274Cr 2  05 82 00     
+00274Fr 2  69 81 00     	.byte $69,$81,$00
+002752r 2  32 81 06     	.byte $32,$81,$06
+002755r 2  7F 12 81 00  	.byte $7f,$12,$81,$00
+002759r 2  5F 81 07     	.byte $5f,$81,$07
+00275Cr 2  46 81 00     	.byte $46,$81,$00
+00275Fr 2  23 81 08     	.byte $23,$81,$08
+002762r 2  4B 81 00     	.byte $4b,$81,$00
+002765r 2  3C 81 09     	.byte $3c,$81,$09
+002768r 2  7F 44 81 00  	.byte $7f,$44,$81,$00
+00276Cr 2  2D 81 0A     	.byte $2d,$81,$0a
+00276Fr 2  7F 4E 81 00  	.byte $7f,$4e,$81,$00
+002773r 2  0F 81 0B     	.byte $0f,$81,$0b
+002776r 2  7F 53 81 00  	.byte $7f,$53,$81,$00
+00277Ar 2  32 81 0C     	.byte $32,$81,$0c
+00277Dr 2  46 81 00     	.byte $46,$81,$00
+002780r 2  23 81 0D     	.byte $23,$81,$0d
+002783r 2  4B 81 00     	.byte $4b,$81,$00
+002786r 2  3C 81 0E     	.byte $3c,$81,$0e
+002789r 2  7F 44 81 00  	.byte $7f,$44,$81,$00
+00278Dr 2  2D 81 0F     	.byte $2d,$81,$0f
+002790r 2  7F 4E 81 00  	.byte $7f,$4e,$81,$00
+002794r 2  0F 81 10     	.byte $0f,$81,$10
+002797r 2  7F 17 81 00  	.byte $7f,$17,$81,$00
+00279Br 2  FF           	.byte $ff
+00279Cr 2               
+00279Cr 1               
+00279Cr 1               
+00279Cr 1               

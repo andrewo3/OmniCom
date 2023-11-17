@@ -1,0 +1,7 @@
+.global second_stage_beats_pI
+.global second_stage_beats_beats
+.global second_stage_beats_points
+.global second_stage_beats_points_minus
+.global second_stage_beats_strings_lo
+.global second_stage_beats_strings_hi
+.global second_stage_beats_commands

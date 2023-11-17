@@ -1,0 +1,125 @@
+-------------------------------------------------------------------------
+
+
+Hot Seat Harry
+(2002 Strangulation Games)
+
+Congratulations, you're now the owner of the newest smash-hit from
+Strangulation Games!   All of us at Strangulation Games hope you enjoy
+this 1023 byte game.
+
+
+                                     1
+-------------------------------------------------------------------------
+
+
+-The Story-
+	
+   The year is 7250 AD, and the judicial systems of the world have
+   crumbled.  Civil and Criminal cases are now settled in an arena-style
+   trial to the death.  The Plaintiff and the Defendant are strapped
+   into modified Electric Chairs and forced to use their legs to push
+   the "Hydro-Electric Foot Pedals", which, therefore, in turn, causes
+   an electric current to course through his/her/it's opponent's body.
+   There is no settlement.  There is no plea-bargain.
+
+   Electric Justice for All!!!
+
+
+                                      2
+-------------------------------------------------------------------------
+
+
+-How To Play-
+
+   Press the A button on controller 1 to begin a 1-player game, or
+   Press the A button on controller 2 to begin a 2-player game.
+
+	BUTTON		Function
+	
+	D-Pad		Nothing
+	Select		Nothing
+	Start		Nothing
+	A 		Fry Opponent
+	B		Nothing
+
+
+                                      3
+-------------------------------------------------------------------------
+
+
+-Hints & Tips-
+
+	-Do Not press the D-Pad.	
+	-Do Not press Select.
+	-Do Not press Start.
+	-Do Not press the B Button.
+	-Repetitively Mash the hell out of the A Button. (Quickly, too).
+
+
+                                      4
+-------------------------------------------------------------------------
+
+
+-Development Team-
+
+   -Graphic Coordination Dept.
+	J.Parsell
+	a.Coppess
+   -Concept Development Team
+	A.Coppess
+	j.Parsell
+   -Sound Effects
+	j.parsell
+	A.COPPESS
+
+
+                                      5
+-------------------------------------------------------------------------
+
+
+   -Composition
+	a.Coppess
+   -Programming
+	j.Parsell
+   -Label Art
+	a.Coppess
+   -Beverages/Food
+	j.Parsell
+   -Cigarettes
+	a.coppess
+
+
+                                      6
+-------------------------------------------------------------------------
+
+
+-Tools Used-
+
+	cc65
+	Tile Layer
+	NES Screen Arranger
+        edit
+	frhed
+        FCEUltra
+	NESten
+        loopynes
+        NESticle
+        Microsoft Paint
+
+
+                                      7
+-------------------------------------------------------------------------
+
+
+This game comes with no warranty, which, therefore, in essence, we
+cannot be held liable for any injury, loss of life or limb, or
+non-enjoyment as a result of participating in this game.
+(It's your fault, not ours).
+
+This document was created with 100% recycled electrons.
+
+
+
+                                      8
+-------------------------------------------------------------------------

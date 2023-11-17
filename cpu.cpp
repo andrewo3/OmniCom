@@ -17,9 +17,9 @@ CPU::CPU() {
 
 void CPU::define_opcodes() {
     for (int i=0; i<0xFF; i++) {
-        uint8_t a = (i & 0xE0)>>5;
-        uint8_t b = (i & 0x1C)>>2;
-        uint8_t c = i & 0x3;
+        int8_t a = (i & 0xE0)>>5;
+        int8_t b = (i & 0x1C)>>2;
+        int8_t c = i & 0x3;
         switch(b) {
             case 1:
                 this->addrmodes[i] = &zpg;
@@ -129,8 +129,37 @@ void CPU::define_opcodes() {
                             case 7:
                                 this->opcodes[i] = &BEQ;
                         }
+                    case 5:
+                        switch(a) {
+                            case 4:
+                                this->opcodes[i] = &STY;
+                            case 5:
+                                this->opcodes[i] = &LDY;
+                        }
                     case 6:
                         this->addrmodes[i] = nullptr;
+                        switch(a) {
+                            case 0:
+                                this->opcodes[i] = &CLC;
+                            case 1:
+                                this->opcodes[i] = &SEC;
+                            case 2:
+                                this->opcodes[i] = &CLI;
+                            case 3:
+                                this->opcodes[i] = &SEI;
+                            case 4:
+                                this->opcodes[i] = &TYA;
+                            case 5:
+                                this->opcodes[i] = &CLV;
+                            case 6:
+                                this->opcodes[i] = &CLD;
+                            case 7:
+                                this->opcodes[i] = &SED;
+                        }
+                    case 7:
+                        if (a==5) {
+                            this->opcodes[i] = &LDY;
+                        }
                 }
             case 1:
                 switch(a) {
@@ -204,7 +233,11 @@ void CPU::define_opcodes() {
                     case 0:
                         this->addrmodes[i] = &imm;
                     case 2:
-                        this->addrmodes[i] = nullptr;
+                        if (a<4) {
+                            this->addrmodes[i] = &acc;
+                        } else {
+                            this->addrmodes[i] = nullptr;
+                        }
                     case 5:
                         if (a==4||a==5) {
                             this->addrmodes[i] = &zpgy;
@@ -214,65 +247,219 @@ void CPU::define_opcodes() {
                     case 7:
                         if (a==5) {
                             this->addrmodes[i] = &absy;
+                        }
                 }
-            }   
-        }
+        }   
+        
     }
 }
 
-void CPU::clock(uint8_t* ins) {
-
+void CPU::clock(int8_t* ins) {
+    ins_size = 1;
+    instruction exec = this->opcodes[ins[0]]; // get instruction from lookup table
+    addressing_mode addr = this->addrmodes[ins[0]]; // get addressing mode from another lookup table
+    int8_t* arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
+    (this->*exec)(arg); // execute instruction
+    pc+=ins_size; // increment by instruction size (determined by addressing mode)
+    
 }
 
 void CPU::reset() {
-    pc = &memory[RESET];
+    pc = this->abs(&memory[RESET]);
 }
 
-uint8_t* CPU::xind(uint8_t* args) {
+int8_t* CPU::xind(int8_t* args) {
+    ins_size = 2;
     return &memory[args[0]+x];
 }
 
-uint8_t* CPU::indy(uint8_t* args) {
+int8_t* CPU::indy(int8_t* args) {
+    ins_size = 2;
     uint16_t ind = memory[args[0]] | (memory[args[1]]<<8);
     return &memory[ind+y];
 }
 
-uint8_t* CPU::zpg(uint8_t* args) {
+int8_t* CPU::zpg(int8_t* args) {
+    ins_size = 2;
     return &memory[args[0]];
 }
 
-uint8_t* CPU::zpgx(uint8_t* args) {
+int8_t* CPU::zpgx(int8_t* args) {
+    ins_size = 2;
     return &memory[args[0]+x];
 }
 
-uint8_t* CPU::zpgy(uint8_t* args) {
-    return &memory[args[0]+y];
+int8_t* CPU::zpgy(int8_t* args) {
+    ins_size = 2;
+    return &memory[(uint8_t)(args[0]+y)];
 }
 
-uint8_t* CPU::abs(uint8_t* args) {
-    return &memory[args[0]|(args[1]<<8)];
+int8_t* CPU::abs(int8_t* args) {
+    ins_size = 3;
+    return &memory[(uint8_t)(args[0]|(args[1]<<8))];
 }
 
-uint8_t* CPU::absx(uint8_t* args) {
-    return &memory[(args[0]|(args[1]<<8))+x];
+int8_t* CPU::absx(int8_t* args) {
+    ins_size = 3;
+    return &memory[(uint8_t)((args[0]|(args[1]<<8))+x)];
 }
 
-uint8_t* CPU::absy(uint8_t* args) {
-    return &memory[(args[0]|(args[1]<<8))+y];
+int8_t* CPU::absy(int8_t* args) {
+    ins_size = 3;
+    return &memory[(uint8_t)((args[0]|(args[1]<<8))+y)];
 }
 
-uint8_t* CPU::ind(uint8_t* args) {
-    return &memory[memory[args[0]] | (memory[args[1]]<<8)];
+int8_t* CPU::ind(int8_t* args) {
+    ins_size = 3;
+    return &memory[(uint8_t)(memory[(uint8_t)args[0]] | (memory[(uint8_t)args[1]]<<8))];
 }
 
-uint8_t* CPU::rel(uint8_t* args) {
-    return &memory[get_addr(pc)+(int8_t)args[0]];
+int8_t* CPU::rel(int8_t* args) {
+    ins_size = 2;
+    return &memory[this->get_addr(pc)+args[0]];
 }
 
-uint16_t CPU::get_addr(uint8_t* ptr) {
+int8_t* CPU::acc(int8_t* args) {
+    return &accumulator;
+}
+
+uint16_t CPU::get_addr(int8_t* ptr) {
     return ptr-memory;
 }
 
-void CPU::ORA(uint8_t* args) {
+bool CPU::get_flag(char flag) {
+    switch(flag) {
+        case 'C':
+            return flags&0x1;
+        case 'Z':
+            return flags&0x2;
+        case 'I':
+            return flags&0x4;
+        case 'D':
+            return flags&0x8; //this flag is disabled on NES 6502
+        case 'B':
+            return flags&0x10;
+        case 'V':
+            return flags&0x40;
+        case 'N':
+            return flags&0x80;
+    }
+}
 
+void CPU::set_flag(char flag,bool val) {
+    if (val) {
+        switch(flag) {
+            case 'C':
+                flags|=0x1;
+            case 'Z':
+                flags|=0x2;
+            case 'I':
+                flags|=0x4;
+            case 'D':
+                flags|=0x8;
+            case 'B':
+                flags|=0x10;
+            case 'V':
+                flags|=0x40;
+            case 'N':
+                flags|=0x80;
+        }
+    } else {
+        switch(flag) {
+            case 'C':
+                flags&=0xFE;
+            case 'Z':
+                flags&=0xFD;
+            case 'I':
+                flags&=0xFB;
+            case 'D':
+                flags&=0xF7;
+            case 'B':
+                flags&=0xEF;
+            case 'V':
+                flags&=0xBF;
+            case 'N':
+                flags&=0x7F;
+        }
+    }
+}
+
+void CPU::ADC(int8_t* args) {
+    bool negative = accumulator<0;
+    uint16_t unwrapped = (uint8_t)accumulator+
+                        (uint8_t)*args+
+                        this->get_flag('C');
+    this->set_flag('C',unwrapped>0xFF);
+    this->set_flag('V',!((accumulator^*args)&0x80) && ((accumulator^unwrapped) & 0x80));
+    this->set_flag('Z',!accumulator);
+    this->set_flag('N',accumulator&0x80);
+}
+
+void CPU::AND(int8_t* args) {
+    accumulator = accumulator&*args;
+    this->set_flag('Z',!accumulator);
+    this->set_flag('N',accumulator&0x80);
+}
+
+void CPU::ASL(int8_t* args) {
+    uint16_t result = *args<<1;
+    *args = result&0xff;
+    this->set_flag('C',result&0x100);
+    this->set_flag('Z',!accumulator);
+    this->set_flag('N',result&0x80);
+}
+
+void CPU::BCC(int8_t* args) {
+    if (!get_flag('C')) {
+        pc = args-ins_size;
+    }
+}
+
+void CPU::BCS(int8_t* args) {
+    if (get_flag('C')) {
+        pc = args-ins_size;
+    }
+}
+
+void CPU::BEQ(int8_t* args) {
+    if (get_flag('Z')) {
+        pc = args-ins_size;
+    }
+}
+
+void CPU::BIT(int8_t* args) {
+    int8_t test = accumulator & *args;
+    this->set_flag('Z',test==0);
+    this->set_flag('V',*args&0x40);
+    this->set_flag('N',*args&0x80);
+}
+
+void CPU::BMI(int8_t* args) {
+    if (get_flag('N')) {
+        pc = args-ins_size;
+    }
+}
+
+void CPU::BNE(int8_t* args) {
+    if (!get_flag('Z')) {
+        pc = args-ins_size;   
+    }
+}
+
+void CPU::BPL(int8_t* args) {
+    if (!get_flag('N')) {
+        pc = args-ins_size;
+    }
+}
+
+void stack_push(int8_t val) {
+    
+}
+
+void CPU::BRK(int8_t* args) {
+    // push high byte first
+    uint16_t last_ptr = get_addr(pc);
+    stack_push((int8_t)last_ptr>>8);
+    stack_push(flags);
+    pc = this->abs(&memory[0xFFFE]);
 }

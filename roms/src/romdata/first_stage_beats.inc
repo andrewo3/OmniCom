@@ -1,0 +1,7 @@
+.global first_stage_beats_pI
+.global first_stage_beats_beats
+.global first_stage_beats_points
+.global first_stage_beats_points_minus
+.global first_stage_beats_strings_lo
+.global first_stage_beats_strings_hi
+.global first_stage_beats_commands

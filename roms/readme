@@ -1,0 +1,35 @@
+
+===============================================================================
+			       うたいたガール
+			*  *  *****  ****  ****  ****
+			*  *    *    *  *  *     *  *
+			*  *    *    ****  *     *  *
+			****    *    *  *  ****  ****
+			 「ＩＩコンは世界を救う？！」
+================================================================================
+
+Utaco was originally an entry for A Game By Its Cover (http://www.agbic.com/).
+The contest idea was to choose a fake cartridge art (with an special focus on
+Famicompo entries) and then develop that game in a month.
+One of those entries, was うたいたガールUTACO~「ＩＩコンは世界を救う？！」
+(http://famicase.com/11/softs/41.html).
+The main idea of a game played with the almost-never-used famicom microphone
+seemed fun enough to try to implement, so that is how I choose it.
+
+The game was not finished when the competition ended, but with some work on the 
+following months, it reached its actual status. 
+
+For more information about the game check the "booklet" directory.
+
+Altough the game uses the microphone, the B button can also be used when a mic
+is not available (NES)
+
+The game cutscenes are available in English, Japanese and Spanish. Unfortunately,
+the lyrics are only in japanese. If you can't read them, you are encouraged to 
+make up whatever you want while singing.
+
+The game source is included. Everything needed to build it with ca65 is included
+albeit some editing of the build scripts and fixing of paths may be needed.
+It's worth noting that the source is not interesting and very badly written.
+
+

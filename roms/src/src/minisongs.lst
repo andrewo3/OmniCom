@@ -1,0 +1,49 @@
+ca65 V2.13.3 - (C) Copyright 1998-2012 Ullrich von Bassewitz
+Main file   : /mnt/ntfs_e/projects/nes/utaco/src/minisongs.s
+Current file: /mnt/ntfs_e/projects/nes/utaco/src/minisongs.s
+
+000000r 1               
+000000r 1               .include "src/globals.inc"
+000000r 2               FontOffset=$80
+000000r 2               
+000000r 1               .include "src/minisongs.inc"
+000000r 2               .global minisongs_musicdata
+000000r 2               
+000000r 2               
+000000r 2               .global CS_NAM_destroyed_city
+000000r 2               .global CS_NAM_mothership
+000000r 2               .global CS_NAM_temple_ruins
+000000r 2               .global CS_NAM_utaco_temple
+000000r 2               .global NAM_title
+000000r 2               .global PAL_title
+000000r 2               
+000000r 1               
+000000r 1               .segment "SBANK_4"
+000000r 1               
+000000r 1               
+000000r 1  80 00 01 10  CS_NAM_destroyed_city:	.incbin "romdata/nam/destroyed_city.nm"
+000004r 1  01 11 01 12  
+000008r 1  01 13 01 10  
+00027Fr 1  80 00 08 0F  CS_NAM_mothership:		.incbin "romdata/nam/mothership.nm"
+000283r 1  01 0B 01 0C  
+000287r 1  07 0F 01 0B  
+00049Er 1  80 00 20 0A  CS_NAM_temple_ruins:	.incbin "romdata/nam/temple_ruins.nm"
+0004A2r 1  01 0B 01 0C  
+0004A6r 1  01 0B 01 0C  
+000631r 1  80 00 20 02  CS_NAM_utaco_temple:	.incbin "romdata/nam/utaco_temple.nm"
+000635r 1  22 01 01 30  
+000639r 1  01 31 01 32  
+00076Cr 1  01 CC 01 CD  NAM_title: .incbin "romdata/nam/title.nm"
+000770r 1  01 CC 01 CD  
+000774r 1  01 CC 01 CD  
+000D1Fr 1  30 0F 2C 36  PAL_title: .incbin "romdata/title.dat"
+000D23r 1  30 0F 25 36  
+000D27r 1  30 0F 2C 25  
+000E1Fr 1               
+000E1Fr 1               minisongs_musicdata:
+000E1Fr 1  53 02 9A 01  	.incbin "romdata/music/minisongs_music.bin"
+000E23r 1  49 02 4F 02  
+000E27r 1  00 10 0E B8  
+001DA9r 1               
+001DA9r 1               
+001DA9r 1               
