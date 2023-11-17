@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "rom.h"
 
 class CPU {
     public:
@@ -19,6 +20,7 @@ class CPU {
         typedef void (CPU::*instruction) (int8_t*);
         addressing_mode addrmodes[256];
         instruction opcodes[256];
+        void loadRom(ROM rom);
     private:
 
         //---- instructions ----
