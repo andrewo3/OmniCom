@@ -1,10 +1,14 @@
-#include <stdint.h>
+#ifndef cpu_h
+#define cpu_h
+
 #include "rom.h"
+#include <stdint.h>
 
 class CPU {
     public:
+        CPU();
         int CLOCK_SPEED = 1789773;
-        void clock(int8_t* ins);
+        void clock();
         int8_t accumulator;
         int8_t x;
         int8_t y;
@@ -20,7 +24,7 @@ class CPU {
         typedef void (CPU::*instruction) (int8_t*);
         addressing_mode addrmodes[256];
         instruction opcodes[256];
-        void loadRom(ROM rom);
+        void loadRom(ROM *r);
     private:
 
         //---- instructions ----
@@ -101,7 +105,11 @@ class CPU {
         uint8_t sp = 0;
         uint8_t flags = 0x20; // bits: NV1BDIZC
         uint16_t get_addr(int8_t* ptr);
+        ROM* rom;
         int8_t memory[0xFFFF];
         void stack_push(int8_t val);
         int8_t stack_pull(void);
+        void map_memory(uint8_t mapper_num); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.
 };
+
+#endif

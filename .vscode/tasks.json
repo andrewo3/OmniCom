@@ -7,6 +7,9 @@
             "args": [
                 "-fcolor-diagnostics",
                 "-fansi-escape-codes",
+                "-v",
+                "rom.cpp",
+                "cpu.cpp",
                 "-g",
                 "${file}",
                 "-o",
@@ -27,6 +30,9 @@
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
+                "-v",
+                "rom.cpp",
+                "cpu.cpp",
                 "-g",
                 "${file}",
                 "-o",
