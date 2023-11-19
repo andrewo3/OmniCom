@@ -1,1 +1,0 @@
-FontOffset=$80
