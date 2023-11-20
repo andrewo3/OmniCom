@@ -11,9 +11,9 @@
                 "rom.cpp",
                 "cpu.cpp",
                 "-g",
-                "${file}",
+                "main.cpp",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/$main"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -34,9 +34,9 @@
                 "rom.cpp",
                 "cpu.cpp",
                 "-g",
-                "${file}",
+                "main.cpp",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/main"
             ],
             "options": {
                 "cwd": "${fileDirname}"

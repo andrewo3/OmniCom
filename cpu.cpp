@@ -24,12 +24,16 @@ void CPU::define_opcodes() {
         switch(b) {
             case 1:
                 this->addrmodes[i] = &CPU::zpg;
+                this->debug_addr[i] = "zpg";
             case 3:
                 this->addrmodes[i] = &CPU::abs;
+                this->debug_addr[i] = "abs";
             case 5:
                 this->addrmodes[i] = &CPU::zpgx;
+                this->debug_addr[i] = "zpgx";
             case 7:
                 this->addrmodes[i] = &CPU::absx;
+                this->debug_addr[i] = "absx";
         }
         switch(c) {
             case 0:
@@ -37,217 +41,302 @@ void CPU::define_opcodes() {
                     case 0:
                         if (a=0||a==2||a==3) {
                             this->addrmodes[i] = nullptr;
+                            this->debug_addr[i] = "impl";
                         } else if (a>4) {
                             this->addrmodes[i] = &CPU::imm;
+                            this->debug_addr[i] = "imm";
                         } else if (a=1) {
                             this->addrmodes[i] = &CPU::abs;
                             this->opcodes[i] = &CPU::JSR;
+                            this->debug_addr[i] = "abs";
+                            this->debug_opcodes[i] = "JSR";
                         }
                         switch(a) {
                             case 0:
                                 this->opcodes[i] = &CPU::BRK;
+                                this->debug_opcodes[i] = "BRK";
                             case 2:
                                 this->opcodes[i] = &CPU::RTI;
+                                this->debug_opcodes[i] = "RTI";
                             case 3:
                                 this->opcodes[i] = &CPU::RTS;
+                                this->debug_opcodes[i] = "RTS";
                             case 5:
                                 this->opcodes[i] = &CPU::LDY;
+                                this->debug_opcodes[i] = "LDY";
                             case 6:
                                 this->opcodes[i] = &CPU::CPY;
+                                this->debug_opcodes[i] = "CPY";
                             case 7:
                                 this->opcodes[i] = &CPU::CPX;
+                                this->debug_opcodes[i] = "CPX";
                         }
 
                     case 1:
                         switch(a) {
                             case 1:
                                 this->opcodes[i] = &CPU::BIT;
+                                this->debug_opcodes[i] = "CPX";
                             case 4:
                                 this->opcodes[i] = &CPU::STY;
+                                this->debug_opcodes[i] = "STY";
                             case 5:
                                 this->opcodes[i] = &CPU::LDY;
+                                this->debug_opcodes[i] = "LDY";
                             case 6:
                                 this->opcodes[i] = &CPU::CPY;
+                                this->debug_opcodes[i] = "CPY";
                             case 7:
                                 this->opcodes[i] = &CPU::CPX;
+                                this->debug_opcodes[i] = "CPX";
                         }
                     case 2:
                         this->addrmodes[i] = nullptr;
+                        this->debug_addr[i] = "impl";
                         switch(a) {
                             case 0:
                                 this->opcodes[i] = &CPU::PHP;
+                                this->debug_opcodes[i] = "PHP";
                             case 1:
                                 this->opcodes[i] = &CPU::PLP;
+                                this->debug_opcodes[i] = "PLP";
                             case 2:
                                 this->opcodes[i] = &CPU::PHA;
+                                this->debug_opcodes[i] = "PHA";
                             case 3:
                                 this->opcodes[i] = &CPU::PLA;
+                                this->debug_opcodes[i] = "PLA";
                             case 4:
                                 this->opcodes[i] = &CPU::DEY;
+                                this->debug_opcodes[i] = "DEY";
                             case 5:
                                 this->opcodes[i] = &CPU::TAY;
+                                this->debug_opcodes[i] = "TAY";
                             case 6:
                                 this->opcodes[i] = &CPU::INY;
+                                this->debug_opcodes[i] = "INY";
                             case 7:
                                 this->opcodes[i] = &CPU::INX;
+                                this->debug_opcodes[i] = "INX";
 
                         }
                     case 3:
                         switch(a) {
                             case 1:
                                 this->opcodes[i] = &CPU::BIT;
+                                this->debug_opcodes[i] = "BIT";
                             case 2:
                                 this->opcodes[i] = &CPU::JMP;
+                                this->debug_opcodes[i] = "JMP";
                             case 3:
                                 this->opcodes[i] = &CPU::JMP;
                                 this->addrmodes[i] = &CPU::ind;
+                                this->debug_opcodes[i] = "JMP";
+                                this->debug_addr[i] = "ind";
                             case 4:
                                 this->opcodes[i] = &CPU::STY;
+                                this->debug_opcodes[i] = "STY";
                             case 5:
                                 this->opcodes[i] = &CPU::LDY;
+                                this->debug_opcodes[i] = "LDY";
                             case 6:
                                 this->opcodes[i] = &CPU::CPY;
+                                this->debug_opcodes[i] = "CPY";
                             case 7:
                                 this->opcodes[i] = &CPU::CPX;
+                                this->debug_opcodes[i] = "CPX";
                         }
                     case 4:
                         this->addrmodes[i] = &CPU::rel;
+                        this->debug_addr[i] = "rel";
                         switch(a) {
                             case 0:
                                 this->opcodes[i] = &CPU::BPL;
+                                this->debug_opcodes[i] = "BPL";
                             case 1:
                                 this->opcodes[i] = &CPU::BMI;
+                                this->debug_opcodes[i] = "BMI";
                             case 2:
                                 this->opcodes[i] = &CPU::BVC;
+                                this->debug_opcodes[i] = "BVC";
                             case 3:
                                 this->opcodes[i] = &CPU::BVS;
+                                this->debug_opcodes[i] = "BVS";
                             case 4:
                                 this->opcodes[i] = &CPU::BCC;
+                                this->debug_opcodes[i] = "BCC";
                             case 5:
                                 this->opcodes[i] = &CPU::BCS;
+                                this->debug_opcodes[i] = "BCS";
                             case 6:
                                 this->opcodes[i] = &CPU::BNE;
+                                this->debug_opcodes[i] = "BNE";
                             case 7:
                                 this->opcodes[i] = &CPU::BEQ;
+                                this->debug_opcodes[i] = "BEQ";
                         }
                     case 5:
                         switch(a) {
                             case 4:
                                 this->opcodes[i] = &CPU::STY;
+                                this->debug_opcodes[i] = "STY";
                             case 5:
                                 this->opcodes[i] = &CPU::LDY;
+                                this->debug_opcodes[i] = "LDY";
                         }
                     case 6:
                         this->addrmodes[i] = nullptr;
+                        this->debug_addr[i] = "impl";
                         switch(a) {
                             case 0:
                                 this->opcodes[i] = &CPU::CLC;
+                                this->debug_opcodes[i] = "CLC";
                             case 1:
                                 this->opcodes[i] = &CPU::SEC;
+                                this->debug_opcodes[i] = "SEC";
                             case 2:
                                 this->opcodes[i] = &CPU::CLI;
+                                this->debug_opcodes[i] = "CLI";
                             case 3:
                                 this->opcodes[i] = &CPU::SEI;
+                                this->debug_opcodes[i] = "SEI";
                             case 4:
                                 this->opcodes[i] = &CPU::TYA;
+                                this->debug_opcodes[i] = "TYA";
                             case 5:
                                 this->opcodes[i] = &CPU::CLV;
+                                this->debug_opcodes[i] = "CLV";
                             case 6:
                                 this->opcodes[i] = &CPU::CLD;
+                                this->debug_opcodes[i] = "CLD";
                             case 7:
                                 this->opcodes[i] = &CPU::SED;
+                                this->debug_opcodes[i] = "SED";
                         }
                     case 7:
                         if (a==5) {
                             this->opcodes[i] = &CPU::LDY;
+                            this->debug_opcodes[i] = "LDY";
                         }
                 }
             case 1:
                 switch(a) {
                     case 0:
                         this->opcodes[i] = &CPU::ORA;
+                        this->debug_opcodes[i] = "ORA";
                     case 1:
                         this->opcodes[i] = &CPU::AND;
+                        this->debug_opcodes[i] = "AND";
                     case 2:
                         this->opcodes[i] = &CPU::EOR;
+                        this->debug_opcodes[i] = "EOR";
                     case 3:
                         this->opcodes[i] = &CPU::ADC;
+                        this->debug_opcodes[i] = "ADC";
                     case 4:
                         this->opcodes[i] = &CPU::STA;
+                        this->debug_opcodes[i] = "STA";
                     case 5:
                         this->opcodes[i] = &CPU::LDA;
+                        this->debug_opcodes[i] = "LDA";
                     case 6:
                         this->opcodes[i] = &CPU::CMP;
+                        this->debug_opcodes[i] = "CMP";
                     case 7:
                         this->opcodes[i] = &CPU::SBC;
+                        this->debug_opcodes[i] = "SBC";
                 }
                 switch(b) {
                     case 0:
                         this->addrmodes[i] = &CPU::xind;
+                        this->debug_addr[i] = "xind";
                     case 2:
                         this->addrmodes[i] = &CPU::imm;
+                        this->debug_addr[i] = "imm";
                     case 4:
                         this->addrmodes[i] = &CPU::indy;
+                        this->debug_addr[i] = "indy";
                     case 6:
                         this->addrmodes[i] = &CPU::absy;
+                        this->debug_addr[i] = "absy";
                 }
             case 2:
                 switch(a) {
                     case 0:
                         this->opcodes[i] = &CPU::ASL;
+                        this->debug_opcodes[i] = "ASL";
                     case 1:
                         this->opcodes[i] = &CPU::ROL;
+                        this->debug_opcodes[i] = "ROL";
                     case 2:
                         this->opcodes[i] = &CPU::LSR;
+                        this->debug_opcodes[i] = "LSR";
                     case 3:
                         this->opcodes[i] = &CPU::ROR;
+                        this->debug_opcodes[i] = "ROR";
                     case 4:
                         if (b==2) {
                             this->opcodes[i] = &CPU::TXA;
+                            this->debug_opcodes[i] = "TXA";
                         } else if (b==6) {
                             this->opcodes[i] = &CPU::TXS;
+                            this->debug_opcodes[i] = "TXS";
                         } else {
                             this->opcodes[i] = &CPU::STX;
+                            this->debug_opcodes[i] = "STX";
                         }
                     case 5:
                         if (b==2) {
                             this->opcodes[i] = &CPU::TAX;
+                            this->debug_opcodes[i] = "TAX";
                         } else if (b==6) {
                             this->opcodes[i] = &CPU::TSX;
+                            this->debug_opcodes[i] = "TSX";
                         } else {
                             this->opcodes[i] = &CPU::LDX;
+                            this->debug_opcodes[i] = "LDX";
                         }
                     case 6:
                         if (b==2) {
                             this->opcodes[i] = &CPU::DEX;
+                            this->debug_opcodes[i] = "DEX";
                         } else {
                             this->opcodes[i] = &CPU::DEC;
+                            this->debug_opcodes[i] = "DEC";
                         }
                     case 7:
                         if (b==2) {
                             this->opcodes[i] = &CPU::NOP;
+                            this->debug_opcodes[i] = "NOP";
                         } else {
                             this->opcodes[i] = &CPU::INC;
+                            this->debug_opcodes[i] = "INC";
                         }
                 }
                 switch(b) {
                     case 0:
                         this->addrmodes[i] = &CPU::imm;
+                        this->debug_addr[i] = "imm";
                     case 2:
                         if (a<4) {
                             this->addrmodes[i] = &CPU::acc;
+                            this->debug_addr[i] = "acc";
                         } else {
                             this->addrmodes[i] = nullptr;
+                            this->debug_addr[i] = "impl";
                         }
                     case 5:
                         if (a==4||a==5) {
                             this->addrmodes[i] = &CPU::zpgy;
+                            this->debug_addr[i] = "zpgy";
                         }
                     case 6:
                         this->addrmodes[i] = nullptr;
+                        this->debug_addr[i] = "impl";
                     case 7:
                         if (a==5) {
                             this->addrmodes[i] = &CPU::absy;
+                            this->debug_addr[i] = "absy";
                         }
                 }
         }   
@@ -478,7 +567,7 @@ void CPU::BRK(int8_t* args) {
     stack_push((int8_t)(last_ptr>>8));
     stack_push((int8_t)(last_ptr&0xff));
     stack_push(flags);
-    pc = this->abs(&memory[0xFFFE])-ins_size;
+    pc = this->abs(&memory[IRQ])-ins_size;
 }
 
 void CPU::BVC(int8_t* args) {

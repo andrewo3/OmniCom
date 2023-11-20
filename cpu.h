@@ -110,6 +110,8 @@ class CPU {
         void stack_push(int8_t val);
         int8_t stack_pull(void);
         void map_memory(uint8_t mapper_num); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.
+        char* debug_opcodes[0xFF];
+        char* debug_addr[0xFF];
 };
 
 #endif

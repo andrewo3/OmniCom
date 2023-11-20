@@ -22,6 +22,11 @@ int main(int argc, char ** argv) {
     }
     printf("%i\n",rom.get_mapper());
     CPU cpu;
+    printf("CPU Initialized.\n");
     cpu.loadRom(&rom);
+    printf("ROM loaded into CPU.\n");
+    while (true) {
+        cpu.clock();
+    }
     return 0;
 }
