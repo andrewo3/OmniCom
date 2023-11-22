@@ -7,6 +7,7 @@
 class CPU {
     public:
         CPU();
+        CPU(bool dbug);
         int CLOCK_SPEED = 1789773;
         void clock();
         int8_t accumulator;
@@ -24,6 +25,7 @@ class CPU {
         typedef void (CPU::*instruction) (int8_t*);
         addressing_mode addrmodes[256];
         instruction opcodes[256];
+        void ins_str(char * write,uint8_t opcode);
         void loadRom(ROM *r);
     private:
 
@@ -110,8 +112,9 @@ class CPU {
         void stack_push(int8_t val);
         int8_t stack_pull(void);
         void map_memory(uint8_t mapper_num); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.
-        char* debug_opcodes[0xFF];
-        char* debug_addr[0xFF];
+        char* debug_opcodes[256] = {0};
+        char* debug_addr[256] = {0};
+        bool debug = false;
 };
 
 #endif

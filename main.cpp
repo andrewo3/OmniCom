@@ -21,7 +21,7 @@ int main(int argc, char ** argv) {
         return invalid_error();
     }
     printf("%i\n",rom.get_mapper());
-    CPU cpu;
+    CPU cpu(true);
     printf("CPU Initialized.\n");
     cpu.loadRom(&rom);
     printf("ROM loaded into CPU.\n");
