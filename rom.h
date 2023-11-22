@@ -1,7 +1,7 @@
 #ifndef rom_h
 #define rom_h
-#include <stdint.h>
-#include <stdio.h>
+#include <cstdint>
+#include <cstdio>
 
 class ROM {
     public:
