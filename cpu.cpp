@@ -1,7 +1,8 @@
 #include "rom.h"
 #include "cpu.h"
 #include <cstdint>
-#include <stdio.h>
+#include <cstdio>
+#include <cstring>
 
 // description of addressing modes:
 // https://blogs.oregonstate.edu/ericmorgan/2022/01/21/6502-addressing-modes/
@@ -14,13 +15,11 @@
 
 CPU::CPU() {
     define_opcodes();
-    reset();
 }
 
 CPU::CPU(bool dbug) {
     this->debug = dbug;
     define_opcodes();
-    reset();
 }
 
 void CPU::ins_str(char * write,uint8_t opcode) {
@@ -31,37 +30,57 @@ void CPU::ins_str(char * write,uint8_t opcode) {
             }
         }
 
-void CPU::map_memory(uint8_t mapper_num,int8_t* address) {
+void CPU::map_memory(int8_t** address) {
     /* TODO*/
-    printf("mappin\n");
+    uint8_t m = rom->get_mapper();
+    int addr = *address-memory;
+    switch(m) {
+        case 0:
+            if (rom->get_prgsize()/0x4000==1) {
+                if (0xC000<=addr && addr<=0xFFFF) {
+                    *address-=0x4000; //mirror first table
+                }
+            }
+            break;
+    }
 }
 
 void CPU::clock() {
     ins_size = 1;
     int8_t* ins = pc;
+    map_memory(&ins);
     if (debug) {
         char w[20] = {0};
         ins_str(w,ins[0]);
         printf("%s\n",w);
     }
-    instruction exec = this->opcodes[ins[0]]; // get instruction from lookup table
-    addressing_mode addr = this->addrmodes[ins[0]]; // get addressing mode from another lookup table
+    instruction exec = this->opcodes[(uint8_t)ins[0]]; // get instruction from lookup table
+    addressing_mode addr = this->addrmodes[(uint8_t)ins[0]]; // get addressing mode from another lookup table
     int8_t* arg = &ins[1];
     if (addr!=nullptr) {
         arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
     }
-    map_memory((*rom).get_mapper(),arg); // update banks and registers as needed
+    map_memory(&arg); // update banks and registers as needed
     (this->*exec)(arg); // execute instruction
     pc+=ins_size; // increment by instruction size (determined by addressing mode)
     
 }
 
 void CPU::reset() {
-    pc = this->abs(&memory[RESET]);
+    int8_t * res = &memory[RESET];
+    map_memory(&res);
+    pc = abs(res);
 }
 
 void CPU::loadRom(ROM *r) {
     rom = r;
+    uint8_t m = rom->get_mapper();
+    switch(m) {
+        case 0:
+            memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
+    }
+    reset();
+
 }
 
 uint16_t CPU::get_addr(int8_t* ptr) {

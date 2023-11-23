@@ -34,22 +34,22 @@ int8_t* CPU::zpgy(int8_t* args) {
 
 int8_t* CPU::abs(int8_t* args) {
     ins_size = 3;
-    return &memory[(uint8_t)(args[0]|(args[1]<<8))];
+    return &memory[(uint16_t)(args[0]|(args[1]<<8))];
 }
 
 int8_t* CPU::absx(int8_t* args) {
     ins_size = 3;
-    return &memory[(uint8_t)((args[0]|(args[1]<<8))+x)];
+    return &memory[(uint16_t)((args[0]|(args[1]<<8))+x)];
 }
 
 int8_t* CPU::absy(int8_t* args) {
     ins_size = 3;
-    return &memory[(uint8_t)((args[0]|(args[1]<<8))+y)];
+    return &memory[(uint16_t)((args[0]|(args[1]<<8))+y)];
 }
 
 int8_t* CPU::ind(int8_t* args) {
     ins_size = 3;
-    return &memory[(uint8_t)(memory[(uint8_t)args[0]] | (memory[(uint8_t)args[1]]<<8))];
+    return &memory[(uint16_t)(memory[(uint8_t)args[0]] | (memory[(uint8_t)args[1]]<<8))];
 }
 
 int8_t* CPU::rel(int8_t* args) {
@@ -89,19 +89,19 @@ void CPU::ASL(int8_t* args) {
 
 void CPU::BCC(int8_t* args) {
     if (!get_flag('C')) {
-        pc = args-ins_size;
+        pc = args;
     }
 }
 
 void CPU::BCS(int8_t* args) {
     if (get_flag('C')) {
-        pc = args-ins_size;
+        pc = args;
     }
 }
 
 void CPU::BEQ(int8_t* args) {
     if (get_flag('Z')) {
-        pc = args-ins_size;
+        pc = args;
     }
 }
 
@@ -114,19 +114,19 @@ void CPU::BIT(int8_t* args) {
 
 void CPU::BMI(int8_t* args) {
     if (get_flag('N')) {
-        pc = args-ins_size;
+        pc = args;
     }
 }
 
 void CPU::BNE(int8_t* args) {
     if (!get_flag('Z')) {
-        pc = args-ins_size;   
+        pc = args;   
     }
 }
 
 void CPU::BPL(int8_t* args) {
     if (!get_flag('N')) {
-        pc = args-ins_size;
+        pc = args;
     }
 }
 
@@ -141,13 +141,13 @@ void CPU::BRK(int8_t* args) {
 
 void CPU::BVC(int8_t* args) {
     if (!get_flag('C')) {
-        pc = args-ins_size;
+        pc = args;
     }
 }
 
 void CPU::BVS(int8_t* args) {
     if(get_flag('V')) {
-        pc = args-ins_size;
+        pc = args;
     }
 }
 
@@ -227,14 +227,14 @@ void CPU::INY(int8_t* args) {
 }
 
 void CPU::JMP(int8_t* args) {
-    pc = args-ins_size;
+    pc = args;
 }
 
 void CPU::JSR(int8_t* args) {
     uint16_t push = get_addr(pc+ins_size-1);
     stack_push((int8_t)(push>>8));
     stack_push((int8_t)(push&0xff));
-    pc = args-ins_size;
+    pc = args;
 }
 
 void CPU::LDA(int8_t* args) {

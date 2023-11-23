@@ -20,7 +20,7 @@ int main(int argc, char ** argv) {
     if (!rom.is_valid()) {
         return invalid_error();
     }
-    printf("%i\n",rom.get_mapper());
+    printf("Mapper: %i\n",rom.get_mapper()); //https://www.nesdev.org/wiki/Mapper
     CPU cpu(true);
     printf("CPU Initialized.\n");
     cpu.loadRom(&rom);

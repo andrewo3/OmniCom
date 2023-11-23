@@ -101,7 +101,7 @@ class CPU {
         int8_t* absy(int8_t* args);
         int8_t* ind(int8_t* args);
         int8_t* rel(int8_t* args);
-        int8_t* imm(int8_t* args) {return &args[0];}
+        int8_t* imm(int8_t* args) {ins_size = 2; return &args[0];}
 
         //--extras--
         uint8_t sp = 0;
@@ -111,7 +111,7 @@ class CPU {
         int8_t memory[0xFFFF];
         void stack_push(int8_t val);
         int8_t stack_pull(void);
-        void map_memory(uint8_t mapper_num,int8_t* address); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.
+        void map_memory(int8_t** address); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.
         char* debug_opcodes[256] = {0};
         char* debug_addr[256] = {0};
         bool debug = false;
