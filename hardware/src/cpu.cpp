@@ -1,5 +1,5 @@
-#include "rom.h"
-#include "cpu.h"
+#include "../rom.h"
+#include "../cpu.h"
 #include <cstdint>
 #include <cstdio>
 #include <cstring>

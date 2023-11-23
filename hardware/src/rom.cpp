@@ -1,8 +1,8 @@
-#include "rom.h"
+#include "../rom.h"
 #include <string.h>
 #include <cstdio>
 #include <cstdlib>
-#include <math.h>
+#include <cmath>
 
 
 ROM::ROM() {

@@ -8,16 +8,17 @@
                 "-fcolor-diagnostics",
                 "-fansi-escape-codes",
                 "-v",
-                "rom.cpp",
-                "cpu.cpp",
-                "instructions.cpp",
+                "hardware/src/rom.cpp",
+                "hardware/src/cpu.cpp",
+                "hardware/src/cpu_helper.cpp",
+                "hardware/src/ppu.cpp",
                 "-g",
                 "main.cpp",
                 "-o",
-                "${fileDirname}/$main"
+                "${workspaceRoot}/main"
             ],
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "${workspaceRoot}"
             },
             "problemMatcher": [
                 "$gcc"
@@ -37,16 +38,17 @@
             "command": "/opt/homebrew/bin/g++-11",
             "args": [
                 "-v",
-                "rom.cpp",
-                "cpu.cpp",
-                "instructions.cpp",
+                "hardware/src/rom.cpp",
+                "hardware/src/cpu.cpp",
+                "hardware/src/cpu_helper.cpp",
+                "hardware/src/ppu.cpp",
                 "-g",
                 "main.cpp",
                 "-o",
-                "${fileDirname}/main"
+                "${workspaceRoot}/main"
             ],
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "${workspaceRoot}"
             },
             "problemMatcher": [
                 "$gcc"

@@ -1,7 +1,7 @@
-#include "rom.h"
-#include "cpu.h"
+#include "../rom.h"
+#include "../cpu.h"
 #include <cstdint>
-#include <stdio.h>
+#include <cstdio>
 
 
 //--addressing modes--

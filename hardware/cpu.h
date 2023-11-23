@@ -2,7 +2,7 @@
 #define cpu_h
 
 #include "rom.h"
-#include <stdint.h>
+#include <cstdint>
 
 class CPU {
     public:

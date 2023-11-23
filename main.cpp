@@ -1,10 +1,11 @@
-#include "rom.h"
-#include "cpu.h"
-#include <stdio.h>
+#include "hardware/rom.h"
+#include "hardware/cpu.h"
+#include "hardware/ppu.h"
+#include <cstdio>
 
 int usage_error() {
     printf("Usage: nes rom_filename\n");
-        return -1;
+    return -1;
 }
 
 int invalid_error() {
@@ -23,6 +24,8 @@ int main(int argc, char ** argv) {
     printf("Mapper: %i\n",rom.get_mapper()); //https://www.nesdev.org/wiki/Mapper
     CPU cpu(true);
     printf("CPU Initialized.\n");
+    PPU ppu;
+    printf("PPU Initialized\n");
     cpu.loadRom(&rom);
     printf("ROM loaded into CPU.\n");
     while (true) {
