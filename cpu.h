@@ -26,6 +26,7 @@ class CPU {
         addressing_mode addrmodes[256];
         instruction opcodes[256];
         void ins_str(char * write,uint8_t opcode);
+        void ins_str_mem(char * write,uint8_t* mem);
         void loadRom(ROM *r);
     private:
 

@@ -23,12 +23,38 @@ CPU::CPU(bool dbug) {
 }
 
 void CPU::ins_str(char * write,uint8_t opcode) {
-            if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
-                sprintf(write,"0x%02x: %s, %s, PC=$%04x",opcode,this->debug_opcodes[opcode],this->debug_addr[opcode],get_addr(pc));
-            } else {
-                sprintf(write,"0x%02x: ---",opcode);
-            }
-        }
+    if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
+        sprintf(write,"0x%02x: %s, %s, PC=$%04x - A=%u - X=%u - Y=%u",
+        opcode,
+        this->debug_opcodes[opcode],
+        this->debug_addr[opcode],
+        get_addr(pc),
+        accumulator,
+        x,
+        y);
+    } else {
+        sprintf(write,"0x%02x: ---",opcode);
+    }
+}
+
+void CPU::ins_str_mem(char * write,uint8_t* mem) {
+    uint8_t opcode = mem[0];
+    uint16_t a;
+    memcpy(&a,&mem[1],ins_size-1);
+    if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
+        sprintf(write,"0x%02x: %s, %s $%04x, PC=$%04x - A=%u - X=%u - Y=%u",
+        opcode,
+        this->debug_opcodes[opcode],
+        this->debug_addr[opcode],
+        a,
+        get_addr(pc),
+        (uint8_t)accumulator,
+        (uint8_t)x,
+        (uint8_t)y);
+    } else {
+        sprintf(write,"0x%02x: ---",opcode);
+    }
+}
 
 void CPU::map_memory(int8_t** address) {
     /* TODO*/
@@ -49,11 +75,6 @@ void CPU::clock() {
     ins_size = 1;
     int8_t* ins = pc;
     map_memory(&ins);
-    if (debug) {
-        char w[20] = {0};
-        ins_str(w,ins[0]);
-        printf("%s\n",w);
-    }
     instruction exec = this->opcodes[(uint8_t)ins[0]]; // get instruction from lookup table
     addressing_mode addr = this->addrmodes[(uint8_t)ins[0]]; // get addressing mode from another lookup table
     int8_t* arg = &ins[1];
@@ -62,6 +83,11 @@ void CPU::clock() {
     }
     map_memory(&arg); // update banks and registers as needed
     (this->*exec)(arg); // execute instruction
+    if (debug) { //print instruction
+        char w[20] = {0};
+        ins_str_mem(w,(uint8_t*)ins);
+        printf("%s\n",w);
+    }
     pc+=ins_size; // increment by instruction size (determined by addressing mode)
     
 }

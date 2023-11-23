@@ -89,19 +89,19 @@ void CPU::ASL(int8_t* args) {
 
 void CPU::BCC(int8_t* args) {
     if (!get_flag('C')) {
-        pc = args;
+        pc = args-ins_size;
     }
 }
 
 void CPU::BCS(int8_t* args) {
     if (get_flag('C')) {
-        pc = args;
+        pc = args-ins_size;
     }
 }
 
 void CPU::BEQ(int8_t* args) {
     if (get_flag('Z')) {
-        pc = args;
+        pc = args-ins_size;
     }
 }
 
@@ -114,13 +114,13 @@ void CPU::BIT(int8_t* args) {
 
 void CPU::BMI(int8_t* args) {
     if (get_flag('N')) {
-        pc = args;
+        pc = args-ins_size;
     }
 }
 
 void CPU::BNE(int8_t* args) {
     if (!get_flag('Z')) {
-        pc = args;   
+        pc = args-ins_size;   
     }
 }
 
@@ -141,13 +141,13 @@ void CPU::BRK(int8_t* args) {
 
 void CPU::BVC(int8_t* args) {
     if (!get_flag('C')) {
-        pc = args;
+        pc = args-ins_size;
     }
 }
 
 void CPU::BVS(int8_t* args) {
     if(get_flag('V')) {
-        pc = args;
+        pc = args-ins_size;
     }
 }
 
@@ -227,14 +227,14 @@ void CPU::INY(int8_t* args) {
 }
 
 void CPU::JMP(int8_t* args) {
-    pc = args;
+    pc = args-ins_size;
 }
 
 void CPU::JSR(int8_t* args) {
     uint16_t push = get_addr(pc+ins_size-1);
     stack_push((int8_t)(push>>8));
     stack_push((int8_t)(push&0xff));
-    pc = args;
+    pc = args-ins_size;
 }
 
 void CPU::LDA(int8_t* args) {
