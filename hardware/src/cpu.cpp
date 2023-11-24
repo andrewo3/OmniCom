@@ -88,6 +88,7 @@ void CPU::clock() {
         ins_str_mem(w,(uint8_t*)ins);
         printf("%s\n",w);
     }
+    clocks++;
     pc+=ins_size; // increment by instruction size (determined by addressing mode)
     
 }

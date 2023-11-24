@@ -28,6 +28,7 @@ class CPU {
         void ins_str(char * write,uint8_t opcode);
         void ins_str_mem(char * write,uint8_t* mem);
         void loadRom(ROM *r);
+        long long clocks = 0;
     private:
 
         //---- instructions ----

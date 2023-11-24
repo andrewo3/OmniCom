@@ -75,6 +75,9 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "__config": "cpp",
+        "__debug": "cpp",
+        "__verbose_abort": "cpp"
     }
 }
