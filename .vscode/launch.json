@@ -1,0 +1,37 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Mac Build and Run",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/main",
+            "args": [
+                "${workspaceRoot}/roms/Pac-Man (U) (Namco) [!p].nes"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "lldb",
+            "preLaunchTask": "C/C++ (Mac): g++ build active file",
+            "isDefault": true
+        },
+        {
+            "name": "Windows Build and Run",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/main",
+            "args": [
+                "${workspaceRoot}/roms/Pac-Man (U) (Namco) [!p].nes"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "lldb",
+            "preLaunchTask": "C/C++ (Windows): g++ build active file",
+            "isDefault": true
+        }
+    ]
+}
