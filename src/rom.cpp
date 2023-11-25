@@ -17,7 +17,7 @@ ROM::ROM(const char* src) {
 void ROM::load_file(const char* src) {
     this->src_filename = src;
     filename_length = strlen(src);
-    FILE* rp = std::fopen(src_filename,"r"); // rom pointer
+    FILE* rp = std::fopen(src_filename,"rb"); // rom pointer
     std::fread(header,16,1,rp);
     if (header[0]=='N' && header[1]=='E' && header[2]=='S' && header[3]==0x1a) {
         valid_rom = true;

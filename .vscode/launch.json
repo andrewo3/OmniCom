@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Build and Run",
+            "name": "Build and Run (Mac)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/bin/main",
@@ -14,8 +14,29 @@
             "environment": [],
             "externalConsole": true,
             "MIMode": "lldb",
-            "preLaunchTask": "C/C++: g++ build active file",
+            "preLaunchTask": "C/C++: g++ build active file (Mac)",
             "isDefault": true
+        },
+        {
+            "name": "Build and Run (Windows)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/main.exe",
+            "args": [
+                "${workspaceRoot}\\res\\roms\\Pac-Man (U) (Namco) [!p].nes"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${env:PATH};C:\\mingw64\\bin"
+                }
+            ],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:\\mingw64\\bin\\gdb.exe",
+            "preLaunchTask": "C/C++: g++ build active file (Windows)"
         }
     ]
 }

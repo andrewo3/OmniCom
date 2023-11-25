@@ -1,3 +1,5 @@
+#define SDL_MAIN_HANDLED
+#include "SDL2/SDL.h"
 #include "rom.h"
 #include "cpu.h"
 #include "ppu.h"
@@ -44,7 +46,7 @@ int main(int argc, char ** argv) {
         return invalid_error();
     }
     printf("Mapper: %i\n",rom.get_mapper()); //https://www.nesdev.org/wiki/Mapper
-    CPU cpu(false);
+    CPU cpu(true);
     printf("CPU Initialized.\n");
     //PPU ppu;
     printf("PPU Initialized\n");
