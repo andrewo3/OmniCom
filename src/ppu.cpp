@@ -1,5 +1,5 @@
-#include "../ppu.h"
-#include "../cpu.h"
+#include "../include/ppu.h"
+#include "../include/cpu.h"
 
 PPU::PPU(CPU* cpu) {
     linked = cpu;
