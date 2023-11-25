@@ -1,6 +1,6 @@
-#include "include/rom.h"
-#include "include/cpu.h"
-#include "include/ppu.h"
+#include "rom.h"
+#include "cpu.h"
+#include "ppu.h"
 #include <cstdio>
 #include <csignal>
 #include <chrono>

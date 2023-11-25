@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main",
             "args": [
-                "${workspaceRoot}/roms/Pac-Man (U) (Namco) [!p].nes"
+                "${workspaceRoot}/res/roms/Pac-Man (U) (Namco) [!p].nes"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
