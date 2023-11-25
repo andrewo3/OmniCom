@@ -29,6 +29,7 @@ class CPU {
         void ins_str_mem(char * write,uint8_t* mem);
         void loadRom(ROM *r);
         long long clocks = 0;
+        ROM* rom;
     private:
 
         //---- instructions ----
@@ -109,7 +110,6 @@ class CPU {
         uint8_t sp = 0;
         uint8_t flags = 0x20; // bits: NV1BDIZC
         uint16_t get_addr(int8_t* ptr);
-        ROM* rom;
         int8_t memory[0xFFFF];
         void stack_push(int8_t val);
         int8_t stack_pull(void);
