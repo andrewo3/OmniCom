@@ -4,6 +4,8 @@
 #include "rom.h"
 #include <cstdint>
 
+class PPU;
+
 class CPU {
     public:
         CPU();

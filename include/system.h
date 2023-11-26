@@ -4,5 +4,4 @@
 
 class System {
     public:
-        
 };

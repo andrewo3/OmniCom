@@ -1,10 +1,15 @@
+#ifndef PPU_H
+#define PPU_H
+
 #include <cstdint>
-#include "cpu.h"
+#include "rom.h"
+
+class CPU;
 
 class PPU {
     public:
         PPU();
-        PPU(CPU* cpu);
+        PPU(CPU* c);
         void clock();
         CPU* cpu;
         void loadRom(ROM* r);
@@ -25,3 +30,5 @@ class PPU {
         int8_t* PPUDATA; //&memory[0x2007]
         int8_t* OAMDMA; //&memory[0x4014]
 };
+
+#endif
