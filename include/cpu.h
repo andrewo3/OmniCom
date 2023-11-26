@@ -8,6 +8,7 @@ class CPU {
     public:
         CPU();
         CPU(bool dbug);
+        PPU* ppu;
         int CLOCK_SPEED = 1789773;
         void clock();
         int8_t accumulator;
@@ -29,7 +30,10 @@ class CPU {
         void ins_str_mem(char * write,uint8_t* mem);
         void loadRom(ROM *r);
         long long clocks = 0;
+        int8_t memory[0xFFFF];
         ROM* rom;
+        void write(int8_t* address,int8_t value);
+        int8_t read(int8_t* address);
     private:
 
         //---- instructions ----
@@ -110,7 +114,6 @@ class CPU {
         uint8_t sp = 0;
         uint8_t flags = 0x20; // bits: NV1BDIZC
         uint16_t get_addr(int8_t* ptr);
-        int8_t memory[0xFFFF];
         void stack_push(int8_t val);
         int8_t stack_pull(void);
         void map_memory(int8_t** address); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.

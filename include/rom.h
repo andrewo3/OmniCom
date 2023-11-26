@@ -13,6 +13,7 @@ class ROM {
         int8_t* prg;
         int8_t* chr;
         int8_t *get_prg_bank(int bank_num);
+        int8_t *get_chr_bank(int bank_num);
         uint8_t get_mapper() {return mapper;}
         int get_prgsize() {return prgsize;}
         int get_chrsize() {return chrsize;}

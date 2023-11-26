@@ -78,9 +78,11 @@
         "variant": "cpp",
         "__config": "cpp",
         "__debug": "cpp",
-        "__verbose_abort": "cpp"
+        "__verbose_abort": "cpp",
+        "csignal": "cpp"
     },
     "terminal.integrated.env.windows": {
         "PATH": "C:\\mingw64\\bin;${env:PATH}"
-    }
+    },
+    "code-runner.runInTerminal": true
 }

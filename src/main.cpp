@@ -6,11 +6,15 @@
 #include <cstdio>
 #include <csignal>
 #include <chrono>
+#include <thread>
+
+const int NES_DIM[2] = {256,240};
+const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
+
+volatile sig_atomic_t interrupted = 0;
 
 long long total_ticks;
 long long start;
-
-volatile sig_atomic_t interrupted = 0;
 
 int usage_error() {
     printf("Usage: nes rom_filename\n");
@@ -30,13 +34,29 @@ long long epoch() {
     return millisecondsSinceEpoch.count();
 }
 
-void exit(int signal) {
-    printf("MIPS: %lf - Target: (approx.) 0.43\n",total_ticks/(epoch()-start)*1000/(1000000.0));
+void quit(int signal) {
+    printf("MIPS: %lf - Target: (approx.) 0.43\n",total_ticks/(epoch()-start)/1000.0);
     interrupted = 1;
 }
 
+void NESLoop(ROM* r_ptr) {
+    printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
+    CPU cpu(false);
+    printf("CPU Initialized.\n");
+    PPU ppu(&cpu);
+    printf("PPU Initialized\n");
+    cpu.loadRom(r_ptr);
+    printf("ROM loaded into CPU.\n");
+    //emulator loop
+    while (!interrupted) {
+        cpu.clock();
+        ppu.clock();
+        total_ticks = cpu.clocks;
+    }
+}
+
 int main(int argc, char ** argv) {
-    std::signal(SIGINT,exit);
+    std::signal(SIGINT,quit);
     start = epoch();
     if (argc!=2) {
         return usage_error();
@@ -45,16 +65,26 @@ int main(int argc, char ** argv) {
     if (!rom.is_valid()) {
         return invalid_error();
     }
-    printf("Mapper: %i\n",rom.get_mapper()); //https://www.nesdev.org/wiki/Mapper
-    CPU cpu(true);
-    printf("CPU Initialized.\n");
-    //PPU ppu;
-    printf("PPU Initialized\n");
-    cpu.loadRom(&rom);
-    printf("ROM loaded into CPU.\n");
+    // SDL initialize
+    SDL_Init(SDL_INIT_EVERYTHING);
+    SDL_Window* window = SDL_CreateWindow(argv[1],SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
+    SDL_GLContext context = SDL_GL_CreateContext(window);
+    SDL_Event event;
+    //Initialize everything else and enter NES loop alongside window loop
+    std::thread NESThread(NESLoop,&rom);
+    //main window loop
     while (!interrupted) {
-        cpu.clock();
-        total_ticks = cpu.clocks;
+        while(SDL_PollEvent(&event)) {
+            switch(event.type) {
+                case SDL_QUIT:
+                    quit(0);
+                    break;
+            }
+        }
     }
+    SDL_GL_DeleteContext(context);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    NESThread.join();
     return 0;
 }

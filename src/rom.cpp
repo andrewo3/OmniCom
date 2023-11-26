@@ -68,6 +68,14 @@ int8_t* ROM::get_prg_bank(int bank_num) { //size = 0x4000
     return prg+0x4000*bank_num;
 }
 
+int8_t* ROM::get_chr_bank(int bank_num) { //size = 0x2000
+    if (bank_num>chrsize/0x2000) {
+        printf("Bank number out of bounds\n");
+        throw(1);
+   }
+    return chr+0x2000*bank_num;
+}
+
 ROM::~ROM() {
     free(prg);
     free(chr);

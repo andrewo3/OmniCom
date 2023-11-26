@@ -22,6 +22,19 @@ CPU::CPU(bool dbug) {
     define_opcodes();
 }
 
+void CPU::write(int8_t* address, int8_t value) {
+    uint16_t mem = get_addr(address); 
+    switch(mem) {
+        default:
+            *address = value;
+            break;
+    }
+}
+
+int8_t CPU::read(int8_t* address) {
+    return *address;
+}
+
 void CPU::ins_str(char * write,uint8_t opcode) {
     if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
         sprintf(write,"0x%02x: %s, %s, PC=$%04x - A=%u - X=%u - Y=%u",
@@ -57,7 +70,6 @@ void CPU::ins_str_mem(char * write,uint8_t* mem) {
 }
 
 void CPU::map_memory(int8_t** address) {
-    /* TODO*/
     uint8_t m = rom->get_mapper();
     int addr = *address-memory;
     switch(m) {
