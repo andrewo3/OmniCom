@@ -146,6 +146,8 @@ bool CPU::get_flag(char flag) {
             return flags&0x40;
         case 'N':
             return flags&0x80;
+        default:
+            return 0;
     }
 }
 

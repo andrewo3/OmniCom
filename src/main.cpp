@@ -7,6 +7,9 @@
 #include <csignal>
 #include <chrono>
 #include <thread>
+#include <mutex>
+
+std::mutex interruptedMutex;
 
 const int NES_DIM[2] = {256,240};
 const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
@@ -35,6 +38,7 @@ long long epoch() {
 }
 
 void quit(int signal) {
+    std::lock_guard<std::mutex> lock(interruptedMutex);
     printf("MIPS: %lf - Target: (approx.) 0.43\n",total_ticks/(epoch()-start)/1000.0);
     interrupted = 1;
 }
