@@ -4,6 +4,7 @@
 
 PPU::PPU() {
     this->scanline = 0;
+    this->set_registers();
 }
 
 void PPU::set_registers() {
@@ -19,6 +20,7 @@ void PPU::set_registers() {
 }
 
 PPU::PPU(CPU* c) {
+    scanline = 0;
     cpu = c;
     cpu->ppu = this;
     if (cpu->rom!=nullptr) {
@@ -29,7 +31,20 @@ PPU::PPU(CPU* c) {
 }
 
 void PPU::clock() {
+    if (0<=scanline && scanline<=239) { // visible scanlines
+        if (1<=scycle && scycle<=256) {
+            
+        }
+    } else if (241<=scanline && scanline<=260) {
+        
+    }
 
+    // increment
+    scycle++;
+    scycle%=341;
+    if (scycle==0) {
+        scanline++;
+    }
 }
 
 void PPU::loadRom(ROM *r) {

@@ -4,6 +4,7 @@
 #include "cpu.h"
 #include "ppu.h"
 #include <cstdio>
+#include <string>
 #include <csignal>
 #include <chrono>
 #include <thread>
@@ -27,6 +28,18 @@ int usage_error() {
 int invalid_error() {
     printf("Invalid NES rom!\n");
     return -1;
+}
+
+void get_filename(char** path) {
+    int l = strlen(*path);
+    for (int i=l-1; i>=0; i--) {
+        if ((*path)[i]=='.') {
+            (*path)[i] = '\0';
+        } else if ((*path)[i]=='/' || (*path)[i]=='\\') {
+            *path = &(*path)[i+1];
+            return;
+        }
+    }
 }
 
 // get time in milliseconds since epoch
@@ -69,10 +82,13 @@ int main(int argc, char ** argv) {
     if (!rom.is_valid()) {
         return invalid_error();
     }
+    char* filename = new char[strlen(argv[1])];
+    memcpy(filename,argv[1],strlen(argv[1]));
+    get_filename(&filename);
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO);
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-    SDL_Window* window = SDL_CreateWindow(argv[1],SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
+    SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
     SDL_GLContext context = SDL_GL_CreateContext(window);
     SDL_Event event;
     //Initialize everything else and enter NES loop alongside window loop

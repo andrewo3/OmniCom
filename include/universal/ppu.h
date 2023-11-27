@@ -16,9 +16,11 @@ class PPU {
         void set_registers();
         ROM* rom;
     private:
-        int8_t memory[0x4000];
+        int8_t memory[0x4000]; // general memory
+        int8_t oam[256]; // OAM (Object Attribute Memory) for sprites
         void map_memory();
         int scanline;
+        int scycle = 0;
         // registers
         int8_t* PPUCTRL; //&memory[0x2000]
         int8_t* PPUMASK; //&memory[0x2001]
