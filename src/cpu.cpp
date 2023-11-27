@@ -53,7 +53,11 @@ void CPU::ins_str(char * write,uint8_t opcode) {
 void CPU::ins_str_mem(char * write,uint8_t* mem) {
     uint8_t opcode = mem[0];
     uint16_t a;
-    memcpy(&a,&mem[1],ins_size-1);
+    if (ins_size<=3) {
+        memcpy(&a,&mem[1],ins_size-1);
+    } else {
+        a = mem[1];
+    }
     if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
         sprintf(write,"0x%02x: %s, %s $%04x, PC=$%04x - A=%u - X=%u - Y=%u",
         opcode,
@@ -96,7 +100,7 @@ void CPU::clock() {
     map_memory(&arg); // update banks and registers as needed
     (this->*exec)(arg); // execute instruction
     if (debug) { //print instruction
-        char w[20] = {0};
+        char w[50] = {0};
         ins_str_mem(w,(uint8_t*)ins);
         printf("%s\n",w);
     }

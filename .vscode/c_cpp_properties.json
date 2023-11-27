@@ -4,11 +4,12 @@
             "name": "Linux",
             "includePath": [
                 "C:\\mingw64\\include\\**",
-                "${workspaceRoot}/**",
-                "/opt/homebrew/include"
+                "${workspaceRoot}/include/**",
+                "/opt/homebrew/include",
+                "${workspaceFolder}/include/universal"
             ],
             "defines": [],
-            "compilerPath": "C:\\mingw64\\bin\\g++",
+            "compilerPath": "/usr/bin/g++",
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "msvc-x64"

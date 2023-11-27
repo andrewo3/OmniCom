@@ -43,9 +43,9 @@ void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
     CPU cpu(false);
     printf("CPU Initialized.\n");
+    cpu.loadRom(r_ptr);
     PPU ppu(&cpu);
     printf("PPU Initialized\n");
-    cpu.loadRom(r_ptr);
     printf("ROM loaded into CPU.\n");
     //emulator loop
     while (!interrupted) {
@@ -66,7 +66,8 @@ int main(int argc, char ** argv) {
         return invalid_error();
     }
     // SDL initialize
-    SDL_Init(SDL_INIT_EVERYTHING);
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
     SDL_Window* window = SDL_CreateWindow(argv[1],SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
     SDL_GLContext context = SDL_GL_CreateContext(window);
     SDL_Event event;

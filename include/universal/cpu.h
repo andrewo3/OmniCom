@@ -32,7 +32,7 @@ class CPU {
         void ins_str_mem(char * write,uint8_t* mem);
         void loadRom(ROM *r);
         long long clocks = 0;
-        int8_t memory[0xFFFF];
+        int8_t memory[0xFFFF] ={0};
         ROM* rom;
         void write(int8_t* address,int8_t value);
         int8_t read(int8_t* address);

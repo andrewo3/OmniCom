@@ -84,5 +84,6 @@
     "terminal.integrated.env.windows": {
         "PATH": "C:\\mingw64\\bin;${env:PATH}"
     },
-    "code-runner.runInTerminal": true
+    "code-runner.runInTerminal": true,
+    "cmake.configureOnOpen": false
 }
