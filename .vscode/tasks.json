@@ -81,35 +81,26 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++ build active file (Linux)",
-            "command": "g++",
-            "args": [
-                "src/rom.cpp",
-                "src/cpu.cpp",
-                "src/cpu_helper.cpp",
-                "src/ppu.cpp",
-                "-g",
-                "src/main.cpp",
-                "-Iinclude/universal",
-                "-lSDL2",
-                "-o",
-                "${workspaceRoot}/bin/main"
-            ],
+            "command": "./bin/linux_build_script.sh",
+            "args": [],
             "options": {
                 "cwd": "${workspaceRoot}"
             },
             "problemMatcher": {
                 "owner": "cpp",
-                "fileLocation": ["relative", "${workspaceFolder}"],
+                "fileLocation": [
+                    "relative",
+                    "${workspaceFolder}"
+                ],
                 "pattern": {
-                   "regexp": "^(.*):(\\d+):(\\d+):\\s+(error):\\s+(.*)$",
-                   "file": 1,
-                   "line": 2,
-                   "column": 3,
-                   "severity": 4,
-                   "message": 5
+                    "regexp": "^(.*):(\\d+):(\\d+):\\s+(error):\\s+(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
                 }
-             }
-             ,
+            },
             "group": {
                 "kind": "build"
             },

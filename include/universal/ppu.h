@@ -10,11 +10,12 @@ class PPU {
     public:
         PPU();
         PPU(CPU* c);
-        void clock();
+        void cycle();
         CPU* cpu;
         void loadRom(ROM* r);
         void set_registers();
         ROM* rom;
+        long long cycles = 0; // total cycles
     private:
         int8_t memory[0x4000]; // general memory
         int8_t oam[256]; // OAM (Object Attribute Memory) for sprites

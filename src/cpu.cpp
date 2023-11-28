@@ -1,5 +1,6 @@
 #include "rom.h"
 #include "cpu.h"
+#include "util.h"
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -88,25 +89,37 @@ void CPU::map_memory(int8_t** address) {
 }
 
 void CPU::clock() {
-    ins_size = 1;
-    int8_t* ins = pc;
-    map_memory(&ins);
-    instruction exec = this->opcodes[(uint8_t)ins[0]]; // get instruction from lookup table
-    addressing_mode addr = this->addrmodes[(uint8_t)ins[0]]; // get addressing mode from another lookup table
-    int8_t* arg = &ins[1];
-    if (addr!=nullptr) {
-        arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
+    if (emulated_clock_speed()<=CLOCK_SPEED) { //limit clock speed
+        ins_size = 1;
+        cycles+=2;
+        int8_t* ins = pc;
+        map_memory(&ins);
+        instruction exec = this->opcodes[(uint8_t)ins[0]]; // get instruction from lookup table
+        addressing_mode addr = this->addrmodes[(uint8_t)ins[0]]; // get addressing mode from another lookup table
+        int8_t* arg = &ins[1];
+        if (addr!=nullptr) {
+            arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
+        }
+        map_memory(&arg); // update banks and registers as needed
+        (this->*exec)(arg); // execute instruction
+        if (debug) { //print instruction
+            char w[50] = {0};
+            ins_str_mem(w,(uint8_t*)ins);
+            printf("%s\n",w);
+        }
+        ins_num++;
+        pc+=ins_size; // increment by instruction size (determined by addressing mode)
     }
-    map_memory(&arg); // update banks and registers as needed
-    (this->*exec)(arg); // execute instruction
-    if (debug) { //print instruction
-        char w[50] = {0};
-        ins_str_mem(w,(uint8_t*)ins);
-        printf("%s\n",w);
-    }
-    clocks++;
-    pc+=ins_size; // increment by instruction size (determined by addressing mode)
+
     
+}
+
+int CPU::emulated_clock_speed() {
+    if (epoch()!=start) {
+        return cycles/(epoch()-start)*1000;
+    } else {
+        return 0;
+    }
 }
 
 void CPU::reset() {
@@ -145,8 +158,6 @@ bool CPU::get_flag(char flag) {
         case 'V':
             return flags&0x40;
         case 'N':
-            return flags&0x80;
-        default:
             return 0;
     }
 }

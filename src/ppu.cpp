@@ -30,7 +30,7 @@ PPU::PPU(CPU* c) {
     }
 }
 
-void PPU::clock() {
+void PPU::cycle() {
     if (0<=scanline && scanline<=239) { // visible scanlines
         if (1<=scycle && scycle<=256) {
             
@@ -42,6 +42,7 @@ void PPU::clock() {
     // increment
     scycle++;
     scycle%=341;
+    cycles++;
     if (scycle==0) {
         scanline++;
     }

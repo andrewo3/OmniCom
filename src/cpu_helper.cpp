@@ -8,47 +8,56 @@
 
 int8_t* CPU::xind(int8_t* args) {
     ins_size = 2;
+    cycles += 4;
     return &memory[args[0]+x];
 }
 
 int8_t* CPU::indy(int8_t* args) {
     ins_size = 2;
+    cycles += 3;
     uint16_t ind = memory[args[0]] | (memory[args[1]]<<8);
     return &memory[ind+y];
 }
 
 int8_t* CPU::zpg(int8_t* args) {
     ins_size = 2;
+    cycles += 1;
     return &memory[args[0]];
 }
 
 int8_t* CPU::zpgx(int8_t* args) {
     ins_size = 2;
+    cycles += 2;
     return &memory[args[0]+x];
 }
 
 int8_t* CPU::zpgy(int8_t* args) {
     ins_size = 2;
+    cycles += 2;
     return &memory[(uint8_t)(args[0]+y)];
 }
 
 int8_t* CPU::abs(int8_t* args) {
     ins_size = 3;
+    cycles += 2;
     return &memory[(uint16_t)(args[0]|(args[1]<<8))];
 }
 
 int8_t* CPU::absx(int8_t* args) {
     ins_size = 3;
+    cycles += 2;
     return &memory[(uint16_t)((args[0]|(args[1]<<8))+x)];
 }
 
 int8_t* CPU::absy(int8_t* args) {
     ins_size = 3;
+    cycles += 2;
     return &memory[(uint16_t)((args[0]|(args[1]<<8))+y)];
 }
 
 int8_t* CPU::ind(int8_t* args) {
     ins_size = 3;
+    cycles += 3;
     return &memory[(uint16_t)(memory[(uint8_t)args[0]] | (memory[(uint8_t)args[1]]<<8))];
 }
 
@@ -83,6 +92,7 @@ void CPU::AND(int8_t* args) {
 void CPU::ASL(int8_t* args) {
     uint16_t result = read(args)<<1;
     write(args,result&0xff);
+    cycles += 2;
     this->set_flag('C',result&0x100);
     this->set_flag('Z',!accumulator);
     this->set_flag('N',result&0x80);
@@ -137,6 +147,7 @@ void CPU::BRK(int8_t* args) {
     stack_push((int8_t)(last_ptr>>8));
     stack_push((int8_t)(last_ptr&0xff));
     stack_push(flags);
+    cycles += 5;
     pc = this->abs(&memory[IRQ])-ins_size;
 }
 
@@ -187,6 +198,7 @@ void CPU::CPY(int8_t* args) {
 
 void CPU::DEC(int8_t* args) {
     write(args,*args-1);
+    cycles += 2;
     this->set_flag('Z',!*args);
     this->set_flag('N',*args&0x80);
 }
@@ -211,6 +223,7 @@ void CPU::EOR(int8_t* args) {
 
 void CPU::INC(int8_t* args) {
     write(args,*args+1);
+    cycles += 2;
     this->set_flag('Z',!*args);
     this->set_flag('N',*args&0x80);
 }
@@ -260,6 +273,7 @@ void CPU::LSR(int8_t* args) {
     this->set_flag('C',*args&1);
     uint16_t result = *args>>1;
     write(args,result&0xff);
+    cycles += 2;
     this->set_flag('Z',!*args);
     this->set_flag('N',result&0x80);
 }
@@ -295,6 +309,7 @@ void CPU::ROL(int8_t* args) {
     changed = this->get_flag('C')?(changed|1):(changed&0xFE);
     this->set_flag('C',*args&0x80);
     write(args,changed);
+    cycles += 2;
     this->set_flag('N',*args&0x80);
     this->set_flag('Z',!accumulator);
 }
@@ -304,6 +319,7 @@ void CPU::ROR(int8_t* args) {
     changed = this->get_flag('C')?(changed|0x80):(changed&0x7F);
     this->set_flag('C',*args&1);
     write(args,changed);
+    cycles += 2;
     this->set_flag('N',*args&0x80);
     this->set_flag('Z',!accumulator);
 }
@@ -312,12 +328,14 @@ void CPU::RTI(int8_t* args) {
     flags = stack_pull();
     uint16_t new_pc = stack_pull();
     new_pc |=stack_pull()<<8;
+    cycles += 4;
     pc = &memory[new_pc];
 }
 
 void CPU::RTS(int8_t* args) {
     uint16_t new_pc = stack_pull();
     new_pc |=stack_pull()<<8;
+    cycles += 4;
     pc = &memory[new_pc];
 }
 

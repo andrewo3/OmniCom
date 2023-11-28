@@ -1,8 +1,13 @@
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
+#include "GL/glew.h"
+
 #include "rom.h"
 #include "cpu.h"
 #include "ppu.h"
+#include "util.h"
+#include "shader_data.h"
+
 #include <cstdio>
 #include <string>
 #include <csignal>
@@ -12,7 +17,7 @@
 
 std::mutex interruptedMutex;
 
-const int NES_DIM[2] = {256,240};
+const int NES_DIM[2] = {256*3,240*3};
 const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
 
 volatile sig_atomic_t interrupted = 0;
@@ -42,33 +47,35 @@ void get_filename(char** path) {
     }
 }
 
-// get time in milliseconds since epoch
-long long epoch() {
-    auto currentTimePoint = std::chrono::system_clock::now();
-    auto durationSinceEpoch = currentTimePoint.time_since_epoch();
-    auto millisecondsSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(durationSinceEpoch);
-    return millisecondsSinceEpoch.count();
-}
-
 void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
-    printf("MIPS: %lf - Target: (approx.) 0.43\n",total_ticks/(epoch()-start)/1000.0);
+    printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% difference\n",total_ticks/(epoch()-start)*1000,total_ticks/(epoch()-start)*1000/1789773.0*100);
     interrupted = 1;
+}
+
+void init_shaders() {
+    GLuint vertexShader;
 }
 
 void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
+    
     CPU cpu(false);
     printf("CPU Initialized.\n");
+
     cpu.loadRom(r_ptr);
+    printf("ROM loaded into CPU.\n");
+
     PPU ppu(&cpu);
     printf("PPU Initialized\n");
-    printf("ROM loaded into CPU.\n");
     //emulator loop
     while (!interrupted) {
         cpu.clock();
-        ppu.clock();
-        total_ticks = cpu.clocks;
+        // 3 dots per cpu cycle
+        while (ppu.cycles<cpu.cycles*3) {
+            ppu.cycle();
+        }
+        total_ticks = cpu.cycles;
     }
 }
 
@@ -85,16 +92,23 @@ int main(int argc, char ** argv) {
     char* filename = new char[strlen(argv[1])];
     memcpy(filename,argv[1],strlen(argv[1]));
     get_filename(&filename);
+
+    
+    
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+    glewInit();
+
+    SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // for linux
     SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
     SDL_GLContext context = SDL_GL_CreateContext(window);
     SDL_Event event;
-    //Initialize everything else and enter NES loop alongside window loop
+    
+    //Initialize everything else and enter NES logic loop alongside window loop
     std::thread NESThread(NESLoop,&rom);
     //main window loop
     while (!interrupted) {
+        // event loop
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
                 case SDL_QUIT:
@@ -102,6 +116,11 @@ int main(int argc, char ** argv) {
                     break;
             }
         }
+        //logic is executed in nes thread
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        SDL_GL_SwapWindow(window);
     }
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);

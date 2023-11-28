@@ -2,6 +2,7 @@
 #define cpu_h
 
 #include "rom.h"
+#include "util.h"
 #include <cstdint>
 
 class PPU;
@@ -12,6 +13,8 @@ class CPU {
         CPU(bool dbug);
         PPU* ppu;
         int CLOCK_SPEED = 1789773;
+        int emulated_clock_speed();
+        long long start = epoch();
         void clock();
         int8_t accumulator;
         int8_t x;
@@ -31,11 +34,12 @@ class CPU {
         void ins_str(char * write,uint8_t opcode);
         void ins_str_mem(char * write,uint8_t* mem);
         void loadRom(ROM *r);
-        long long clocks = 0;
+        long long ins_num = 0;
         int8_t memory[0xFFFF] ={0};
         ROM* rom;
         void write(int8_t* address,int8_t value);
         int8_t read(int8_t* address);
+        long long cycles = 0;
     private:
 
         //---- instructions ----
