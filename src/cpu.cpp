@@ -1,5 +1,6 @@
 #include "rom.h"
 #include "cpu.h"
+#include "ppu.h"
 #include "util.h"
 #include <cstdint>
 #include <cstdio>
@@ -26,6 +27,18 @@ CPU::CPU(bool dbug) {
 void CPU::write(int8_t* address, int8_t value) {
     uint16_t mem = get_addr(address); 
     switch(mem) {
+        case 0x2006: //write to PPUADDR
+            if (!ppu->vram_twice) {
+                ppu->vram_addr = (uint16_t)value<<8;
+                ppu->vram_twice = 1;
+            } else {
+                ppu->vram_addr |= value;
+                ppu->vram_addr %= 0x4000;
+                ppu->vram_twice = 0;
+            }
+        case 0x4014: //write to OAMDMA
+            memcpy(ppu->oam,&memory[(uint16_t)value<<8],256);
+            break;
         default:
             *address = value;
             break;

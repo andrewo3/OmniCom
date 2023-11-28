@@ -46,6 +46,15 @@ void PPU::cycle() {
     if (scycle==0) {
         scanline++;
     }
+    apply_and_update_registers();
+}
+
+void PPU::apply_and_update_registers() {
+    if (scanline>=241 && scanline<=260) {
+        *PPUSTATUS|=0x80;
+    } else {
+        *PPUSTATUS&=0x7F;
+    }
 }
 
 void PPU::loadRom(ROM *r) {

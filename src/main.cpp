@@ -7,6 +7,8 @@
 #include "ppu.h"
 #include "util.h"
 #include "shader_data.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #include <cstdio>
 #include <string>
@@ -24,6 +26,10 @@ volatile sig_atomic_t interrupted = 0;
 
 long long total_ticks;
 long long start;
+
+GLuint shaderProgram;
+GLuint vertexShader;
+GLuint fragmentShader;
 
 int usage_error() {
     printf("Usage: nes rom_filename\n");
@@ -49,12 +55,40 @@ void get_filename(char** path) {
 
 void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
-    printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% difference\n",total_ticks/(epoch()-start)*1000,total_ticks/(epoch()-start)*1000/1789773.0*100);
+    printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",total_ticks/(epoch()-start)*1000,total_ticks/(epoch()-start)*1000/1789773.0*100);
     interrupted = 1;
 }
 
 void init_shaders() {
-    GLuint vertexShader;
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    char * vertex_source = new char[vertex_len+1];
+    vertex_source[vertex_len] = 0;
+    memcpy(vertex_source,vertex,vertex_len);
+
+    glShaderSource(vertexShader,1,&vertex_source, NULL);
+    glCompileShader(vertexShader);
+
+    GLint compileStatus;
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
+
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    char * fragment_source = new char[fragment_len+1];
+    fragment_source[fragment_len] = 0;
+    memcpy(fragment_source,fragment,fragment_len);
+
+    glShaderSource(fragmentShader,1,&fragment_source, NULL);
+    glCompileShader(fragmentShader);
+
+
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
+
+    shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
 }
 
 void NESLoop(ROM* r_ptr) {
@@ -93,19 +127,70 @@ int main(int argc, char ** argv) {
     memcpy(filename,argv[1],strlen(argv[1]));
     get_filename(&filename);
 
-    
+    int dim[3] = {112,128,3};
+    unsigned char* img = stbi_load("/home/andrew/Downloads/Linux Downloads/clueless.jpg", &dim[0],&dim[1],&dim[2],3);
     
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO);
-    glewInit();
 
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // for linux
     SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
     SDL_GLContext context = SDL_GL_CreateContext(window);
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
+    SDL_GL_SetAttribute (SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute (SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    glewExperimental = GL_TRUE;
+    glewInit();
+    GLenum error = glGetError();
     SDL_Event event;
     
-    //Initialize everything else and enter NES logic loop alongside window loop
+    // Shader init
+    init_shaders();
+
+    //VBO & VAO init for the fullscreen texture
+    GLuint VBO, VAO;
+    glGenVertexArrays(1,&VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    // vertices of quad covering entire screen with tex coords
+    GLfloat vertices[] = {
+        -1.0f, 1.0f,0.0f,0.0f,
+        -1.0f, -1.0f,0.0f,1.0f,
+        1.0f, -1.0f,1.0f,1.0f,
+        1.0f, 1.0f, 1.0f,0.0f
+    };
+
+
+    glBindBuffer(GL_ARRAY_BUFFER,VBO);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2*sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    //texture init
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim[0],dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
+    
+    //Enter NES logic loop alongside window loop
     std::thread NESThread(NESLoop,&rom);
+
     //main window loop
     while (!interrupted) {
         // event loop
@@ -114,14 +199,35 @@ int main(int argc, char ** argv) {
                 case SDL_QUIT:
                     quit(0);
                     break;
+                case SDL_WINDOWEVENT:
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        glViewport(0,0,event.window.data1,event.window.data2);
+                    }
             }
         }
         //logic is executed in nes thread
 
+        //render texture from nes (temporarily clueless.jpg)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim[0],dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+
+        glUseProgram(shaderProgram);
+        
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLE_FAN,0,4);
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+        //update screen
+        SDL_GL_SwapWindow(window);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        SDL_GL_SwapWindow(window);
     }
+    glDetachShader(shaderProgram,vertexShader);
+    glDetachShader(shaderProgram,fragmentShader);
+    glDeleteProgram(shaderProgram);
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_Quit();
