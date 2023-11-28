@@ -24,6 +24,18 @@ CPU::CPU(bool dbug) {
     define_opcodes();
 }
 
+void CPU::start_nmi() {
+    recv_nmi = false;
+    uint16_t push = get_addr(pc+ins_size-1);
+    stack_push((int8_t)(push>>8));
+    stack_push((int8_t)(push&0xff));
+    stack_push(flags);
+
+    int8_t * res = &memory[NMI];
+    map_memory(&res);
+    pc = abs(res); 
+}
+
 void CPU::write(int8_t* address, int8_t value) {
     uint16_t mem = get_addr(address); 
     switch(mem) {
@@ -121,6 +133,9 @@ void CPU::clock() {
             printf("%s\n",w);
         }
         ins_num++;
+        if (recv_nmi) {
+            start_nmi();
+        }
         pc+=ins_size; // increment by instruction size (determined by addressing mode)
     }
 

@@ -32,11 +32,23 @@ PPU::PPU(CPU* c) {
 
 void PPU::cycle() {
     if (0<=scanline && scanline<=239) { // visible scanlines
+        vblank = false;
         if (1<=scycle && scycle<=256) {
             
         }
-    } else if (241<=scanline && scanline<=260) {
-        
+    } else if (241<=scanline && scanline<=260) { //vblank
+        if (vblank==false) { //start vblank as soon as you reach this
+            vblank = true;
+            //TODO: push image to variable, so that SDL+OpenGL can take over and draw it to window
+
+            if ((*PPUCTRL)&0x80) { // if ppu is configured to generate nmi, do so.
+                cpu->recv_nmi = true;
+                printf("NMI");
+            }
+
+        }
+    } else if (scanline==261) { // pre-render scanline
+    
     }
 
     // increment
@@ -45,6 +57,7 @@ void PPU::cycle() {
     cycles++;
     if (scycle==0) {
         scanline++;
+        scanline%=262;
     }
     apply_and_update_registers();
 }

@@ -94,7 +94,7 @@ void init_shaders() {
 void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
     
-    CPU cpu(false);
+    CPU cpu(true);
     printf("CPU Initialized.\n");
 
     cpu.loadRom(r_ptr);
@@ -108,6 +108,7 @@ void NESLoop(ROM* r_ptr) {
         // 3 dots per cpu cycle
         while (ppu.cycles<cpu.cycles*3) {
             ppu.cycle();
+            //printf("%i\n",ppu.scanline);
         }
         total_ticks = cpu.cycles;
     }

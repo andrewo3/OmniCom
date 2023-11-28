@@ -40,6 +40,8 @@ class CPU {
         void write(int8_t* address,int8_t value);
         int8_t read(int8_t* address);
         long long cycles = 0;
+        void start_nmi();
+        bool recv_nmi = false;
     private:
 
         //---- instructions ----
