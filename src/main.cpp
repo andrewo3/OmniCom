@@ -19,7 +19,7 @@
 
 std::mutex interruptedMutex;
 
-const int NES_DIM[2] = {256*3,240*3};
+const int NES_DIM[2] = {256,240};
 const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
 
 volatile sig_atomic_t interrupted = 0;
@@ -60,6 +60,9 @@ void quit(int signal) {
 }
 
 void init_shaders() {
+    GLint success;
+    GLchar infoLog[512];
+
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
     char * vertex_source = new char[vertex_len+1];
     vertex_source[vertex_len] = 0;
@@ -79,6 +82,19 @@ void init_shaders() {
     glShaderSource(fragmentShader,1,&fragment_source, NULL);
     glCompileShader(fragmentShader);
 
+    //Check vertex shader compilation
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        fprintf(stderr, "Vertex Shader Compilation Failed:\n%s\n", infoLog);
+    }
+
+    // Check fragment shader compilation
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        fprintf(stderr, "Fragment Shader Compilation Failed:\n%s\n", infoLog);
+    }
 
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
 
@@ -86,15 +102,22 @@ void init_shaders() {
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        fprintf(stderr, "Shader Program Linking Failed:\n%s\n", infoLog);
+    }
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+    delete[] vertex_source;
+    delete[] fragment_source;
 }
 
 void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
     
-    CPU cpu(true);
+    CPU cpu(false);
     printf("CPU Initialized.\n");
 
     cpu.loadRom(r_ptr);
@@ -124,24 +147,27 @@ int main(int argc, char ** argv) {
     if (!rom.is_valid()) {
         return invalid_error();
     }
-    char* filename = new char[strlen(argv[1])];
-    memcpy(filename,argv[1],strlen(argv[1]));
+    char* filename = new char[strlen(argv[1])+1];
+    char* original_start = filename;
+    memcpy(filename,argv[1],strlen(argv[1])+1);
     get_filename(&filename);
 
-    int dim[3] = {112,128,3};
-    unsigned char* img = stbi_load("/home/andrew/Downloads/Linux Downloads/clueless.jpg", &dim[0],&dim[1],&dim[2],3);
+    int dim[3] = {498,498,3};
+    unsigned char* img = stbi_load("res/test_image.jpg", &dim[0],&dim[1],&dim[2],3);
     
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO);
 
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // for linux
-    SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
-    SDL_GLContext context = SDL_GL_CreateContext(window);
+    
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
+    SDL_GLContext context = SDL_GL_CreateContext(window);
     glewExperimental = GL_TRUE;
     glewInit();
+    glViewport(0, 0, NES_DIM[0], NES_DIM[1]);
     GLenum error = glGetError();
     SDL_Event event;
     
@@ -167,7 +193,7 @@ int main(int argc, char ** argv) {
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
     glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), nullptr);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), 0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)(2*sizeof(GLfloat)));
     glEnableVertexAttribArray(1);
@@ -208,7 +234,7 @@ int main(int argc, char ** argv) {
         }
         //logic is executed in nes thread
 
-        //render texture from nes (temporarily clueless.jpg)
+        //render texture from nes (temporarily test_image.jpg)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim[0],dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, img);
 
         glUseProgram(shaderProgram);
@@ -233,5 +259,7 @@ int main(int argc, char ** argv) {
     SDL_DestroyWindow(window);
     SDL_Quit();
     NESThread.join();
+    stbi_image_free(img);
+    delete[] original_start;
     return 0;
 }
