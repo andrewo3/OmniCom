@@ -48,17 +48,22 @@ void CPU::write(int8_t* address, int8_t value) {
                 ppu->vram_addr %= 0x4000;
                 ppu->vram_twice = 0;
             }
+            break;
         case 0x4014: //write to OAMDMA
             memcpy(ppu->oam,&memory[(uint16_t)value<<8],256);
             break;
-        default:
-            *address = value;
-            break;
     }
+    *address = value;
 }
 
 int8_t CPU::read(int8_t* address) {
-    return *address;
+    uint16_t mem = get_addr(address);
+    int8_t value = *address;
+    switch(mem) {
+        case 0x2002:
+            *address &= 0x7F;
+    }
+    return value;
 }
 
 void CPU::ins_str(char * write,uint8_t opcode) {
@@ -126,12 +131,12 @@ void CPU::clock() {
             arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
         }
         map_memory(&arg); // update banks and registers as needed
-        (this->*exec)(arg); // execute instruction
         if (debug) { //print instruction
             char w[50] = {0};
             ins_str_mem(w,(uint8_t*)ins);
             printf("%s\n",w);
         }
+        (this->*exec)(arg); // execute instruction
         ins_num++;
         if (recv_nmi) {
             start_nmi();
@@ -186,6 +191,8 @@ bool CPU::get_flag(char flag) {
         case 'V':
             return flags&0x40;
         case 'N':
+            return flags&0x80;
+        default:
             return 0;
     }
 }
@@ -233,8 +240,9 @@ void CPU::stack_push(int8_t val) {
     sp++;
 }
 
-int8_t CPU::stack_pull(void) {
+uint8_t CPU::stack_pull(void) {
     sp--;
+    printf("Top of stack: %02x\n",(uint8_t)memory[0x0100+sp]);
     return memory[0x0100+sp]; 
 }
 

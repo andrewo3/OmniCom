@@ -117,7 +117,7 @@ void init_shaders() {
 void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
     
-    CPU cpu(false);
+    CPU cpu(true);
     printf("CPU Initialized.\n");
 
     cpu.loadRom(r_ptr);
@@ -152,9 +152,9 @@ int main(int argc, char ** argv) {
     memcpy(filename,argv[1],strlen(argv[1])+1);
     get_filename(&filename);
 
-    int dim[3] = {498,498,3};
-    unsigned char* img = stbi_load("res/test_image.jpg", &dim[0],&dim[1],&dim[2],3);
-    
+    int dim[3];
+    GLubyte* img = stbi_load("res/test_image2.jpg", &dim[0],&dim[1],&dim[2],STBI_default);
+    printf("%i %i %i\n",dim[0],dim[1],dim[2]);
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -210,8 +210,10 @@ int main(int argc, char ** argv) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
     

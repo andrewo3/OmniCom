@@ -42,6 +42,7 @@ class CPU {
         long long cycles = 0;
         void start_nmi();
         bool recv_nmi = false;
+        uint8_t status() { return flags;}
     private:
 
         //---- instructions ----
@@ -123,7 +124,7 @@ class CPU {
         uint8_t flags = 0x20; // bits: NV1BDIZC
         uint16_t get_addr(int8_t* ptr);
         void stack_push(int8_t val);
-        int8_t stack_pull(void);
+        uint8_t stack_pull(void);
         void map_memory(int8_t** address); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.
         char* debug_opcodes[256] = {0};
         char* debug_addr[256] = {0};
