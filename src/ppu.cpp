@@ -7,6 +7,10 @@ PPU::PPU() {
     this->set_registers();
 }
 
+uint16_t PPU::get_addr(int8_t* ptr) {
+    return ptr-memory;
+}
+
 void PPU::set_registers() {
     this->PPUCTRL = &(cpu->memory[0x2000]);
     this->PPUMASK = &(cpu->memory[0x2001]);
@@ -43,7 +47,7 @@ void PPU::cycle() {
             //TODO: push image to variable, so that SDL+OpenGL can take over and draw it to window
             if ((*PPUCTRL)&0x80) { // if ppu is configured to generate nmi, do so.
                 cpu->recv_nmi = true;
-                printf("NMI\n");
+                //printf("NMI\n");
             }
 
         }
@@ -51,6 +55,8 @@ void PPU::cycle() {
         if (vblank == true) {
             vblank = false;
         }
+
+
     }
 
     // increment
@@ -67,6 +73,12 @@ void PPU::cycle() {
 void PPU::apply_and_update_registers() {
     if (!(scanline>=241 && scanline<=260)) {
         *PPUSTATUS&=0x7F;
+    }
+}
+
+void PPU::map_memory(int8_t** addr) {
+    if (0x2000<=get_addr(*addr) && get_addr(*addr)<0x3000) {
+        rom->rom_mirror(addr);
     }
 }
 

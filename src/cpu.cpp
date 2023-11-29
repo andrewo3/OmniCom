@@ -27,8 +27,8 @@ CPU::CPU(bool dbug) {
 void CPU::start_nmi() {
     recv_nmi = false;
     uint16_t push = get_addr(pc-1);
-    stack_push((int8_t)(push>>8));
-    stack_push((int8_t)(push&0xff));
+    stack_push((uint8_t)(push>>8));
+    stack_push((uint8_t)(push&0xff));
     stack_push(flags);
 
     int8_t * res = &memory[NMI];
@@ -39,16 +39,35 @@ void CPU::start_nmi() {
 void CPU::write(int8_t* address, int8_t value) {
     uint16_t mem = get_addr(address); 
     switch(mem) {
+        //write to OAMADDR (0x2001) is handled implicitly
+        //write to OAMADDR (0x2003) is handled implicitly
+        case 0x2004: //write to OAMDATA
+            ppu->oam[(uint8_t)memory[0x2003]] = value;
+            memory[0x2003]++;
+        case 0x2005: //write to PPUSCROLL
+            if (!ppu->vram_twice) {
+                ppu->scroll_x = (uint8_t)value;
+                ppu->vram_twice = 1;
+            } else {
+                ppu->scroll_y = (uint8_t)value;
+                ppu->vram_twice = 0;
+            }
         case 0x2006: //write to PPUADDR
             if (!ppu->vram_twice) {
                 ppu->vram_addr = (uint16_t)value<<8;
                 ppu->vram_twice = 1;
             } else {
-                ppu->vram_addr |= value;
+                ppu->vram_addr |= (uint8_t)value;
                 ppu->vram_addr %= 0x4000;
                 ppu->vram_twice = 0;
             }
             break;
+        case 0x2007: // write to PPUDATA
+            ppu->memory[ppu->vram_addr] = value;
+            ppu->vram_addr+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            ppu->vram_addr %= 0x4000;
+            break;
+
         case 0x4014: //write to OAMDMA
             memcpy(ppu->oam,&memory[(uint16_t)value<<8],256);
             break;
@@ -59,9 +78,16 @@ void CPU::write(int8_t* address, int8_t value) {
 int8_t CPU::read(int8_t* address) {
     uint16_t mem = get_addr(address);
     int8_t value = *address;
-    switch(mem) {
+    switch(mem) { // handle special ppu and apu registers
         case 0x2002:
             *address &= 0x7F;
+            ppu->vram_twice = 0;
+            break;
+        case 0x2007:
+            ppu->vram_addr+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            ppu->vram_addr %= 0x4000;
+            break;
+
     }
     return value;
 }
@@ -245,7 +271,7 @@ void CPU::stack_push(int8_t val) {
 
 uint8_t CPU::stack_pull(void) {
     sp--;
-    printf("Top of stack: %02x\n",(uint8_t)memory[0x0100+sp]);
+    //printf("Top of stack (%02x): %02x\n",sp,(uint8_t)memory[0x0100+sp]);
     return memory[0x0100+sp]; 
 }
 

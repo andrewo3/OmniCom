@@ -117,7 +117,7 @@ void init_shaders() {
 void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
     
-    CPU cpu(true);
+    CPU cpu(false);
     printf("CPU Initialized.\n");
 
     cpu.loadRom(r_ptr);

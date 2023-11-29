@@ -21,13 +21,21 @@ class PPU {
         int8_t oam[256]; // OAM (Object Attribute Memory) for sprites
         uint16_t vram_addr = 0;
         bool vram_twice = 0;
-        int scanline;
+        int scanline = 261;
+
+        // registers
+        uint16_t temp_vram_addr = 0;
+        uint8_t X = 0;
+        bool W = 0;
+        uint8_t scroll_x;
+        uint8_t scroll_y;
     private:
-        void map_memory();
+        void map_memory(int8_t** addr);
         
         int scycle = 0;
-        bool vblank;
+        bool vblank = false;
         void apply_and_update_registers();
+        uint16_t upcoming_pattern;
         // registers
         int8_t* PPUCTRL; //&memory[0x2000]
         int8_t* PPUMASK; //&memory[0x2001]
