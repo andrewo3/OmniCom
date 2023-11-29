@@ -26,7 +26,7 @@ CPU::CPU(bool dbug) {
 
 void CPU::start_nmi() {
     recv_nmi = false;
-    uint16_t push = get_addr(pc+ins_size-1);
+    uint16_t push = get_addr(pc-1);
     stack_push((int8_t)(push>>8));
     stack_push((int8_t)(push&0xff));
     stack_push(flags);
@@ -81,7 +81,7 @@ void CPU::ins_str(char * write,uint8_t opcode) {
     }
 }
 
-void CPU::ins_str_mem(char * write,uint8_t* mem) {
+void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
     uint8_t opcode = mem[0];
     uint16_t a;
     if (ins_size<=3) {
@@ -90,11 +90,13 @@ void CPU::ins_str_mem(char * write,uint8_t* mem) {
         a = mem[1];
     }
     if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
-        sprintf(write,"0x%02x: %s, %s $%04x, PC=$%04x - A=%u - X=%u - Y=%u",
+        sprintf(write,"0x%02x: %s, %s $%04x->%04x=%02x, PC=$%04x - A=%02x - X=%02x - Y=%02x",
         opcode,
         this->debug_opcodes[opcode],
         this->debug_addr[opcode],
         a,
+        get_addr(arg_ptr),
+        (uint8_t)*arg_ptr,
         get_addr(pc),
         (uint8_t)accumulator,
         (uint8_t)x,
@@ -132,16 +134,17 @@ void CPU::clock() {
         }
         map_memory(&arg); // update banks and registers as needed
         if (debug) { //print instruction
-            char w[50] = {0};
-            ins_str_mem(w,(uint8_t*)ins);
+            char w[256] = {0};
+            ins_str_mem(w,(uint8_t*)ins,arg);
             printf("%s\n",w);
         }
         (this->*exec)(arg); // execute instruction
         ins_num++;
         if (recv_nmi) {
             start_nmi();
+        } else {
+            pc+=ins_size; // increment by instruction size (determined by addressing mode)
         }
-        pc+=ins_size; // increment by instruction size (determined by addressing mode)
     }
 
     

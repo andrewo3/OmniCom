@@ -9,32 +9,33 @@
 int8_t* CPU::xind(int8_t* args) {
     ins_size = 2;
     cycles += 4;
-    return &memory[args[0]+x];
+    return &memory[(uint8_t)args[0]+(uint8_t)x];
 }
 
 int8_t* CPU::indy(int8_t* args) {
+    uint8_t* u = (uint8_t*)args;
     ins_size = 2;
     cycles += 3;
-    uint16_t ind = memory[args[0]] | (memory[args[1]]<<8);
-    return &memory[ind+y];
+    uint16_t ind = (uint8_t)memory[u[0]] | (uint16_t)(((uint8_t)memory[u[0]+1])<<8);
+    return &memory[ind+(uint8_t)y];
 }
 
 int8_t* CPU::zpg(int8_t* args) {
     ins_size = 2;
     cycles += 1;
-    return &memory[args[0]];
+    return &memory[(uint8_t)args[0]];
 }
 
 int8_t* CPU::zpgx(int8_t* args) {
     ins_size = 2;
     cycles += 2;
-    return &memory[args[0]+x];
+    return &memory[(uint8_t)args[0]+(uint8_t)x];
 }
 
 int8_t* CPU::zpgy(int8_t* args) {
     ins_size = 2;
     cycles += 2;
-    return &memory[(uint8_t)(args[0]+y)];
+    return &memory[(uint8_t)((uint8_t)args[0]+(uint8_t)y)];
 }
 
 int8_t* CPU::abs(int8_t* args) {
@@ -45,15 +46,17 @@ int8_t* CPU::abs(int8_t* args) {
 }
 
 int8_t* CPU::absx(int8_t* args) {
+    uint8_t* u = (uint8_t*)args;
     ins_size = 3;
     cycles += 2;
-    return &memory[(uint16_t)((args[0]|(args[1]<<8))+x)];
+    return &memory[(uint16_t)((u[0]|(u[1]<<8))+(uint8_t)x)];
 }
 
 int8_t* CPU::absy(int8_t* args) {
+    uint8_t* u = (uint8_t*)args;
     ins_size = 3;
     cycles += 2;
-    return &memory[(uint16_t)((args[0]|(args[1]<<8))+y)];
+    return &memory[(uint16_t)((u[0]|(u[1]<<8))+(uint8_t)y)];
 }
 
 int8_t* CPU::ind(int8_t* args) {
@@ -237,8 +240,8 @@ void CPU::INX(int8_t* args) {
 
 void CPU::INY(int8_t* args) {
     y+=1;
-    this->set_flag('Z',!y);
-    this->set_flag('N',y&0x80);
+    this->set_flag('Z',!(uint8_t)y);
+    this->set_flag('N',((uint8_t)y)&0x80);
 }
 
 void CPU::JMP(int8_t* args) {

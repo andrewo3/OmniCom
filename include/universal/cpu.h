@@ -32,7 +32,7 @@ class CPU {
         addressing_mode addrmodes[256];
         instruction opcodes[256];
         void ins_str(char * write,uint8_t opcode);
-        void ins_str_mem(char * write,uint8_t* mem);
+        void ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr);
         void loadRom(ROM *r);
         long long ins_num = 0;
         int8_t memory[0xFFFF] ={0};

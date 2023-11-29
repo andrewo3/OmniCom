@@ -139,7 +139,6 @@ void NESLoop(ROM* r_ptr) {
 
 int main(int argc, char ** argv) {
     std::signal(SIGINT,quit);
-    start = epoch();
     if (argc!=2) {
         return usage_error();
     }
@@ -157,6 +156,7 @@ int main(int argc, char ** argv) {
     printf("%i %i %i\n",dim[0],dim[1],dim[2]);
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO);
+    printf("SDL Initialized\n");
 
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // for linux
     
@@ -164,15 +164,18 @@ int main(int argc, char ** argv) {
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
+    printf("Window Created\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
     glewExperimental = GL_TRUE;
     glewInit();
     glViewport(0, 0, NES_DIM[0], NES_DIM[1]);
+    printf("OpenGL Initialized.\n");
     GLenum error = glGetError();
     SDL_Event event;
     
     // Shader init
     init_shaders();
+    printf("Shaders compiled and linked.\n");
 
     //VBO & VAO init for the fullscreen texture
     GLuint VBO, VAO;
@@ -217,8 +220,13 @@ int main(int argc, char ** argv) {
 
     glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
     
+    printf("Window texture bound and mapped.\n");
+
     //Enter NES logic loop alongside window loop
+    start = epoch();
     std::thread NESThread(NESLoop,&rom);
+
+    printf("NES thread started. Starting main window loop...\n");
 
     //main window loop
     while (!interrupted) {

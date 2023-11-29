@@ -41,17 +41,15 @@ void PPU::cycle() {
             vblank = true;
             *PPUSTATUS|=0x80;
             //TODO: push image to variable, so that SDL+OpenGL can take over and draw it to window
-            printf("vblank start\n");
             if ((*PPUCTRL)&0x80) { // if ppu is configured to generate nmi, do so.
                 cpu->recv_nmi = true;
-                printf("NMI");
+                printf("NMI\n");
             }
 
         }
     } else if (scanline==261) { // pre-render scanline
         if (vblank == true) {
             vblank = false;
-            printf("vblank end\n");
         }
     }
 
