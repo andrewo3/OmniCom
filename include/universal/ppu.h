@@ -31,7 +31,7 @@ class PPU {
         uint8_t scroll_y;
     private:
         void map_memory(int8_t** addr);
-        
+        uint16_t get_addr(int8_t* ptr);
         int scycle = 0;
         bool vblank = false;
         void apply_and_update_registers();
