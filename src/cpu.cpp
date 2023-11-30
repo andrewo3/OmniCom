@@ -54,18 +54,16 @@ void CPU::write(int8_t* address, int8_t value) {
             }
         case 0x2006: //write to PPUADDR
             if (!ppu->vram_twice) {
-                ppu->vram_addr = (uint16_t)value<<8;
+                ppu->v = (uint16_t)value<<8;
                 ppu->vram_twice = 1;
             } else {
-                ppu->vram_addr |= (uint8_t)value;
-                ppu->vram_addr %= 0x4000;
+                ppu->v |= (uint8_t)value;
                 ppu->vram_twice = 0;
             }
             break;
         case 0x2007: // write to PPUDATA
-            ppu->write(&(ppu->memory[ppu->vram_addr]),value); // write method takes mapper into account
-            ppu->vram_addr+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
-            ppu->vram_addr %= 0x4000;
+            ppu->write(&(ppu->memory[ppu->v]),value); // write method takes mapper into account
+            ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
             break;
 
         case 0x4014: //write to OAMDMA
@@ -85,8 +83,8 @@ int8_t CPU::read(int8_t* address) {
             ppu->vram_twice = 0;
             break;
         case 0x2007:
-            ppu->vram_addr+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
-            ppu->vram_addr %= 0x4000;
+            ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            ppu->v %= 0x4000;
             break;
 
     }

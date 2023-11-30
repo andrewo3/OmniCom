@@ -19,7 +19,6 @@ class PPU {
         long long cycles = 0; // total cycles
         int8_t memory[0x4000]; // general memory
         int8_t oam[256]; // OAM (Object Attribute Memory) for sprites
-        uint16_t vram_addr = 0;
         bool vram_twice = 0;
         int scanline = 261;
         bool debug = false;
@@ -29,10 +28,10 @@ class PPU {
         void write(int8_t* address, int8_t value);
 
         // registers
-        uint16_t temp_vram_addr = 0;
-        uint8_t X = 0;
-        uint8_t scroll_x;
-        uint8_t scroll_y;
+        uint16_t v = 0;
+        uint16_t t = 0;
+        uint8_t x = 0;
+        uint8_t w = 0;
 
         uint16_t pthigh; //pattern table high bit data
         uint16_t ptlow; //pattern table low bit data
