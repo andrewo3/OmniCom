@@ -30,6 +30,11 @@ void ROM::load_file(const char* src) {
 
     bool trainer_present = header[6]&0x04;
     mapper = ((header[6]&0xF0)>>4)|(header[7]&0xF0);
+    if (header[6]&0x08) {
+        mirrormode = FOURSCREEN;
+    } else {
+        mirrormode = (header[6]&0x1) ? VERTICAL : HORIZONTAL;
+    }
     if (nes2) {
         int8_t msb = header[9]&0x0F;
         if (msb == 0x0F) { //use exponent notation
@@ -74,6 +79,10 @@ int8_t* ROM::get_chr_bank(int bank_num) { //size = 0x2000
         throw(1);
    }
     return chr+0x2000*bank_num;
+}
+
+int8_t* ROM::rom_mirror(int8_t *address) {
+    throw("TODO\n");
 }
 
 ROM::~ROM() {

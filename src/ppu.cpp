@@ -1,3 +1,4 @@
+#include "rom.h"
 #include "ppu.h"
 #include "cpu.h"
 #include <cstring>
@@ -34,11 +35,27 @@ PPU::PPU(CPU* c) {
     }
 }
 
+void PPU::write(int8_t* address, int8_t value) { //write ppu memory, taking into account any mirrors or bankswitches
+    int8_t* mapped_vram = address;
+    map_memory(&mapped_vram);
+    *mapped_vram = value;
+}
+
+int8_t PPU::read(int8_t* address) {
+    int8_t* mapped_vram = address;
+    map_memory(&mapped_vram);
+    return *mapped_vram;
+}
+
 void PPU::cycle() {
+    int8_t* vram_ptr = &memory[vram_addr];
     if (0<=scanline && scanline<=239) { // visible scanlines
         vblank = false;
         if (1<=scycle && scycle<=256) {
-            
+            int intile = (scycle-1)%8;
+            if (intile==0) {
+                int8_t r = read(vram_ptr);
+            }
         }
     } else if (241<=scanline && scanline<=260) { //vblank
         if (vblank==false) { //start vblank as soon as you reach this
@@ -77,8 +94,12 @@ void PPU::apply_and_update_registers() {
 }
 
 void PPU::map_memory(int8_t** addr) {
-    if (0x2000<=get_addr(*addr) && get_addr(*addr)<0x3000) {
-        rom->rom_mirror(addr);
+    uint16_t location = get_addr(*addr);
+    if (0x2000<=location && location<0x3000) { //map according to rom, which could also include CHR bankswitching
+        *addr = rom->rom_mirror(*addr);
+    }
+    if (0x3000<=location && location<0x4000) {
+        *addr-=0x1000;
     }
 }
 

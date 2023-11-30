@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <cstdio>
 
+enum NT_MIRROR { HORIZONTAL, VERTICAL, FOURSCREEN };
+
 class ROM {
     public:
         ROM();
@@ -18,7 +20,8 @@ class ROM {
         int get_prgsize() {return prgsize;}
         int get_chrsize() {return chrsize;}
         ~ROM();
-        void rom_mirror(int8_t** address);
+        NT_MIRROR mirrormode;
+        int8_t* rom_mirror(int8_t* address);
     private:
         bool valid_rom = false;
         bool nes2 = false;

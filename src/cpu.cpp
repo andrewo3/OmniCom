@@ -63,7 +63,7 @@ void CPU::write(int8_t* address, int8_t value) {
             }
             break;
         case 0x2007: // write to PPUDATA
-            ppu->memory[ppu->vram_addr] = value;
+            ppu->write(&(ppu->memory[ppu->vram_addr]),value); // write method takes mapper into account
             ppu->vram_addr+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
             ppu->vram_addr %= 0x4000;
             break;

@@ -23,6 +23,10 @@ class PPU {
         bool vram_twice = 0;
         int scanline = 261;
 
+        //rw
+        int8_t read(int8_t* address);
+        void write(int8_t* address, int8_t value);
+
         // registers
         uint16_t temp_vram_addr = 0;
         uint8_t X = 0;
