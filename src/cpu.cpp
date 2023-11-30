@@ -32,11 +32,11 @@ void CPU::start_nmi() {
     stack_push(flags);
 
     int8_t * res = &memory[NMI];
-    map_memory(&res);
     pc = abs(res); 
 }
 
 void CPU::write(int8_t* address, int8_t value) {
+    map_memory(&address);
     uint16_t mem = get_addr(address); 
     switch(mem) {
         //write to OAMADDR (0x2001) is handled implicitly
@@ -76,6 +76,7 @@ void CPU::write(int8_t* address, int8_t value) {
 }
 
 int8_t CPU::read(int8_t* address) {
+    map_memory(&address);
     uint16_t mem = get_addr(address);
     int8_t value = *address;
     switch(mem) { // handle special ppu and apu registers
@@ -108,6 +109,8 @@ void CPU::ins_str(char * write,uint8_t opcode) {
 }
 
 void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
+    map_memory((int8_t**)&mem);
+    map_memory(&arg_ptr);
     uint8_t opcode = mem[0];
     uint16_t a;
     if (ins_size<=3) {
@@ -151,14 +154,15 @@ void CPU::clock() {
         ins_size = 1;
         cycles+=2;
         int8_t* ins = pc;
-        map_memory(&ins);
-        instruction exec = this->opcodes[(uint8_t)ins[0]]; // get instruction from lookup table
-        addressing_mode addr = this->addrmodes[(uint8_t)ins[0]]; // get addressing mode from another lookup table
+        //map_memory(&ins);
+        uint8_t ins_value = read(ins);
+        instruction exec = this->opcodes[ins_value]; // get instruction from lookup table
+        addressing_mode addr = this->addrmodes[ins_value]; // get addressing mode from another lookup table
         int8_t* arg = &ins[1];
         if (addr!=nullptr) {
             arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
         }
-        map_memory(&arg); // update banks and registers as needed
+        //map_memory(&arg); // update banks and registers as needed
         if (debug) { //print instruction
             char w[256] = {0};
             ins_str_mem(w,(uint8_t*)ins,arg);

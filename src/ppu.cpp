@@ -36,15 +36,13 @@ PPU::PPU(CPU* c) {
 }
 
 void PPU::write(int8_t* address, int8_t value) { //write ppu memory, taking into account any mirrors or bankswitches
-    int8_t* mapped_vram = address;
-    map_memory(&mapped_vram);
-    *mapped_vram = value;
+    map_memory(&address);
+    *address = value;
 }
 
 int8_t PPU::read(int8_t* address) {
-    int8_t* mapped_vram = address;
-    map_memory(&mapped_vram);
-    return *mapped_vram;
+    map_memory(&address);
+    return *address;
 }
 
 void PPU::cycle() {
@@ -96,9 +94,14 @@ void PPU::apply_and_update_registers() {
 void PPU::map_memory(int8_t** addr) {
     uint16_t location = get_addr(*addr);
     if (0x2000<=location && location<0x3000) { //map according to rom, which could also include CHR bankswitching
-        *addr = rom->rom_mirror(*addr);
+        switch(rom->mirrormode) {
+            case HORIZONTAL:
+                *addr -= ((location-0x2000)/0x400)%2 ? 0x400 : 0; //horizontal nametable mirroring
+            case VERTICAL:
+                *addr -= location>=0x2800 ? 0x800 : 0; //horizontal nametable mirroring
+        }
     }
-    if (0x3000<=location && location<0x4000) {
+    else if (0x3000<=location && location<0x4000) {
         *addr-=0x1000;
     }
 }

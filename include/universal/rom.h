@@ -21,7 +21,6 @@ class ROM {
         int get_chrsize() {return chrsize;}
         ~ROM();
         NT_MIRROR mirrormode;
-        int8_t* rom_mirror(int8_t* address);
     private:
         bool valid_rom = false;
         bool nes2 = false;

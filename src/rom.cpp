@@ -81,10 +81,6 @@ int8_t* ROM::get_chr_bank(int bank_num) { //size = 0x2000
     return chr+0x2000*bank_num;
 }
 
-int8_t* ROM::rom_mirror(int8_t *address) {
-    throw("TODO\n");
-}
-
 ROM::~ROM() {
     free(prg);
     free(chr);

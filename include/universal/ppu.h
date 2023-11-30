@@ -22,6 +22,7 @@ class PPU {
         uint16_t vram_addr = 0;
         bool vram_twice = 0;
         int scanline = 261;
+        bool debug = false;
 
         //rw
         int8_t read(int8_t* address);

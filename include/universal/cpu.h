@@ -13,6 +13,7 @@ class CPU {
         CPU(bool dbug);
         PPU* ppu;
         int CLOCK_SPEED = 1789773;
+        //int CLOCK_SPEED = 2147483647; //for test purposes
         int emulated_clock_speed();
         long long start = epoch();
         void clock();
@@ -117,7 +118,7 @@ class CPU {
         int8_t* absy(int8_t* args);
         int8_t* ind(int8_t* args);
         int8_t* rel(int8_t* args);
-        int8_t* imm(int8_t* args) {ins_size = 2; return &args[0];}
+        int8_t* imm(int8_t* args) {ins_size = 2; map_memory(&args); return &args[0];}
 
         //--extras--
         uint8_t sp = 0;

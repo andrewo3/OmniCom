@@ -133,6 +133,12 @@ void NESLoop(ROM* r_ptr) {
             ppu.cycle();
             //printf("%i\n",ppu.scanline);
         }
+        if (ppu.debug) {
+            printf("PPU Memory:\n");
+            for (int i=0; i<0x4000; i++) {
+                printf("%04x: %02x\n",i,ppu.memory[i]);
+            }
+        }
         total_ticks = cpu.cycles;
     }
 }

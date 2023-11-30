@@ -9,8 +9,9 @@
 int8_t* CPU::xind(int8_t* args) {
     ins_size = 2;
     cycles += 4;
-    uint8_t* u = (uint8_t*)&memory[(uint8_t)args[0]+(uint8_t)x];
-    uint16_t ind = (uint8_t)memory[u[0]] | (uint16_t)(((uint8_t)memory[u[0]+1])<<8);
+    uint8_t* u = (uint8_t*)&memory[(uint8_t)read(args)+(uint8_t)x];
+    uint8_t u_val = read((int8_t*)u);
+    uint16_t ind = (uint8_t)read(&memory[u_val]) | (uint16_t)(((uint8_t)read(&memory[u_val+1]))<<8);
     return &memory[ind];
 }
 
@@ -18,53 +19,51 @@ int8_t* CPU::indy(int8_t* args) {
     uint8_t* u = (uint8_t*)args;
     ins_size = 2;
     cycles += 3;
-    uint16_t ind = (uint8_t)memory[u[0]] | (uint16_t)(((uint8_t)memory[u[0]+1])<<8);
+    uint8_t u_val = read((int8_t*)u);
+    uint16_t ind = (uint8_t)read(&memory[u_val]) | (uint16_t)(((uint8_t)read(&memory[u_val+1]))<<8);
     return &memory[ind+(uint8_t)y];
 }
 
 int8_t* CPU::zpg(int8_t* args) {
     ins_size = 2;
     cycles += 1;
-    return &memory[(uint8_t)args[0]];
+    return &memory[(uint8_t)read(args)];
 }
 
 int8_t* CPU::zpgx(int8_t* args) {
     ins_size = 2;
     cycles += 2;
-    return &memory[(uint8_t)args[0]+(uint8_t)x];
+    return &memory[(uint8_t)read(args)+(uint8_t)x];
 }
 
 int8_t* CPU::zpgy(int8_t* args) {
     ins_size = 2;
     cycles += 2;
-    return &memory[(uint8_t)((uint8_t)args[0]+(uint8_t)y)];
+    return &memory[(uint8_t)((uint8_t)read(args)+(uint8_t)y)];
 }
 
 int8_t* CPU::abs(int8_t* args) {
-    uint8_t* u = (uint8_t*)args;
     ins_size = 3;
     cycles += 2;
-    return &memory[(uint16_t)((u[0])|((u[1])<<8))];
+    return &memory[(uint16_t)(((uint8_t)read(args))|((uint8_t)read(args+1)<<8))];
 }
 
 int8_t* CPU::absx(int8_t* args) {
-    uint8_t* u = (uint8_t*)args;
     ins_size = 3;
     cycles += 2;
-    return &memory[(uint16_t)((u[0]|(u[1]<<8))+(uint8_t)x)];
+    return &memory[(uint16_t)(((uint8_t)read(args))|((uint8_t)read(args+1)<<8)+(uint8_t)x)];
 }
 
 int8_t* CPU::absy(int8_t* args) {
-    uint8_t* u = (uint8_t*)args;
     ins_size = 3;
     cycles += 2;
-    return &memory[(uint16_t)((u[0]|(u[1]<<8))+(uint8_t)y)];
+    return &memory[(uint16_t)(((uint8_t)read(args))|((uint8_t)read(args+1)<<8)+(uint8_t)y)];
 }
 
 int8_t* CPU::ind(int8_t* args) {
     ins_size = 3;
     cycles += 3;
-    return &memory[(uint16_t)(memory[(uint8_t)args[0]] | ((uint8_t)memory[(uint8_t)args[0]+1]<<8))];
+    return &memory[(uint16_t)(read(&memory[(uint8_t)args[0]]) | ((uint8_t)read(&memory[(uint8_t)args[0]+1])<<8))];
 }
 
 int8_t* CPU::rel(int8_t* args) {
@@ -79,24 +78,27 @@ int8_t* CPU::acc(int8_t* args) {
 //--instruction set--
 
 void CPU::ADC(int8_t* args) {
+    uint8_t r = read(args);
     uint16_t unwrapped = (uint8_t)accumulator+
-                        (uint8_t)read(args)+
+                        r+
                         this->get_flag('C');
     this->set_flag('C',unwrapped>0xFF);
-    this->set_flag('V',!((accumulator^read(args))&0x80) && ((accumulator^unwrapped) & 0x80));
+    this->set_flag('V',!((accumulator^r)&0x80) && ((accumulator^unwrapped) & 0x80));
     accumulator = (int8_t)unwrapped;
     this->set_flag('Z',!accumulator);
     this->set_flag('N',accumulator&0x80);
 }
 
 void CPU::AND(int8_t* args) {
-    accumulator = accumulator&read(args);
+    uint8_t r = read(args);
+    accumulator = accumulator&r;
     this->set_flag('Z',!accumulator);
     this->set_flag('N',accumulator&0x80);
 }
 
 void CPU::ASL(int8_t* args) {
-    uint16_t result = read(args)<<1;
+    uint8_t r = read(args);
+    uint16_t result = r<<1;
     write(args,result&0xff);
     cycles += 2;
     this->set_flag('C',result&0x100);
@@ -123,10 +125,11 @@ void CPU::BEQ(int8_t* args) {
 }
 
 void CPU::BIT(int8_t* args) {
-    int8_t test = accumulator & read(args);
+    uint8_t r = read(args);
+    int8_t test = accumulator & r;
     this->set_flag('Z',test==0);
-    this->set_flag('V',*args&0x40);
-    this->set_flag('N',*args&0x80);
+    this->set_flag('V',r&0x40);
+    this->set_flag('N',r&0x80);
 }
 
 void CPU::BMI(int8_t* args) {
@@ -159,13 +162,13 @@ void CPU::BRK(int8_t* args) {
 
 void CPU::BVC(int8_t* args) {
     if (!get_flag('C')) {
-        pc = args-ins_size;
+        pc = args;
     }
 }
 
 void CPU::BVS(int8_t* args) {
     if(get_flag('V')) {
-        pc = args-ins_size;
+        pc = args;
     }
 }
 
@@ -186,27 +189,31 @@ void CPU::CLV(int8_t* args) {
 }
 
 void CPU::CMP(int8_t* args) {
-    this->set_flag('C',accumulator>=read(args));
-    this->set_flag('Z',accumulator==*args);
-    this->set_flag('N',(accumulator-*args)&0x80);
+    uint8_t r = read(args);
+    this->set_flag('C',accumulator>=r);
+    this->set_flag('Z',accumulator==r);
+    this->set_flag('N',(accumulator-r)&0x80);
 }
 
 void CPU::CPX(int8_t* args) {
-    this->set_flag('C',x>=read(args));
-    this->set_flag('Z',x==*args);
-    this->set_flag('N',(x-*args)&0x80);
+    uint8_t r = read(args);
+    this->set_flag('C',x>=r);
+    this->set_flag('Z',x==r);
+    this->set_flag('N',(x-r)&0x80);
 }
 void CPU::CPY(int8_t* args) {
-    this->set_flag('C',y>=read(args));
-    this->set_flag('Z',y==*args);
-    this->set_flag('N',(y-*args)&0x80);
+    uint8_t r = read(args);
+    this->set_flag('C',y>=r);
+    this->set_flag('Z',y==r);
+    this->set_flag('N',(y-r)&0x80);
 }
 
 void CPU::DEC(int8_t* args) {
-    write(args,read(args)-1);
+    uint8_t r = read(args);
+    write(args,r-1);
     cycles += 2;
-    this->set_flag('Z',!(*args));
-    this->set_flag('N',(*args)&0x80);
+    this->set_flag('Z',!r);
+    this->set_flag('N',r&0x80);
 }
 
 void CPU::DEX(int8_t* args) {
@@ -222,16 +229,18 @@ void CPU::DEY(int8_t* args) {
 }
 
 void CPU::EOR(int8_t* args) {
-    accumulator = accumulator ^ read(args);
+    uint8_t r = read(args);
+    accumulator = accumulator ^ r;
     this->set_flag('Z',!accumulator);
     this->set_flag('N',accumulator&0x80);
 }
 
 void CPU::INC(int8_t* args) {
-    write(args,read(args)+1);
+    uint8_t r = read(args);
+    write(args,r+1);
     cycles += 2;
-    this->set_flag('Z',!(*args));
-    this->set_flag('N',(*args)&0x80);
+    this->set_flag('Z',!r);
+    this->set_flag('N',r&0x80);
 }
 
 void CPU::INX(int8_t* args) {
@@ -258,29 +267,33 @@ void CPU::JSR(int8_t* args) {
 }
 
 void CPU::LDA(int8_t* args) {
-    accumulator = read(args);
+    uint8_t r = read(args);
+    accumulator = r;
     this->set_flag('Z',!accumulator);
     this->set_flag('N',accumulator&0x80);
 }
 
 void CPU::LDX(int8_t* args) {
-    x = read(args);
+    uint8_t r = read(args);
+    x = r;
     this->set_flag('Z',!x);
     this->set_flag('N',x&0x80);
 }
 
 void CPU::LDY(int8_t* args) {
-    y = read(args);
+    uint8_t r = read(args);
+    y = r;
     this->set_flag('Z',!y);
     this->set_flag('N',y&0x80);
 }
 
 void CPU::LSR(int8_t* args) {
-    this->set_flag('C',read(args)&1);
-    uint16_t result = (*args)>>1;
+    uint8_t r = read(args);
+    this->set_flag('C',r&1);
+    uint16_t result = r>>1;
     write(args,result&0xff);
     cycles += 2;
-    this->set_flag('Z',!(*args));
+    this->set_flag('Z',!r);
     this->set_flag('N',result&0x80);
 }
 
@@ -289,7 +302,8 @@ void CPU::NOP(int8_t* args) {
 }
 
 void CPU::ORA(int8_t* args) {
-    accumulator|=read(args);
+    uint8_t r = read(args);
+    accumulator|=r;
     this->set_flag('Z',!accumulator);
     this->set_flag('N',accumulator&0x80);
 }
@@ -311,22 +325,24 @@ void CPU::PLP(int8_t* args) {
 }
 
 void CPU::ROL(int8_t* args) {
-    int8_t changed = read(args)<<1;
+    uint8_t r = read(args);
+    int8_t changed = r<<1;
     changed = this->get_flag('C')?(changed|1):(changed&0xFE);
-    this->set_flag('C',(*args)&0x80);
+    this->set_flag('C',r&0x80);
     write(args,changed);
     cycles += 2;
-    this->set_flag('N',(*args)&0x80);
+    this->set_flag('N',r&0x80);
     this->set_flag('Z',!accumulator);
 }
 
 void CPU::ROR(int8_t* args) {
-    int8_t changed = read(args)>>1;
+    uint8_t r = read(args);
+    int8_t changed = r>>1;
     changed = this->get_flag('C')?(changed|0x80):(changed&0x7F);
-    this->set_flag('C',(*args)&1);
+    this->set_flag('C',r&1);
     write(args,changed);
     cycles += 2;
-    this->set_flag('N',(*args)&0x80);
+    this->set_flag('N',r&0x80);
     this->set_flag('Z',!accumulator);
 }
 
@@ -346,11 +362,12 @@ void CPU::RTS(int8_t* args) {
 }
 
 void CPU::SBC(int8_t* args) {
+    uint8_t r = read(args);
     uint16_t unwrapped = (uint8_t)accumulator+
-                        ~(uint8_t)read(args)+
+                        ~r+
                         this->get_flag('C');
     this->set_flag('C',!(unwrapped>0xFF));
-    this->set_flag('V',!((accumulator^(*args))&0x80) && ((accumulator^unwrapped) & 0x80));
+    this->set_flag('V',!((accumulator^r)&0x80) && ((accumulator^unwrapped) & 0x80));
     accumulator = (int8_t)unwrapped;
     this->set_flag('Z',!accumulator);
     this->set_flag('N',accumulator&0x80);
