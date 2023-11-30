@@ -51,7 +51,7 @@ void PPU::cycle() {
         if (1<=scycle && scycle<=256) { //TODO: fetching background and sprite data during visible scanlines
             int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
             if (intile==0) { // beginning of a tile
-                uint8_t tile_addr = vram_addr+;
+                uint8_t tile_addr = vram_addr+scroll_;
                 //TODO INCLUDE Y SCROLL IN THE BYTE FETCH
                 ptlow>>=8; //shift low register
                 pthigh>>=8;// shift high register
