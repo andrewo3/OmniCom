@@ -48,12 +48,21 @@ int8_t PPU::read(int8_t* address) {
 void PPU::cycle() {
     int8_t* vram_ptr = &memory[vram_addr];
     if (0<=scanline && scanline<=239) { // visible scanlines
-        vblank = false;
-        if (1<=scycle && scycle<=256) {
-            int intile = (scycle-1)%8;
-            if (intile==0) {
-                int8_t r = read(vram_ptr);
+        if (1<=scycle && scycle<=256) { //TODO: fetching background and sprite data during visible scanlines
+            int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
+            if (intile==0) { // beginning of a tile
+                uint8_t tile_addr = vram_addr+;
+                //TODO INCLUDE Y SCROLL IN THE BYTE FETCH
+                ptlow>>=8; //shift low register
+                pthigh>>=8;// shift high register
+                ptlow |= ((uint8_t)memory[((*PPUCTRL)&0x10)<<8 + (vram_ptr[1])<<4])<<8; // add next low byte
+                pthigh |= ((uint8_t)memory[((*PPUCTRL)&0x10)<<8 + (vram_ptr[1])<<4]|0x8)<<8; // add next high byte
+            } else {
+                pthigh+=0x10;
             }
+
+            //write some pixel to image here
+            vram_addr++;
         }
     } else if (241<=scanline && scanline<=260) { //vblank
         if (vblank==false) { //start vblank as soon as you reach this
@@ -69,7 +78,10 @@ void PPU::cycle() {
     } else if (scanline==261) { // pre-render scanline
         if (vblank == true) {
             vblank = false;
+            vram_addr = (((*PPUCTRL)&0x11)<<0xA)|0x2000; //set vram address to base nametable as determined by ppuctrl
         }
+        ptlow = (uint8_t)memory[((*PPUCTRL)&0x10)<<8 + (*vram_ptr)<<4]<<8;// add low byte for current
+        pthigh = ((uint8_t)memory[((*PPUCTRL)&0x10)<<8 + (*vram_ptr)<<4]|0x8)<<8;// add high byte for current
 
 
     }
@@ -99,6 +111,8 @@ void PPU::map_memory(int8_t** addr) {
                 *addr -= ((location-0x2000)/0x400)%2 ? 0x400 : 0; //horizontal nametable mirroring
             case VERTICAL:
                 *addr -= location>=0x2800 ? 0x800 : 0; //horizontal nametable mirroring
+
+            //fourtable has nothing because four table is no mirroring at all
         }
     }
     else if (0x3000<=location && location<0x4000) {

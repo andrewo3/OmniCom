@@ -31,9 +31,11 @@ class PPU {
         // registers
         uint16_t temp_vram_addr = 0;
         uint8_t X = 0;
-        bool W = 0;
         uint8_t scroll_x;
         uint8_t scroll_y;
+
+        uint16_t pthigh; //pattern table high bit data
+        uint16_t ptlow; //pattern table low bit data
     private:
         void map_memory(int8_t** addr);
         uint16_t get_addr(int8_t* ptr);
