@@ -68,7 +68,7 @@ int8_t* CPU::ind(int8_t* args) {
 
 int8_t* CPU::rel(int8_t* args) {
     ins_size = 2;
-    return &memory[this->get_addr(pc)+args[0]];
+    return &memory[this->get_addr(pc)+read(args)];
 }
 
 int8_t* CPU::acc(int8_t* args) {

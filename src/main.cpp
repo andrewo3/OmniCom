@@ -131,7 +131,7 @@ void NESLoop(ROM* r_ptr) {
         // 3 dots per cpu cycle
         while (ppu.cycles<cpu.cycles*3) {
             ppu.cycle();
-            //printf("%i\n",ppu.scanline);
+            //printf("%i\n",ppu.v);
         }
         if (ppu.debug) {
             printf("PPU Memory:\n");
@@ -215,7 +215,7 @@ int main(int argc, char ** argv) {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim[0],dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim[0],dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -251,7 +251,7 @@ int main(int argc, char ** argv) {
         //logic is executed in nes thread
 
         //render texture from nes (temporarily test_image.jpg)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim[0],dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim[0],dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
 
         glUseProgram(shaderProgram);
         

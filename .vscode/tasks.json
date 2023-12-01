@@ -6,6 +6,7 @@
             "command": "g++-11",
             "args": [
                 "-v",
+                "src/util.cpp",
                 "src/rom.cpp",
                 "src/cpu.cpp",
                 "src/cpu_helper.cpp",

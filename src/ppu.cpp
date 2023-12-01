@@ -1,3 +1,4 @@
+#include "util.h"
 #include "rom.h"
 #include "ppu.h"
 #include "cpu.h"
@@ -46,23 +47,64 @@ int8_t PPU::read(int8_t* address) {
 }
 
 void PPU::cycle() {
-    int8_t* vram_ptr = &memory[vram_addr];
     if (0<=scanline && scanline<=239) { // visible scanlines
         if (1<=scycle && scycle<=256) { //TODO: fetching background and sprite data during visible scanlines
             int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
             if (intile==0) { // beginning of a tile
-                uint8_t tile_addr = vram_addr+scroll_;
-                //TODO INCLUDE Y SCROLL IN THE BYTE FETCH
-                ptlow>>=8; //shift low register
-                pthigh>>=8;// shift high register
-                ptlow |= ((uint8_t)memory[((*PPUCTRL)&0x10)<<8 + (vram_ptr[1])<<4])<<8; // add next low byte
-                pthigh |= ((uint8_t)memory[((*PPUCTRL)&0x10)<<8 + (vram_ptr[1])<<4]|0x8)<<8; // add next high byte
-            } else {
-                pthigh+=0x10;
+                tile_addr = 0x2000 | (v & 0x0fff);
+                attr_addr = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
+                uint8_t tile_val = read(&memory[tile_addr]);
+                uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4);
+                ptlow=((uint8_t)memory[pattern_table_loc]); // add next low byte
+                pthigh = (uint8_t)memory[pattern_table_loc|8]; // add next high byte
+            } else if (intile==7) { // end of tile
+                //increment v horizontally
+                //pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
+                if ((v&0x001F)==0x1F) { // if coarse X == 31, that means you reached the end of the nametable (next would be 32)
+                    v &= ~0x001F; //un set coarse x to make it 0 again
+                    v^= 0x0400; // switch nametable
+                } else {
+                    v++;
+                }
             }
 
+            //get pallete location and pixel color
+            uint8_t attr_read = read(&memory[attr_addr]);
+            bool right = tile_addr&1;
+            bool bottom = (tile_addr>>1)&1;
+            uint8_t attribute = (attr_read>>((right<<1)|(bottom<<2)))&3;
+            uint8_t pattern = ((ptlow>>x)&1)|(((pthigh>>x)&1)<<1);
+            uint8_t pixel = read(&memory[0x3f00+4*attribute+pattern]) ? pattern : read(&memory[0x3f00]);
+
             //write some pixel to image here
-            vram_addr++;
+            int color_ind = pixel*3;
+
+            for (int i=0; i<3; i++) {
+                out_img[(scycle-1)+256*scanline+i] = NTSC_TO_RGB[color_ind+i];
+            }
+            x++;
+            x%=8;
+            
+
+        }
+        if (scycle==256) { // dot 256 of scanline
+            //increment v vertically
+            // pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
+            if ((v & 0x7000) != 0x7000) { //if fine Y < 7
+                v += 0x1000; // increment fine Y
+            } else {
+                v &= ~0x7000;
+                int y = (v & 0x3e0) >> 5; // coarse y
+                if (y==29) { // reset and switch nametable (29 is last row)
+                    y = 0;
+                    v ^= 0x8000;
+                } else if (y==31) { // if 31, nametable doesnt switch
+                    y = 0;
+                } else {
+                    y++;
+                }
+                v = (v & ~0x03e0)|(y<<5);
+            }
         }
     } else if (241<=scanline && scanline<=260) { //vblank
         if (vblank==false) { //start vblank as soon as you reach this
@@ -78,10 +120,7 @@ void PPU::cycle() {
     } else if (scanline==261) { // pre-render scanline
         if (vblank == true) {
             vblank = false;
-            vram_addr = (((*PPUCTRL)&0x11)<<0xA)|0x2000; //set vram address to base nametable as determined by ppuctrl
         }
-        ptlow = (uint8_t)memory[((*PPUCTRL)&0x10)<<8 + (*vram_ptr)<<4]<<8;// add low byte for current
-        pthigh = ((uint8_t)memory[((*PPUCTRL)&0x10)<<8 + (*vram_ptr)<<4]|0x8)<<8;// add high byte for current
 
 
     }

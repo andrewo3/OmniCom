@@ -33,8 +33,12 @@ class PPU {
         uint8_t x = 0;
         uint8_t w = 0;
 
+        uint16_t tile_addr;
+        uint16_t attr_addr;
+
         uint16_t pthigh; //pattern table high bit data
         uint16_t ptlow; //pattern table low bit data
+        uint8_t pattern;
     private:
         void map_memory(int8_t** addr);
         uint16_t get_addr(int8_t* ptr);
@@ -42,6 +46,7 @@ class PPU {
         bool vblank = false;
         void apply_and_update_registers();
         uint16_t upcoming_pattern;
+        
         // registers
         int8_t* PPUCTRL; //&memory[0x2000]
         int8_t* PPUMASK; //&memory[0x2001]

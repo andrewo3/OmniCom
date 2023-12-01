@@ -41,31 +41,48 @@ void CPU::write(int8_t* address, int8_t value) {
     switch(mem) {
         //write to OAMADDR (0x2001) is handled implicitly
         //write to OAMADDR (0x2003) is handled implicitly
+        case 0x2000:
+            ppu->t &= 0xf3ff;
+            ppu->t |= (value&0x3)<<10;
+            break;
         case 0x2004: //write to OAMDATA
             ppu->oam[(uint8_t)memory[0x2003]] = value;
             memory[0x2003]++;
+            break;
         case 0x2005: //write to PPUSCROLL
-            if (!ppu->vram_twice) {
-                ppu->scroll_x = (uint8_t)value;
-                ppu->vram_twice = 1;
+            if (!ppu->w) {
+                ppu->t &= 0xffe0; //mask for bit replacement
+                ppu->t |= ((uint8_t)value)>>3;
+                ppu->x = value&0x7;
+                ppu->w = 1;
             } else {
-                ppu->scroll_y = (uint8_t)value;
-                ppu->vram_twice = 0;
+                ppu->t &= 0x8c1f; //another bit mask for replace bits;
+                ppu->t |= (value&0xf8)<<2;
+                ppu->t |= (value&0x7)<<12;
+                ppu->w = 0;
             }
+            break;
         case 0x2006: //write to PPUADDR
-            if (!ppu->vram_twice) {
-                ppu->v = (uint16_t)value<<8;
-                ppu->vram_twice = 1;
+            if (!ppu->w) {
+                ppu->t &= 0x80ff;
+                ppu->t |= (value&0x3f)<<8;
+                ppu->w = 1;
             } else {
-                ppu->v |= (uint8_t)value;
-                ppu->vram_twice = 0;
+                ppu->t &= 0xff00;
+                ppu->t |= (uint8_t)value;
+                ppu->v = ppu->t;
+                ppu->w = 0;
             }
             break;
         case 0x2007: // write to PPUDATA
-            ppu->write(&(ppu->memory[ppu->v]),value); // write method takes mapper into account
-            ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            {
+            uint16_t bit14 = (ppu->v)&0x3fff;
+            ppu->write(&(ppu->memory[bit14]),value); // write method takes mapper into account
+            bit14+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            ppu->v&=0x4000;
+            ppu->v|=bit14;
             break;
-
+            }
         case 0x4014: //write to OAMDMA
             memcpy(ppu->oam,&memory[(uint16_t)value<<8],256);
             break;
@@ -80,7 +97,7 @@ int8_t CPU::read(int8_t* address) {
     switch(mem) { // handle special ppu and apu registers
         case 0x2002:
             *address &= 0x7F;
-            ppu->vram_twice = 0;
+            ppu->w = 0;
             break;
         case 0x2007:
             ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
