@@ -132,10 +132,10 @@ void NESLoop(ROM* r_ptr) {
         while (ppu.cycles<cpu.cycles*3) {
             ppu.cycle();
             //printf("%i\n",ppu.v);
-        }
-        if (ppu.debug) {
-            printf("PPU REGISTERS: ");
-            printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu.vblank, cpu.memory[0x2000],cpu.memory[0x2001],cpu.memory[0x2002],ppu.v);
+            if (ppu.debug) {
+                printf("PPU REGISTERS: ");
+                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu.vblank, cpu.memory[0x2000],cpu.memory[0x2001],cpu.memory[0x2002],ppu.v);
+            }
         }
         total_ticks = cpu.cycles;
     }

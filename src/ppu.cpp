@@ -94,7 +94,7 @@ void PPU::cycle() {
                 if (scycle==256) { // dot 256 of scanline
                     v_vert();
                 }
-                printf("%04x, %04x - %i, %i, %04x\n",tile_addr, attr_addr, scycle, scanline, v);
+                //printf("%04x, %04x - %i, %i, %04x\n",tile_addr, attr_addr, scycle, scanline, v);
             }
             //get pallete location and pixel color
             uint8_t attr_read = read(&memory[attr_addr]);
