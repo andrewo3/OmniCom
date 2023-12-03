@@ -132,10 +132,11 @@ void NESLoop(ROM* r_ptr) {
         while (ppu.cycles<cpu.cycles*3) {
             ppu.cycle();
             //printf("%i\n",ppu.v);
-            if (ppu.debug) {
-                printf("PPU REGISTERS: ");
-                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu.vblank, cpu.memory[0x2000],cpu.memory[0x2001],cpu.memory[0x2002],ppu.v);
-            }
+        }
+        if (ppu.debug) {
+            printf("PPU REGISTERS: ");
+            printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu.vblank, cpu.memory[0x2000],cpu.memory[0x2001],cpu.memory[0x2002],ppu.v);
+            printf("scanline: %i, cycle: %i\n",ppu.scanline,ppu.scycle);
         }
         total_ticks = cpu.cycles;
     }
@@ -217,8 +218,8 @@ int main(int argc, char ** argv) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     glGenerateMipmap(GL_TEXTURE_2D);
 

@@ -106,7 +106,7 @@ int8_t CPU::read(int8_t* address) {
             if (ppu->vblank) {
                 ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
             }
-            ppu->v %= 0x4000;
+            //ppu->v %= 0x4000;
             break;
 
     }

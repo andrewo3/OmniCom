@@ -21,6 +21,7 @@ class PPU {
         int8_t oam[256]; // OAM (Object Attribute Memory) for sprites
         bool vram_twice = 0;
         int scanline = 261;
+        int scycle = 0;
         bool debug = true;
         bool vblank = false;
 
@@ -43,7 +44,6 @@ class PPU {
     private:
         void map_memory(int8_t** addr);
         uint16_t get_addr(int8_t* ptr);
-        int scycle = 0;
         void apply_and_update_registers();
         uint16_t upcoming_pattern;
         uint8_t internalx;

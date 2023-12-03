@@ -43,7 +43,8 @@ void PPU::write(int8_t* address, int8_t value) { //write ppu memory, taking into
 
 int8_t PPU::read(int8_t* address) {
     map_memory(&address);
-    return *address;
+    int8_t res = *address;
+    return res;
 }
 
 void PPU::v_horiz() {
@@ -78,17 +79,18 @@ void PPU::v_vert() {
 }
 
 void PPU::cycle() {
+    bool rendering = ((*PPUMASK)&0xC); //checks if rendering is enabled
     if (0<=scanline && scanline<=239) { // visible scanlines
         int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
-        if (1<=scycle && scycle<=256) { //TODO: fetching background and sprite data during visible scanlines
+        if (1<=scycle && scycle<=256 && rendering) { //TODO: fetching background and sprite data during visible scanlines
             if (intile==0) { // beginning of a tile
                 tile_addr = 0x2000 | (v & 0x0fff);
                 attr_addr = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
                 uint8_t tile_val = read(&memory[tile_addr]);
-                uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4);
+                uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
                 internalx = x;
                 ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
-                pthigh = (uint8_t)read(&memory[pattern_table_loc|8]); // add next high byte
+                pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
             } else if (intile==7) { // end of tile
                 v_horiz();
                 if (scycle==256) { // dot 256 of scanline
@@ -101,32 +103,25 @@ void PPU::cycle() {
             bool right = tile_addr&1;
             bool bottom = (tile_addr>>4)&1;
             uint8_t attribute = (attr_read>>((right<<1)|(bottom<<2)))&3;
-            uint8_t pattern = ((ptlow>>internalx)&1)|(((pthigh>>internalx)&1)<<1);
-            uint8_t pixel = read(&memory[0x3f00+4*attribute+pattern]) ? pattern : read(&memory[0x3f00]);
-            
+            uint8_t flip = 7-internalx;
+            uint8_t pattern = ((ptlow>>flip)&1)|(((pthigh>>flip)&1)<<1);
+            uint8_t pixel = pattern ? read(&memory[0x3f00+4*attribute+pattern]) : read(&memory[0x3f00]);
+            printf("POS(%i,%i) - TILEIND $%04x: %02x, PATTERN - $%04x: %02x %02x,bit: %i, val: %i, finey: %i\n",scycle-1,scanline,tile_addr,read(&memory[tile_addr]),(((*PPUCTRL)&0x10)<<8)|((read(&memory[tile_addr]))<<4)|(((v&0x7000)>>12)&0x07),ptlow,pthigh, internalx, pattern,(((v&7000)>>12)&0x07));
             //write some pixel to image here
             int color_ind = pixel*3;
 
             for (int i=0; i<3; i++) {
-                out_img[(scycle-1)+256*scanline+i] = NTSC_TO_RGB[color_ind+i];
+                out_img[3*((scycle-1)+256*scanline)+i] = NTSC_TO_RGB[color_ind+i];
             }
             internalx++;
             if (internalx==8) {
-                v_horiz();
+                //v_horiz();
                 internalx=0;
             }
 
-        } else if (scycle>=328 && intile==7) { // after the first few dots
-            //increment v horizontally
-                //pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
-                if ((v&0x001F)==0x1F) { // if coarse X == 31, that means you reached the end of the nametable row (next would be 32)
-                    v &= ~0x001F; //un set coarse x to make it 0 again
-                    v^= 0x0400; // switch nametable
-                } else {
-                    v++;
-                }
+        } else if (scycle>=328 && intile==7 && rendering) { // after the first few dots
                 
-        }   else if (scycle == 257) {
+        }   else if (scycle == 257 && rendering) {
             v&=0xFBE0;
             v|=(t&0x41F);
         }
@@ -134,7 +129,6 @@ void PPU::cycle() {
         if (vblank==false) { //start vblank as soon as you reach this
             vblank = true;
             *PPUSTATUS|=0x80;
-            //TODO: push image to variable, so that SDL+OpenGL can take over and draw it to window
             if ((*PPUCTRL)&0x80) { // if ppu is configured to generate nmi, do so.
                 cpu->recv_nmi = true;
                 //printf("NMI\n");
@@ -142,10 +136,14 @@ void PPU::cycle() {
 
         }
     } else if (scanline==261) { // pre-render scanline
-        v &= 0x841F;
-        v |= (t&0x7BE0);
+        if (((*PPUMASK)&0xC)) {
+            v &= 0x841F;
+            v |= (t&0x7BE0);
+        }
         if (scycle == 340 && vblank == true) {
-            v = 0x2000+(0x400*(*PPUCTRL&0x3));
+            if (((*PPUMASK)&0xC)) {
+                v = 0x2000+(0x400*(*PPUCTRL&0x3));
+            }
             t = v;
             *PPUSTATUS&=0x7F;
             vblank = false;
@@ -183,8 +181,10 @@ void PPU::map_memory(int8_t** addr) {
             //fourtable has nothing because four table is no mirroring at all
         }
     }
-    else if (0x3000<=location && location<0x4000) {
+    else if (0x3000<=location && location<0x3F00) {
         *addr-=0x1000;
+    } else if (0x3F20<=location&&location<0x4000) {
+        *addr-=(location-0x3f00)/0x20*0x20;
     }
 }
 
