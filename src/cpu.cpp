@@ -25,6 +25,7 @@ CPU::CPU(bool dbug) {
 }
 
 void CPU::start_nmi() {
+    printf("NMI\n");
     recv_nmi = false;
     uint16_t push = get_addr(pc-1);
     stack_push((uint8_t)(push>>8));
@@ -66,6 +67,7 @@ void CPU::write(int8_t* address, int8_t value) {
             if (!ppu->w) {
                 ppu->t &= 0x80ff;
                 ppu->t |= (value&0x3f)<<8;
+                ppu->t &= 0xbfff;
                 ppu->w = 1;
             } else {
                 ppu->t &= 0xff00;
@@ -77,6 +79,7 @@ void CPU::write(int8_t* address, int8_t value) {
         case 0x2007: // write to PPUDATA
             {
             uint16_t bit14 = (ppu->v)&0x3fff;
+            printf("ppu->%04x: %02x\n",bit14,(uint8_t)value);
             ppu->write(&(ppu->memory[bit14]),value); // write method takes mapper into account
             bit14+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
             ppu->v&=0x4000;
@@ -100,7 +103,9 @@ int8_t CPU::read(int8_t* address) {
             ppu->w = 0;
             break;
         case 0x2007:
-            ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            if (ppu->vblank) {
+                ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            }
             ppu->v %= 0x4000;
             break;
 
@@ -185,10 +190,9 @@ void CPU::clock() {
         }
         (this->*exec)(arg); // execute instruction
         ins_num++;
+        pc+=ins_size; // increment by instruction size (determined by addressing mode)
         if (recv_nmi) {
             start_nmi();
-        } else {
-            pc+=ins_size; // increment by instruction size (determined by addressing mode)
         }
     }
 

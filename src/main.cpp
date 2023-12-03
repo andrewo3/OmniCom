@@ -117,7 +117,7 @@ void init_shaders() {
 void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
     
-    CPU cpu(false);
+    CPU cpu(true);
     printf("CPU Initialized.\n");
 
     cpu.loadRom(r_ptr);
@@ -134,10 +134,8 @@ void NESLoop(ROM* r_ptr) {
             //printf("%i\n",ppu.v);
         }
         if (ppu.debug) {
-            printf("PPU Memory:\n");
-            for (int i=0; i<0x4000; i++) {
-                printf("%04x: %02x\n",i,ppu.memory[i]);
-            }
+            printf("PPU REGISTERS: ");
+            printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu.vblank, cpu.memory[0x2000],cpu.memory[0x2001],cpu.memory[0x2002],ppu.v);
         }
         total_ticks = cpu.cycles;
     }
@@ -157,8 +155,8 @@ int main(int argc, char ** argv) {
     memcpy(filename,argv[1],strlen(argv[1])+1);
     get_filename(&filename);
 
-    int dim[3];
-    GLubyte* img = stbi_load("res/test_image2.jpg", &dim[0],&dim[1],&dim[2],STBI_default);
+    int dim[3] = {256,240,3};
+    //GLubyte* img = stbi_load("res/test_image2.jpg", &dim[0],&dim[1],&dim[2],STBI_default);
     printf("%i %i %i\n",dim[0],dim[1],dim[2]);
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO);
@@ -275,7 +273,7 @@ int main(int argc, char ** argv) {
     SDL_DestroyWindow(window);
     SDL_Quit();
     NESThread.join();
-    stbi_image_free(img);
+    //stbi_image_free(img);
     delete[] original_start;
     return 0;
 }

@@ -46,65 +46,89 @@ int8_t PPU::read(int8_t* address) {
     return *address;
 }
 
+void PPU::v_horiz() {
+    //increment v horizontally
+    //pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
+    if ((v&0x001F)==0x1F) { // if coarse X == 31, that means you reached the end of the nametable row (next would be 32)
+        v &= ~0x001F; //un set coarse x to make it 0 again
+        v^= 0x0400; // switch nametable
+    } else {
+        v++;
+    }
+}
+
+void PPU::v_vert() {
+    //increment v vertically
+    // pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
+    if ((v & 0x7000) != 0x7000) { //if fine Y < 7
+        v += 0x1000; // increment fine Y
+    } else {
+        v &= ~0x7000;
+        int y = (v & 0x3e0) >> 5; // coarse y
+        if (y==29) { // reset and switch nametable (29 is last row)
+            y = 0;
+            v ^= 0x0800;
+        } else if (y==31) { // if 31, nametable doesnt switch
+            y = 0;
+        } else {
+            y++;
+        }
+        v = (v & ~0x03e0)|(y<<5);
+    }
+}
+
 void PPU::cycle() {
     if (0<=scanline && scanline<=239) { // visible scanlines
+        int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
         if (1<=scycle && scycle<=256) { //TODO: fetching background and sprite data during visible scanlines
-            int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
             if (intile==0) { // beginning of a tile
                 tile_addr = 0x2000 | (v & 0x0fff);
                 attr_addr = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
                 uint8_t tile_val = read(&memory[tile_addr]);
                 uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4);
-                ptlow=((uint8_t)memory[pattern_table_loc]); // add next low byte
-                pthigh = (uint8_t)memory[pattern_table_loc|8]; // add next high byte
+                internalx = x;
+                ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
+                pthigh = (uint8_t)read(&memory[pattern_table_loc|8]); // add next high byte
             } else if (intile==7) { // end of tile
-                //increment v horizontally
-                //pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
-                if ((v&0x001F)==0x1F) { // if coarse X == 31, that means you reached the end of the nametable (next would be 32)
-                    v &= ~0x001F; //un set coarse x to make it 0 again
-                    v^= 0x0400; // switch nametable
-                } else {
-                    v++;
+                v_horiz();
+                if (scycle==256) { // dot 256 of scanline
+                    v_vert();
                 }
+                printf("%04x, %04x - %i, %i, %04x\n",tile_addr, attr_addr, scycle, scanline, v);
             }
-
             //get pallete location and pixel color
             uint8_t attr_read = read(&memory[attr_addr]);
             bool right = tile_addr&1;
-            bool bottom = (tile_addr>>1)&1;
+            bool bottom = (tile_addr>>4)&1;
             uint8_t attribute = (attr_read>>((right<<1)|(bottom<<2)))&3;
-            uint8_t pattern = ((ptlow>>x)&1)|(((pthigh>>x)&1)<<1);
+            uint8_t pattern = ((ptlow>>internalx)&1)|(((pthigh>>internalx)&1)<<1);
             uint8_t pixel = read(&memory[0x3f00+4*attribute+pattern]) ? pattern : read(&memory[0x3f00]);
-
+            
             //write some pixel to image here
             int color_ind = pixel*3;
 
             for (int i=0; i<3; i++) {
                 out_img[(scycle-1)+256*scanline+i] = NTSC_TO_RGB[color_ind+i];
             }
-            x++;
-            x%=8;
-            
-
-        }
-        if (scycle==256) { // dot 256 of scanline
-            //increment v vertically
-            // pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
-            if ((v & 0x7000) != 0x7000) { //if fine Y < 7
-                v += 0x1000; // increment fine Y
-            } else {
-                v &= ~0x7000;
-                int y = (v & 0x3e0) >> 5; // coarse y
-                if (y==29) { // reset and switch nametable (29 is last row)
-                    y = 0;
-                    v ^= 0x8000;
-                } else if (y==31) { // if 31, nametable doesnt switch
-                    y = 0;
-                } else {
-                    y++;
-                }
-                v = (v & ~0x03e0)|(y<<5);
+            internalx++;
+            if (internalx==8) {
+                v_horiz();
+                internalx=0;
             }
+
+        } else if (scycle>=328 && intile==7) { // after the first few dots
+            //increment v horizontally
+                //pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
+                if ((v&0x001F)==0x1F) { // if coarse X == 31, that means you reached the end of the nametable row (next would be 32)
+                    v &= ~0x001F; //un set coarse x to make it 0 again
+                    v^= 0x0400; // switch nametable
+                } else {
+                    v++;
+                }
+                
+        }   else if (scycle == 257) {
+            v&=0xFBE0;
+            v|=(t&0x41F);
         }
     } else if (241<=scanline && scanline<=260) { //vblank
         if (vblank==false) { //start vblank as soon as you reach this
@@ -118,7 +142,12 @@ void PPU::cycle() {
 
         }
     } else if (scanline==261) { // pre-render scanline
-        if (vblank == true) {
+        v &= 0x841F;
+        v |= (t&0x7BE0);
+        if (scycle == 340 && vblank == true) {
+            v = 0x2000+(0x400*(*PPUCTRL&0x3));
+            t = v;
+            *PPUSTATUS&=0x7F;
             vblank = false;
         }
 
