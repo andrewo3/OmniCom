@@ -121,7 +121,7 @@ class CPU {
         int8_t* imm(int8_t* args) {ins_size = 2; map_memory(&args); return &args[0];}
 
         //--extras--
-        uint8_t sp = 0;
+        uint8_t sp = 0xff;
         uint8_t flags = 0x20; // bits: NV1BDIZC
         uint16_t get_addr(int8_t* ptr);
         void stack_push(int8_t val);

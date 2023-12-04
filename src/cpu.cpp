@@ -186,7 +186,16 @@ void CPU::clock() {
         if (debug) { //print instruction
             char w[256] = {0};
             ins_str_mem(w,(uint8_t*)ins,arg);
-            printf("%s\n",w);
+            printf("%s ",w);
+            //print stack
+            printf("SP: %02x [",sp);
+            if (sp!=0xff) {
+                printf("%02x",(uint8_t)memory[0x01ff]);
+            }
+            for (int i=0xfe; i>sp; i--) {
+                printf(",%02x",(uint8_t)memory[0x100+i]);
+            }
+            printf("]\n");
         }
         (this->*exec)(arg); // execute instruction
         ins_num++;
@@ -289,11 +298,11 @@ void CPU::set_flag(char flag,bool val) {
 
 void CPU::stack_push(int8_t val) {
     memory[0x0100+sp] = val;
-    sp++;
+    sp--;
 }
 
 uint8_t CPU::stack_pull(void) {
-    sp--;
+    sp++;
     //printf("Top of stack (%02x): %02x\n",sp,(uint8_t)memory[0x0100+sp]);
     return memory[0x0100+sp]; 
 }
