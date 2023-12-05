@@ -140,6 +140,9 @@ void NESLoop(ROM* r_ptr) {
         }
         total_ticks = cpu.cycles;
     }
+    std::FILE* memory_dump = fopen("dump.txt","w");
+    fwrite(&cpu.memory[0x6000],sizeof(uint8_t),0x8000-0x6000,memory_dump);
+    fclose(memory_dump);
 }
 
 int main(int argc, char ** argv) {

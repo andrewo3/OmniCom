@@ -67,7 +67,7 @@ int8_t* CPU::ind(int8_t* args) {
     ins_size = 3;
     cycles += 3;
     uint16_t* full = (uint16_t*)args;
-    return &memory[(uint16_t)((read(&memory[full[0]])&0xff) | ((uint16_t)(read(&memory[full[0]+1])&0xff)<<8))];
+    return &memory[(uint16_t)((read(&memory[full[0]])&0xff) | ((uint16_t)(read(&memory[(full[0]&0xff00)|((full[0]+1)&0xff)])&0xff)<<8))];
 }
 
 int8_t* CPU::rel(int8_t* args) {
@@ -165,7 +165,7 @@ void CPU::BRK(int8_t* args) {
 }
 
 void CPU::BVC(int8_t* args) {
-    if (!get_flag('C')) {
+    if (!get_flag('V')) {
         pc = args;
     }
 }
@@ -319,7 +319,9 @@ void CPU::PHA(int8_t* args) {
 }
 
 void CPU::PHP(int8_t* args) {
-    stack_push(flags);
+    uint8_t flagspush = flags;
+    flagspush|=0x30;
+    stack_push(flagspush);
 }
 
 void CPU::PLA(int8_t* args) {
@@ -330,6 +332,7 @@ void CPU::PLA(int8_t* args) {
 
 void CPU::PLP(int8_t* args) {
     flags = stack_pull();
+    //flags&=0xEF;
 }
 
 void CPU::ROL(int8_t* args) {
@@ -355,12 +358,15 @@ void CPU::ROR(int8_t* args) {
 }
 
 void CPU::RTI(int8_t* args) {
+    bool i = this->get_flag('I');
     flags = stack_pull();
-    set_flag('I',false);
-    uint16_t new_pc = stack_pull();
-    new_pc |=stack_pull()<<8;
-    cycles += 4;
-    pc = &memory[new_pc];
+    this->set_flag('I',i);
+    if (!i) {
+        uint16_t new_pc = stack_pull();
+        new_pc |=stack_pull()<<8;
+        cycles += 4;
+        pc = &memory[new_pc];
+    }
 }
 
 void CPU::RTS(int8_t* args) {
@@ -514,7 +520,7 @@ void CPU::define_opcodes() {
                         switch(a) {
                             case 1:
                                 this->opcodes[i] = &CPU::BIT;
-                                this->debug_opcodes[i] = "CPX";
+                                this->debug_opcodes[i] = "BIT";
                                 break;
                             case 4:
                                 this->opcodes[i] = &CPU::STY;

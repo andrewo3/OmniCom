@@ -122,7 +122,7 @@ class CPU {
 
         //--extras--
         uint8_t sp = 0xff;
-        uint8_t flags = 0x00; // bits: NV-BDIZC
+        uint8_t flags = 0x24; // bits: NV-BDIZC
         uint16_t get_addr(int8_t* ptr);
         void stack_push(int8_t val);
         uint8_t stack_pull(void);

@@ -225,6 +225,8 @@ void CPU::reset() {
     int8_t * res = &memory[RESET];
     map_memory(&res);
     pc = abs(res);
+    //for test purposes: remove this later.
+    //pc = &memory[0xc000];
 }
 
 void CPU::loadRom(ROM *r) {
@@ -233,6 +235,8 @@ void CPU::loadRom(ROM *r) {
     switch(m) {
         case 0:
             memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
+        case 1:
+            memcpy(&memory[0xc000],rom->get_prg_bank(0),0x4000);
     }
     reset();
 
