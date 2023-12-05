@@ -18,6 +18,7 @@ class PPU {
         ROM* rom;
         long long cycles = 0; // total cycles
         int8_t memory[0x4000]; // general memory
+        int8_t chr_ram[0x8000]; //chr-ram (used by some mappers)
         int8_t oam[256]; // OAM (Object Attribute Memory) for sprites
         bool vram_twice = 0;
         int scanline = 261;

@@ -27,7 +27,7 @@ CPU::CPU(bool dbug) {
 void CPU::start_nmi() {
     //printf("NMI\n");
     recv_nmi = false;
-    uint16_t push = get_addr(pc-1);
+    uint16_t push = get_addr(pc);
     stack_push((uint8_t)(push>>8));
     stack_push((uint8_t)(push&0xff));
     stack_push(flags);
@@ -89,6 +89,66 @@ void CPU::write(int8_t* address, int8_t value) {
             }
         case 0x4014: //write to OAMDMA
             memcpy(ppu->oam,&memory[(uint16_t)value<<8],256);
+            break;
+    }
+    // special mapper cases
+    switch (rom->get_mapper()) {
+        case 1:
+            {
+            if (0x8000<=mem && mem<=0xFFFF) { //MMC1 shift register
+                if (value&0x80) {
+                    rom->mmc1shift = 0x10;
+                } else {
+                    bool full = rom->mmc1shift&1; //1 in bit 0
+                    rom->mmc1shift>>=1;
+                    rom->mmc1shift|=(value&1)<<4;
+                    if (full) {
+                        bool eightkb = rom->mmc1bankmode&0x10;
+                        uint8_t prgmode = (rom->mmc1bankmode&0xC)>>2;
+                        //printf("%04x: %02x\n",mem,rom->mmc1shift);
+                        if (0x8000<=mem && mem<=0x9FFF) { //MMC1 control
+                            rom->mmc1bankmode = rom->mmc1shift;
+                            uint8_t mirror = rom->mmc1shift&0x3;
+                            if (mirror==2) {
+                                rom->mirrormode = VERTICAL;
+                            } else if (mirror ==3) {
+                                rom->mirrormode = HORIZONTAL;
+                            } else {
+                                //other thing - one-screen "lower" and "upper" bank. Not quite sure what that means.
+                            }
+                        } else if (0xA000<=mem && mem<=0xBFFF) { //CHR bank 0
+                            uint8_t mask = 0x1e|eightkb; // test for 8kb mode in chr
+                            if (rom->get_chrsize()==0) { //chr-ram
+                                rom->mmc1chrbank = rom->mmc1shift;
+                                rom->mmc1chrloc = 0;
+                                memcpy(ppu->memory,rom->get_chr_bank(rom->mmc1shift&mask),0x1000<<(!eightkb));
+                            } else {
+                                throw(0); //TODO
+                            }
+                        } else if (0xC000<=mem && mem<=0xDFFF && !eightkb) { //CHR bank 1
+                            if (rom->get_chrsize()==0) { //chr-ram
+                                rom->mmc1chrbank = rom->mmc1shift;
+                                rom->mmc1chrloc = 1;
+                                memcpy(&(ppu->memory[0x1000]),rom->get_chr_bank(rom->mmc1shift),0x1000);
+                            } else {
+                                throw(0); //TODO
+                            }
+                        } else if (0xE000<=mem && mem<=0xFFFF) { //PRG bank
+                            if (prgmode==2) {
+                                memcpy(&memory[0x8000],rom->get_prg_bank(0),0x4000);
+                                memcpy(&memory[0xC000],rom->get_prg_bank(rom->mmc1shift&0xf),0x4000);
+                            } else if (prgmode==3) {
+                                memcpy(&memory[0xC000],rom->get_prg_bank((rom->get_prgsize()/0x4000)-1),0x4000);
+                                memcpy(&memory[0x8000],rom->get_prg_bank(rom->mmc1shift&0xf),0x4000);
+                            } else {
+                                memcpy(&memory[0x8000],rom->get_prg_bank(rom->mmc1shift&0xe),0x8000);
+                            }
+                        }
+                        rom->mmc1shift = 0x10;
+                    }
+                }
+            }
+            }
             break;
     }
     *address = value;
@@ -242,7 +302,7 @@ void CPU::loadRom(ROM *r) {
 
 }
 
-uint16_t CPU::get_addr(int8_t* ptr) {
+long long CPU::get_addr(int8_t* ptr) {
     return ptr-memory;
 }
 

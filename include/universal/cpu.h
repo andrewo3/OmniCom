@@ -123,7 +123,7 @@ class CPU {
         //--extras--
         uint8_t sp = 0xff;
         uint8_t flags = 0x24; // bits: NV-BDIZC
-        uint16_t get_addr(int8_t* ptr);
+        long long get_addr(int8_t* ptr);
         void stack_push(int8_t val);
         uint8_t stack_pull(void);
         void map_memory(int8_t** address); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.

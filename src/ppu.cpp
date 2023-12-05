@@ -38,12 +38,21 @@ PPU::PPU(CPU* c) {
 
 void PPU::write(int8_t* address, int8_t value) { //write ppu memory, taking into account any mirrors or bankswitches
     map_memory(&address);
-    *address = value;
+    if (rom->get_chrsize()==0 && get_addr(address)<0x2000) { //chr-ram
+        chr_ram[get_addr(address)] = value;
+    } else {
+        *address = value;
+    }
 }
 
 int8_t PPU::read(int8_t* address) {
     map_memory(&address);
-    int8_t res = *address;
+    int8_t res;
+    if (rom->get_chrsize()==0 && get_addr(address)<0x2000) { //chr-ram
+        res = chr_ram[get_addr(address)];
+    } else {
+        res = *address;
+    }
     return res;
 }
 
