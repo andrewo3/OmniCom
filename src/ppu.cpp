@@ -100,13 +100,14 @@ void PPU::cycle() {
             }
             //get pallete location and pixel color
             uint8_t attr_read = read(&memory[attr_addr]);
-            bool right = tile_addr&1;
-            bool bottom = (tile_addr>>4)&1;
+            bool right = (tile_addr>>1)&1;
+            bool bottom = (tile_addr>>6)&1;
+            //11011101;
             uint8_t attribute = (attr_read>>((right<<1)|(bottom<<2)))&3;
             uint8_t flip = 7-internalx;
             uint8_t pattern = ((ptlow>>flip)&1)|(((pthigh>>flip)&1)<<1);
             uint8_t pixel = pattern ? read(&memory[0x3f00+4*attribute+pattern]) : read(&memory[0x3f00]);
-            printf("POS(%i,%i) - TILEIND $%04x: %02x, PATTERN - $%04x: %02x %02x,bit: %i, val: %i, finey: %i\n",scycle-1,scanline,tile_addr,read(&memory[tile_addr]),(((*PPUCTRL)&0x10)<<8)|((read(&memory[tile_addr]))<<4)|(((v&0x7000)>>12)&0x07),ptlow,pthigh, internalx, pattern,(((v&7000)>>12)&0x07));
+            //printf("POS(%i,%i) - TILEIND $%04x: %02x, ATTRIBUTE: %04x, PATTERN - $%04x: %02x %02x,bit: %i, val: %i, finey: %i\n",scycle-1,scanline,tile_addr,read(&memory[tile_addr]),attr_addr,(((*PPUCTRL)&0x10)<<8)|((read(&memory[tile_addr]))<<4)|(((v&0x7000)>>12)&0x07),ptlow,pthigh, internalx, pattern,(((v&7000)>>12)&0x07));
             //write some pixel to image here
             int color_ind = pixel*3;
 
@@ -114,10 +115,7 @@ void PPU::cycle() {
                 out_img[3*((scycle-1)+256*scanline)+i] = NTSC_TO_RGB[color_ind+i];
             }
             internalx++;
-            if (internalx==8) {
-                //v_horiz();
-                internalx=0;
-            }
+            internalx%=8;
 
         } else if (scycle>=328 && intile==7 && rendering) { // after the first few dots
                 
@@ -142,9 +140,12 @@ void PPU::cycle() {
         }
         if (scycle == 340 && vblank == true) {
             if (((*PPUMASK)&0xC)) {
-                v = 0x2000+(0x400*(*PPUCTRL&0x3));
+                v &= 0x841F;
+                v |= (t&0x7BE0);
+                t = v;
+                //v = 0x2000+(0x400*(*PPUCTRL&0x3));
             }
-            t = v;
+            //t = v;
             *PPUSTATUS&=0x7F;
             vblank = false;
         }
@@ -175,8 +176,10 @@ void PPU::map_memory(int8_t** addr) {
         switch(rom->mirrormode) {
             case HORIZONTAL:
                 *addr -= ((location-0x2000)/0x400)%2 ? 0x400 : 0; //horizontal nametable mirroring
+                break;
             case VERTICAL:
                 *addr -= location>=0x2800 ? 0x800 : 0; //horizontal nametable mirroring
+                break;
 
             //fourtable has nothing because four table is no mirroring at all
         }

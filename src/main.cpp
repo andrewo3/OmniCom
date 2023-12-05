@@ -116,8 +116,8 @@ void init_shaders() {
 
 void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
-    
-    CPU cpu(true);
+    printf("Mirrormode: %i\n",r_ptr->mirrormode);
+    CPU cpu(false);
     printf("CPU Initialized.\n");
 
     cpu.loadRom(r_ptr);
@@ -169,6 +169,7 @@ int main(int argc, char ** argv) {
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
+    delete[] original_start;
     printf("Window Created\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
     glewExperimental = GL_TRUE;
@@ -275,6 +276,5 @@ int main(int argc, char ** argv) {
     SDL_Quit();
     NESThread.join();
     //stbi_image_free(img);
-    delete[] original_start;
     return 0;
 }

@@ -22,7 +22,7 @@ class PPU {
         bool vram_twice = 0;
         int scanline = 261;
         int scycle = 0;
-        bool debug = true;
+        bool debug = false;
         bool vblank = false;
 
         //rw

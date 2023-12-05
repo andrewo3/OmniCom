@@ -25,12 +25,13 @@ CPU::CPU(bool dbug) {
 }
 
 void CPU::start_nmi() {
-    printf("NMI\n");
+    //printf("NMI\n");
     recv_nmi = false;
     uint16_t push = get_addr(pc-1);
     stack_push((uint8_t)(push>>8));
     stack_push((uint8_t)(push&0xff));
     stack_push(flags);
+    set_flag('I',true);
 
     int8_t * res = &memory[NMI];
     pc = abs(res); 
@@ -67,7 +68,7 @@ void CPU::write(int8_t* address, int8_t value) {
             if (!ppu->w) {
                 ppu->t &= 0x80ff;
                 ppu->t |= (value&0x3f)<<8;
-                ppu->t &= 0xbfff;
+                ppu->t &= 0x3fff;
                 ppu->w = 1;
             } else {
                 ppu->t &= 0xff00;
@@ -79,10 +80,10 @@ void CPU::write(int8_t* address, int8_t value) {
         case 0x2007: // write to PPUDATA
             {
             uint16_t bit14 = (ppu->v)&0x3fff;
-            printf("ppu->%04x: %02x\n",bit14,(uint8_t)value);
+            //printf("ppu->%04x: %02x\n",bit14,(uint8_t)value);
             ppu->write(&(ppu->memory[bit14]),value); // write method takes mapper into account
             bit14+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
-            ppu->v&=0x4000;
+            ppu->v&=~0x3fff;
             ppu->v|=bit14;
             break;
             }
@@ -139,7 +140,7 @@ void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
         a = mem[1];
     }
     if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
-        sprintf(write,"0x%02x: %s, %s $%04x->%04x=%02x, PC=$%04x - A=%02x - X=%02x - Y=%02x",
+        sprintf(write,"0x%02x: %s, %s $%04x->%04x=%02x, PC=$%04x - A=%02x - X=%02x - Y=%02x - P=%02x",
         opcode,
         this->debug_opcodes[opcode],
         this->debug_addr[opcode],
@@ -149,7 +150,8 @@ void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
         get_addr(pc),
         (uint8_t)accumulator,
         (uint8_t)x,
-        (uint8_t)y);
+        (uint8_t)y,
+        flags);
     } else {
         sprintf(write,"0x%02x: ---",opcode);
     }
@@ -166,6 +168,9 @@ void CPU::map_memory(int8_t** address) {
                 }
             }
             break;
+    }
+    if (0x0800<=addr && addr < 0x2000) {
+        *address-=addr/0x800*0x800;
     }
 }
 
@@ -262,36 +267,50 @@ void CPU::set_flag(char flag,bool val) {
     if (val) {
         switch(flag) {
             case 'C':
-                flags|=0x1;
+                flags|=0x01;
+                break;
             case 'Z':
-                flags|=0x2;
+                flags|=0x02;
+                break;
             case 'I':
-                flags|=0x4;
+                flags|=0x04;
+                break;
             case 'D':
-                flags|=0x8;
+                flags|=0x08;
+                break;
             case 'B':
                 flags|=0x10;
+                break;
             case 'V':
                 flags|=0x40;
+                break;
             case 'N':
                 flags|=0x80;
+                break;
         }
     } else {
         switch(flag) {
             case 'C':
                 flags&=0xFE;
+                break;
             case 'Z':
                 flags&=0xFD;
+                break;
             case 'I':
                 flags&=0xFB;
+                break;
             case 'D':
                 flags&=0xF7;
+                break;
             case 'B':
                 flags&=0xEF;
+                break;
             case 'V':
                 flags&=0xBF;
+                break;
             case 'N':
                 flags&=0x7F;
+                break;
         }
     }
 }

@@ -131,7 +131,7 @@ void CPU::BEQ(int8_t* args) {
 void CPU::BIT(int8_t* args) {
     uint8_t r = read(args);
     int8_t test = accumulator & r;
-    this->set_flag('Z',test==0);
+    this->set_flag('Z',!test);
     this->set_flag('V',r&0x40);
     this->set_flag('N',r&0x80);
 }
@@ -214,49 +214,51 @@ void CPU::CPY(int8_t* args) {
 
 void CPU::DEC(int8_t* args) {
     uint8_t r = read(args);
-    write(args,r-1);
+    r--;
+    write(args,r);
     cycles += 2;
     this->set_flag('Z',!r);
     this->set_flag('N',r&0x80);
 }
 
 void CPU::DEX(int8_t* args) {
-    x-=1;
+    x--;
     this->set_flag('Z',!x);
     this->set_flag('N',x&0x80);
 }
 
 void CPU::DEY(int8_t* args) {
-    y-=1;
+    y--;
     this->set_flag('Z',!y);
     this->set_flag('N',y&0x80);
 }
 
 void CPU::EOR(int8_t* args) {
     uint8_t r = read(args);
-    accumulator = accumulator ^ r;
+    accumulator ^= r;
     this->set_flag('Z',!accumulator);
     this->set_flag('N',accumulator&0x80);
 }
 
 void CPU::INC(int8_t* args) {
     uint8_t r = read(args);
-    write(args,r+1);
+    r++;
+    write(args,r);
     cycles += 2;
     this->set_flag('Z',!r);
     this->set_flag('N',r&0x80);
 }
 
 void CPU::INX(int8_t* args) {
-    x+=1;
+    x++;
     this->set_flag('Z',!x);
     this->set_flag('N',x&0x80);
 }
 
 void CPU::INY(int8_t* args) {
-    y+=1;
-    this->set_flag('Z',!(uint8_t)y);
-    this->set_flag('N',((uint8_t)y)&0x80);
+    y++;
+    this->set_flag('Z',!y);
+    this->set_flag('N',y&0x80);
 }
 
 void CPU::JMP(int8_t* args) {
@@ -294,10 +296,10 @@ void CPU::LDY(int8_t* args) {
 void CPU::LSR(int8_t* args) {
     uint8_t r = read(args);
     this->set_flag('C',r&1);
-    uint16_t result = r>>1;
+    uint8_t result = r>>1;
     write(args,result&0xff);
     cycles += 2;
-    this->set_flag('Z',!r);
+    this->set_flag('Z',!accumulator);
     this->set_flag('N',result&0x80);
 }
 
@@ -322,6 +324,8 @@ void CPU::PHP(int8_t* args) {
 
 void CPU::PLA(int8_t* args) {
     accumulator = stack_pull();
+    this->set_flag('Z',!accumulator);
+    this->set_flag('N',accumulator&0x80);
 }
 
 void CPU::PLP(int8_t* args) {
@@ -330,28 +334,29 @@ void CPU::PLP(int8_t* args) {
 
 void CPU::ROL(int8_t* args) {
     uint8_t r = read(args);
-    uint8_t changed = r<<1;
-    changed |= this->get_flag('C');
+    uint8_t changed = (r<<1)&0xff;
+    changed |= this->get_flag('C')&1;
     this->set_flag('C',r&0x80);
     write(args,changed);
     cycles += 2;
-    this->set_flag('N',changed&0x1);
-    this->set_flag('Z',!changed);
+    this->set_flag('N',changed&0x80);
+    this->set_flag('Z',!accumulator);
 }
 
 void CPU::ROR(int8_t* args) {
     uint8_t r = read(args);
-    uint8_t changed = r>>1;
-    changed |= this->get_flag('C')<<7;
+    uint8_t changed = (r>>1)&0xff;
+    changed |= (this->get_flag('C')<<7);
     this->set_flag('C',r&1);
     write(args,changed);
     cycles += 2;
     this->set_flag('N',changed&0x80);
-    this->set_flag('Z',!changed);
+    this->set_flag('Z',!accumulator);
 }
 
 void CPU::RTI(int8_t* args) {
     flags = stack_pull();
+    set_flag('I',false);
     uint16_t new_pc = stack_pull();
     new_pc |=stack_pull()<<8;
     cycles += 4;
@@ -368,7 +373,7 @@ void CPU::RTS(int8_t* args) {
 void CPU::SBC(int8_t* args) {
     uint8_t r = read(args);
     uint16_t unwrapped = (uint8_t)accumulator+
-                        ~r+
+                        (255-r)+
                         this->get_flag('C');
     this->set_flag('C',!(unwrapped>0xFF));
     this->set_flag('V',!((accumulator^r)&0x80) && ((accumulator^unwrapped) & 0x80));
@@ -403,18 +408,27 @@ void CPU::STY(int8_t* args) {
 
 void CPU::TAX(int8_t* args) {
     x = accumulator;
+    this->set_flag('Z',!x);
+    this->set_flag('N',x&0x80);
 }
 
 void CPU::TAY(int8_t* args) {
     y = accumulator;
+    this->set_flag('Z',!y);
+    this->set_flag('N',y&0x80);
+
 }
 
 void CPU::TSX(int8_t* args) {
     x = (int8_t)sp;
+    this->set_flag('Z',!x);
+    this->set_flag('N',x&0x80);
 }
 
 void CPU::TXA(int8_t* args) {
     accumulator = x;
+    this->set_flag('Z',!accumulator);
+    this->set_flag('N',accumulator&0x80);
 }
 
 void CPU::TXS(int8_t* args) {
@@ -423,6 +437,8 @@ void CPU::TXS(int8_t* args) {
 
 void CPU::TYA(int8_t* args) {
     accumulator = y;
+    this->set_flag('Z',!accumulator);
+    this->set_flag('N',accumulator&0x80);
 }
 
 //--defining instruction lookup table

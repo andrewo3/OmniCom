@@ -43,7 +43,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main",
             "args": [
-                "${workspaceRoot}/res/roms/Pac-Man (U) (Namco) [!p].nes"
+                "${workspaceRoot}/res/roms/Donkey Kong (U) (PRG1) [!p].nes"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
