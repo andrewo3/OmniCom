@@ -93,9 +93,9 @@ void CPU::write(int8_t* address, int8_t value) {
             uint16_t bit14 = (ppu->v)&0x3fff;
             //printf("ppu->%04x: %02x\n",bit14,(uint8_t)value);
             ppu->write(&(ppu->memory[bit14]),value); // write method takes mapper into account
-            bit14+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
-            ppu->v&=~0x3fff;
-            ppu->v|=bit14;
+            ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            //ppu->v&=~0x3fff;
+            //ppu->v|=bit14;
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
             }
@@ -131,12 +131,10 @@ void CPU::write(int8_t* address, int8_t value) {
                             } else if (mirror ==3) {
                                 rom->mirrormode = HORIZONTAL;
                             } else {
-                                //other thing - one-screen - "everything mirrors"
+                                //other thing - one-screen - everything mirrors
                             }
                             if (prgmode==2) {
-                                printf("BEFORE: %02x\n",memory[0x8000]);
                                 memcpy(&memory[0x8000],rom->get_prg_bank(0),0x4000);
-                                printf("AFTER: %02x\n",memory[0x8000]);
                             } else if (prgmode==3) {
                                 memcpy(&memory[0xC000],rom->get_prg_bank((rom->get_prgsize()/0x4000)-1),0x4000);
                             } else {
@@ -144,26 +142,26 @@ void CPU::write(int8_t* address, int8_t value) {
                             }
                         } else if (0xA000<=mem && mem<=0xBFFF) { //CHR bank 0
                             uint8_t mask = 0x1e|eightkb; // test for 8kb mode in chr
+                            rom->mmc1chrloc0 = rom->mmc1shift&mask;
+                            rom->mmc1chrbank = rom->mmc1shift;
                             if (rom->get_chrsize()==0) { //chr-ram
                                 rom->mmc1chrbank = rom->mmc1shift;
-                                rom->mmc1chrloc = 0;
                                 memcpy(ppu->memory,rom->get_chr_bank(rom->mmc1shift&mask),0x1000<<(!eightkb));
                             } else {
                                 printf("NOT CHR-RAM\n");
                                 rom->mmc1chrbank = rom->mmc1shift;
-                                rom->mmc1chrloc = rom->mmc1shift&(0xff-eightkb);
                                 memcpy(ppu->memory,rom->get_chr_bank(rom->mmc1shift&mask),0x1000<<(!eightkb));
                                 throw(0); //TODO
                             }
                         } else if (0xC000<=mem && mem<=0xDFFF && !eightkb) { //CHR bank 1
                             if (rom->get_chrsize()==0) { //chr-ram
                                 rom->mmc1chrbank = rom->mmc1shift;
-                                rom->mmc1chrloc = 1;
+                                rom->mmc1chrloc1 = 1;
                                 memcpy(&(ppu->memory[0x1000]),rom->get_chr_bank(rom->mmc1shift),0x1000);
                             } else {
                                 printf("NOT CHR-RAM\n");
                                 rom->mmc1chrbank = rom->mmc1shift;
-                                rom->mmc1chrloc = rom->mmc1shift;
+                                rom->mmc1chrloc1 = rom->mmc1shift;
                                 memcpy(&(ppu->memory[0x1000]),rom->get_chr_bank(rom->mmc1shift),0x1000);
                                 throw(0); //TODO
                             }

@@ -38,20 +38,18 @@ PPU::PPU(CPU* c) {
 
 void PPU::write(int8_t* address, int8_t value) { //write ppu memory, taking into account any mirrors or bankswitches
     map_memory(&address);
+    *address = value;
     if (rom->get_chrsize()==0 && get_addr(address)<0x2000) { //chr-ram
-        chr_ram[get_addr(address)] = value;
-    } else {
-        *address = value;
+        rom->chr_ram[rom->mmc1chrbank*0x1000] = value;
     }
 }
 
 int8_t PPU::read(int8_t* address) {
     map_memory(&address);
     int8_t res;
+    res = *address;
     if (rom->get_chrsize()==0 && get_addr(address)<0x2000) { //chr-ram
-        res = chr_ram[get_addr(address)];
-    } else {
-        res = *address;
+        rom->chr_ram[rom->mmc1chrbank*0x1000] = *address;
     }
     return res;
 }
@@ -88,7 +86,7 @@ void PPU::v_vert() {
 }
 
 void PPU::cycle() {
-    bool rendering = !((~(*PPUMASK))&0xC); //checks if rendering is enabled
+    bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
     if (0<=scanline && scanline<=239) { // visible scanlines
         int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
         if (1<=scycle && scycle<=256 && rendering) { //TODO: fetching background and sprite data during visible scanlines
@@ -100,14 +98,11 @@ void PPU::cycle() {
                 internalx = x;
                 ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
                 pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
-            } if (intile==7) { // end of tile
-                if (scycle==256) { // dot 256 of scanline
-                    v_vert();
-                } else {
-                    v_horiz();
-                }
-                //printf("%04x, %04x - %i, %i, %04x\n",tile_addr, attr_addr, scycle, scanline, v);
             }
+            if (scycle==256) { // dot 256 of scanline
+                v_vert();
+            }
+                //printf("%04x, %04x - %i, %i, %04x\n",tile_addr, attr_addr, scycle, scanline, v);
             //get pallete location and pixel color
             uint8_t attr_read = read(&memory[attr_addr]);
             bool right = (tile_addr>>1)&1;
@@ -127,13 +122,15 @@ void PPU::cycle() {
             internalx++;
             internalx%=8;
 
-        } else if (scycle>=328 && intile==7 && rendering) { // after the first few dots
-            v_horiz(); 
-        }   else if (scycle == 257 && rendering) {
+        } else if (scycle == 257 && rendering) {
             v&=~0x41F;
             v|=(t&0x41F);
         }
+        if (intile==7 && rendering && (scycle>=329 || scycle<=257)) {
+            v_horiz();
+        }
     } else if (241<=scanline && scanline<=260) { //vblank
+        //printf("vblank!\n");
         if (vblank==false) { //start vblank as soon as you reach this
             vblank = true;
             *PPUSTATUS|=0x80;
@@ -144,15 +141,15 @@ void PPU::cycle() {
 
         }
     } else if (scanline==261) { // pre-render scanline
-        if (((*PPUMASK)&0xC) && scycle>=280 && scycle<=304) {
+        if (scycle>=280 && scycle<=304 && rendering) {
             v &= ~0x7BE0;
             v |= (t&0x7BE0);
         }
         if (scycle == 340 && vblank == true) {
-            if (((*PPUMASK)&0xC)) {
-                //v &= 0x841F;
-                //v |= (t&0x7BE0);
-                t = v;
+            if (rendering) {
+                v &= ~0x7BE0;
+                v |= (t&0x7BE0);
+                //v = t;
                 //v = 0x2000+(0x400*(*PPUCTRL&0x3));
             }
             //t = v;

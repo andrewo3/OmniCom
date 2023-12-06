@@ -128,7 +128,7 @@ void init_shaders() {
 void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
     printf("Mirrormode: %i\n",r_ptr->mirrormode);
-    CPU cpu(true);
+    CPU cpu(false);
     cpu_ptr = &cpu;
     printf("CPU Initialized.\n");
 
@@ -136,7 +136,7 @@ void NESLoop(ROM* r_ptr) {
     printf("ROM loaded into CPU.\n");
 
     PPU ppu(&cpu);
-    ppu.debug = true;
+    ppu.debug = false;
     printf("PPU Initialized\n");
     //emulator loop
     while (!interrupted) {
@@ -144,12 +144,12 @@ void NESLoop(ROM* r_ptr) {
         // 3 dots per cpu cycle
         while (ppu.cycles<cpu.cycles*3) {
             ppu.cycle();
+            if (ppu.debug) {
+                printf("PPU REGISTERS: ");
+                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu.vblank, (uint8_t)cpu.memory[0x2000],(uint8_t)cpu.memory[0x2001],(uint8_t)cpu.memory[0x2002],ppu.v);
+                printf("scanline: %i, cycle: %i\n",ppu.scanline,ppu.scycle);
+            }
             //printf("%i\n",ppu.v);
-        }
-        if (ppu.debug) {
-            printf("PPU REGISTERS: ");
-            printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu.vblank, (uint8_t)cpu.memory[0x2000],(uint8_t)cpu.memory[0x2001],(uint8_t)cpu.memory[0x2002],ppu.v);
-            printf("scanline: %i, cycle: %i\n",ppu.scanline,ppu.scycle);
         }
         total_ticks = cpu.cycles;
         

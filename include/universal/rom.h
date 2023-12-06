@@ -15,16 +15,18 @@ class ROM {
         uint8_t* prg;
         uint8_t* chr;
         uint8_t mmc1shift = 0x10;
-        uint8_t mmc1bankmode = 0x00;
+        uint8_t mmc1bankmode = 0x03;
         uint8_t mmc1chrbank = 0x00;
         uint8_t mmc1prgbank = 0x00;
-        uint8_t mmc1chrloc = 0;
+        uint8_t mmc1chrloc0 = 0;
+        uint8_t mmc1chrloc1 = 0;
         uint8_t mmc1prgloc = 0;
         uint8_t *get_prg_bank(int bank_num);
         uint8_t *get_chr_bank(int bank_num);
         uint8_t get_mapper() {return mapper;}
         int get_prgsize() {return prgsize;}
         int get_chrsize() {return chrsize;}
+        uint8_t chr_ram[0x2000];
         ~ROM();
         NT_MIRROR mirrormode;
     private:
