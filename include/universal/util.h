@@ -12,6 +12,8 @@ inline long long epoch() {
 }
 extern unsigned char out_img[184320]; //output image
 
+extern const uint8_t* state;
+
 static uint8_t NTSC_TO_RGB[192] = {
             0x60,0x60,0x60, //0x00
             0x00,0x1c,0xa1, //0x01

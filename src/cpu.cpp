@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <SDL2/SDL.h>
 
 // description of addressing modes:
 // https://blogs.oregonstate.edu/ericmorgan/2022/01/21/6502-addressing-modes/
@@ -101,6 +102,19 @@ void CPU::write(int8_t* address, int8_t value) {
             }
         case 0x4014: //write to OAMDMA
             memcpy(ppu->oam,&memory[(uint16_t)value<<8],256);
+            break;
+        case 0x4016: //controller input 1
+            if (value==1) {
+                //poll input
+                inputs = state[SDL_SCANCODE_RIGHT]| //right
+                (state[SDL_SCANCODE_LEFT]<<1)| //left
+                (state[SDL_SCANCODE_DOWN]<<2)| //down
+                (state[SDL_SCANCODE_UP]<<3)| //up
+                (state[SDL_SCANCODE_RETURN]<<4)| //start
+                (state[SDL_SCANCODE_TAB]<<5)| //select
+                (state[SDL_SCANCODE_LSHIFT]<<6)| //B
+                (state[SDL_SCANCODE_SPACE]<<7); //A
+            }
             break;
     }
     // special mapper cases
@@ -204,6 +218,10 @@ int8_t CPU::read(int8_t* address) {
                 ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
             }
             //ppu->v %= 0x4000;
+            break;
+        case 0x4016:
+            value = (bool)(inputs&0x80);
+            inputs<<=1;
             break;
 
     }

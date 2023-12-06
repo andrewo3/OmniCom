@@ -20,6 +20,7 @@ class CPU {
         int8_t accumulator;
         int8_t x;
         int8_t y;
+        int8_t inputs = 0;
         int8_t* pc;
         uint8_t ins_size;
         bool get_flag(char flag);
