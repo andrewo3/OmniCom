@@ -20,6 +20,7 @@ class PPU {
         int8_t memory[0x4000]; // general memory
         int8_t chr_ram[0x8000]; //chr-ram (used by some mappers)
         int8_t oam[256]; // OAM (Object Attribute Memory) for sprites
+        int8_t secondary_oam[32]; //sprites to draw on each scanline.
         bool vram_twice = 0;
         int scanline = 261;
         int scycle = 0;
@@ -36,6 +37,7 @@ class PPU {
         uint8_t x = 0;
         uint8_t w = 0;
 
+        uint8_t oam_addr;
         uint16_t tile_addr;
         uint16_t attr_addr;
 
@@ -50,6 +52,20 @@ class PPU {
         uint8_t internalx;
         void v_horiz();
         void v_vert();
+
+        //sprite stuff
+        uint8_t sprite_eval_n;
+        uint8_t sprite_eval_m;
+        bool sprite_eval_end;
+        uint8_t sprites;
+        int8_t scanlinesprites[32] = {0};
+        int8_t scanlinespritenum = 0;
+        uint8_t sprite_x_counters[8] = {0};
+        uint8_t active_sprites = {0}; //8 bits - each bit will represent one sprite.
+        uint8_t sprite_patterns[8] = {0};
+        bool spritezeropresent = false;
+        bool sprite_eval = false;
+        
         // registers
         int8_t* PPUCTRL; //&memory[0x2000]
         int8_t* PPUMASK; //&memory[0x2001]

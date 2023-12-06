@@ -14,6 +14,7 @@
 #include <string>
 #include <csignal>
 #include <chrono>
+#include <cmath>
 #include <thread>
 #include <mutex>
 
@@ -26,12 +27,18 @@ volatile sig_atomic_t interrupted = 0;
 
 long long total_ticks;
 long long start;
+long long start_nano;
 
 GLuint shaderProgram;
 GLuint vertexShader;
 GLuint fragmentShader;
 
 CPU *cpu_ptr;
+SDL_AudioDeviceID audio_device;
+char* device_name;
+SDL_AudioSpec audio_spec;
+
+const int BUFFER_LEN = 1024;
 
 int usage_error() {
     printf("Usage: nes rom_filename\n");
@@ -59,8 +66,8 @@ void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
     printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",total_ticks/(epoch()-start)*1000,total_ticks/(epoch()-start)*1000/1789773.0*100);
     //for test purpose: remove once done testing!!
-    std::FILE* memory_dump = fopen("dump.txt","w");
-    fwrite(&cpu_ptr->memory[0x6000],sizeof(uint8_t),0x8000-0x6000,memory_dump);
+    std::FILE* memory_dump = fopen("dump","w");
+    fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
     fclose(memory_dump);
 
     interrupted = 1;
@@ -138,6 +145,7 @@ void NESLoop(ROM* r_ptr) {
     PPU ppu(&cpu);
     ppu.debug = false;
     printf("PPU Initialized\n");
+    
     //emulator loop
     while (!interrupted) {
         cpu.clock();
@@ -155,6 +163,42 @@ void NESLoop(ROM* r_ptr) {
         
     }
     
+}
+
+void AudioLoop() {
+    int16_t buffer[BUFFER_LEN*2];
+    int16_t copy[BUFFER_LEN*2];
+    SDL_PauseAudioDevice(audio_device,0);
+    printf("SAMPLES: %i\n",audio_spec.samples);
+    printf("FREQUENCY: %i\n",audio_spec.freq);
+    printf("CHANNELS: %i\n",audio_spec.channels);
+    printf("SILENCE: %i\n",audio_spec.silence);
+    printf("SIZE: %i\n",audio_spec.size);
+    printf("FORMAT: %i\n",audio_spec.format);
+    //long long x=0;
+    double t_time = SDL_GetTicks()/1000.0;
+    while (!interrupted) {
+        //test audio
+        //printf("Buffer: [");
+        //double t_time = (epoch_nano()-start_nano)/1000000000.0f;
+        
+        //printf("%f\n",t_time);
+        for (int i=0; i<BUFFER_LEN; i++) {
+            double t = t_time+(double)i/audio_spec.freq;
+            double s_value = sin(t*2*M_PI*500.0);
+            //printf("%lf,",s_value);
+            buffer[2*i]=(int16_t)(s_value*((1<<15)-1));
+            buffer[2*i+1]=(int16_t)(s_value*((1<<15)-1));
+            //x++;
+        }
+        //printf("]\n");
+        SDL_QueueAudio(audio_device,buffer,BUFFER_LEN*2*sizeof(int16_t));
+        //SDL_PauseAudioDevice(audio_device,1);
+        t_time = SDL_GetTicks()/1000.0;
+        //int delay = 1000;
+        //SDL_Delay(delay);
+        
+    }
 }
 
 int main(int argc, char ** argv) {
@@ -176,8 +220,18 @@ int main(int argc, char ** argv) {
     //GLubyte* img = stbi_load("res/test_image2.jpg", &dim[0],&dim[1],&dim[2],STBI_default);
     printf("%i %i %i\n",dim[0],dim[1],dim[2]);
     // SDL initialize
-    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
     printf("SDL Initialized\n");
+    printf("SAMPLES: %i\n",audio_spec.samples);
+    if (SDL_GetDefaultAudioInfo(&device_name,&audio_spec,0)) { //get default output
+        printf("Failed to open audio device.");
+        return -1;
+    }
+    audio_spec.samples = BUFFER_LEN;
+    audio_spec.size = audio_spec.samples * sizeof(int16_t) * audio_spec.channels;
+    audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
+    //stream = SDL_NewAudioStream(AUDIO_U8,1,44100,);
+    printf("SDL audio set up.\n");
 
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // for linux
     
@@ -246,10 +300,11 @@ int main(int argc, char ** argv) {
 
     //Enter NES logic loop alongside window loop
     start = epoch();
+    start_nano = epoch_nano();
     std::thread NESThread(NESLoop,&rom);
+    std::thread AudioThread(AudioLoop);
 
     printf("NES thread started. Starting main window loop...\n");
-
     //main window loop
     while (!interrupted) {
         // event loop
@@ -289,8 +344,10 @@ int main(int argc, char ** argv) {
     glDeleteProgram(shaderProgram);
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
+    SDL_CloseAudioDevice(audio_device);
     SDL_Quit();
     NESThread.join();
+    AudioThread.join();
     //stbi_image_free(img);
     return 0;
 }

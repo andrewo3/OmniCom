@@ -10,6 +10,13 @@ inline long long epoch() {
     auto millisecondsSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(durationSinceEpoch);
     return millisecondsSinceEpoch.count();
 }
+
+inline long long epoch_nano() {
+    auto currentTimePoint = std::chrono::system_clock::now();
+    auto durationSinceEpoch = currentTimePoint.time_since_epoch();
+    auto nanosecondsSinceEpoch = std::chrono::duration_cast<std::chrono::nanoseconds>(durationSinceEpoch);
+    return nanosecondsSinceEpoch.count();
+}
 extern unsigned char out_img[184320]; //output image
 
 extern const uint8_t* state;

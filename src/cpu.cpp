@@ -48,6 +48,9 @@ void CPU::write(int8_t* address, int8_t value) {
     switch(mem) {
         //write to OAMADDR (0x2001) is handled implicitly
         //write to OAMADDR (0x2003) is handled implicitly
+        case 0x2003:
+            ppu->oam_addr = (uint8_t)value;
+            break;
         case 0x2000:
             //printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             ppu->t &= ~0xC00;
@@ -55,8 +58,11 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
         case 0x2004: //write to OAMDATA
-            ppu->oam[(uint8_t)memory[0x2003]] = value;
-            memory[0x2003]++;
+            if (ppu->oam_addr%4==2) {
+                value &= ~0x1C;
+            }
+            ppu->oam[ppu->oam_addr] = value;
+            ppu->oam_addr++;
             break;
         case 0x2005: //write to PPUSCROLL
             //printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
@@ -212,6 +218,9 @@ int8_t CPU::read(int8_t* address) {
         case 0x2002:
             *address &= 0x7F;
             ppu->w = 0;
+            break;
+        case 0x2004: //OAMDATA
+            value = ppu->oam[ppu->oam_addr];
             break;
         case 0x2007:
             if (ppu->vblank) {

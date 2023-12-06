@@ -89,7 +89,16 @@ void PPU::cycle() {
     bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
     if (0<=scanline && scanline<=239) { // visible scanlines
         int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
-        if (1<=scycle && scycle<=256 && rendering) { //TODO: fetching background and sprite data during visible scanlines
+        if (1<=scycle && scycle<=256 && rendering) {
+            for (int i=0; i<scanlinespritenum; i++) {
+                sprite_x_counters[i]--;
+                if (active_sprites&(1<<i)) { //if sprite already active
+                    sprite_patterns[i]--; //subtract one from bit for pattern
+                }
+                if (!sprite_x_counters[i]) { //if x counter is 0, sprite becomes active
+                    active_sprites|=(1<<i);
+                }
+            }
             if (intile==0) { // beginning of a tile
                 tile_addr = 0x2000 | (v & 0x0fff);
                 attr_addr = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
@@ -99,19 +108,120 @@ void PPU::cycle() {
                 ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
                 pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
             }
-            if (scycle==256) { // dot 256 of scanline
+
+            if (scycle<=64 && rendering) { //secondary oam initialize
+                for (int i=0; i<32; i++) {
+                    secondary_oam[scycle/2]=0xff;
+                }
+                sprites = 0;
+                sprite_eval_n = 0;
+                sprite_eval_m = 0;
+                sprite_eval = true;
+                sprite_eval_end = false;
+                spritezeropresent = false;
+            } else if (scycle<=256 && rendering) { //sprite evaluation
+                if (!(scycle%2) && sprites<8) {
+                    uint8_t sprite_y = oam[sprite_eval_n];
+                    if (!sprite_eval_end) { // if you havent already reached the end of oam once
+                        secondary_oam[sprites*4] = sprite_y; // copy y pos
+                        bool h16 = (*PPUCTRL)&0x20;
+                        if ((scanline-sprite_y)<(8<<h16) && (scanline-sprite_y)>=0) {
+                            memcpy(&secondary_oam[sprites*4+1],&oam[sprite_eval_n+1],3);
+                            sprite_x_counters[sprites] = (uint8_t)secondary_oam[sprites*4+3];
+                            if (sprite_eval_n==0) {
+                                spritezeropresent = true;
+                            }
+                            sprites++;
+                        }
+                    }
+                    sprite_eval_n+=4;
+                    if (sprite_eval_n == 0) { // no more sprites in primary oam to evaluate for the next line
+                        sprite_eval_end = true;
+                    }
+                } else if (sprites==8 && rendering) {
+                    uint8_t sprite_y = oam[sprite_eval_n+sprite_eval_m];
+                    bool h16 = (*PPUCTRL)&0x20;
+                    if ((scanline-sprite_y)<(8<<h16) && (scanline-sprite_y)>=0) {
+                        (*PPUSTATUS)|=0x20; //set sprite overflow
+                        sprite_eval_n+=4;
+                    } else {
+                        sprite_eval_n+=4;
+
+                        sprite_eval_m++; //the m increment is a hardware bug of the actual NES. for expected behavior of sprite overflow flag it actually shouldnt do this.
+                        sprite_eval_m%=4;
+                    }
+                }
+            }
+
+            if (scycle==256) { // end of scanline, increment vertically and wrap around
                 v_vert();
             }
+
                 //printf("%04x, %04x - %i, %i, %04x\n",tile_addr, attr_addr, scycle, scanline, v);
-            //get pallete location and pixel color
+            
+            //RENDERING
+
+            //get background pallete location and pixel color
             uint8_t attr_read = read(&memory[attr_addr]);
             bool right = (tile_addr>>1)&1;
             bool bottom = (tile_addr>>6)&1;
-            //11011101;
             uint8_t attribute = (attr_read>>((right<<1)|(bottom<<2)))&3;
             uint8_t flip = 7-internalx;
-            uint8_t pattern = ((ptlow>>flip)&1)|(((pthigh>>flip)&1)<<1);
-            uint8_t pixel = pattern ? read(&memory[0x3f00+4*attribute+pattern]) : read(&memory[0x3f00]);
+            uint8_t bg_pattern = ((ptlow>>flip)&1)|(((pthigh>>flip)&1)<<1);
+            
+            
+            //get sprite information to multiplex over background
+            uint8_t sprite_pattern = 0;
+            uint8_t sprite_palette = 0;
+            uint8_t sprite_index = 0;
+            bool sprite_priority = 1;
+            for (int i=scanlinespritenum-1; i>=0; i--) { // go in reverse to get lower priority first. This will result in highest priority pixels on top.
+                
+                if (active_sprites&(1<<i)) { //if sprite is active
+                    //draw sprite
+                    uint8_t sprite_bit = sprite_patterns[i];
+                    if (sprite_bit>=0) {
+                        sprite_index = i;
+                        uint8_t sprite_y=scanlinesprites[4*i];
+                        uint8_t sprite_tile_ind = scanlinesprites[4*i+1];
+                        bool sprite_bank = (*PPUCTRL)&0x8;
+                        if ((*PPUCTRL)&0x20) {
+                            sprite_tile_ind = sprite_tile_ind&0xfe;
+                            sprite_bank = sprite_tile_ind*0x1;
+                        }
+                        uint16_t sprite_tile = (sprite_bank<<12)|(sprite_tile_ind<<4)|((scanline-sprite_y)&0x7);
+                        uint8_t sprite_attr = scanlinesprites[4*i+2];
+                        sprite_palette = sprite_attr&0x3;
+                        bool flip_x = sprite_attr&0x40;
+                        bool flip_y = sprite_attr&0x80;
+                        sprite_priority = sprite_attr&0x20;
+                        uint8_t sprite_x = scanlinesprites[4*i+3];
+                        sprite_pattern = ((read(&memory[sprite_tile])>>sprite_bit)&1)|(((read(&memory[sprite_tile|8])>>sprite_bit)&1)<<1);
+                    }
+                }
+            }
+            uint8_t pattern;
+            bool sprite_pix = false;
+            if (bg_pattern) {
+                if (sprite_pattern) {
+                    switch(sprite_priority) {
+                        case 0:
+                            sprite_pix = true;
+                            break;
+                    }
+                }
+            } else {
+                if (sprite_pattern) {
+                    sprite_pix = true;
+                }
+            }
+            if (sprite_pix && spritezeropresent && sprite_index==0) { //if sprite pixel was chosen, sprite zero is in the secondary oam, and sprite index was the first one (which must have been sprite 0), this is a sprite 0 hit
+                //sprite 0 hit
+                (*PPUSTATUS)|=0x40;
+            }
+            pattern = sprite_pix ? sprite_pattern : bg_pattern;
+            uint8_t pixel = pattern ? read(&memory[(0x3f00|(0x10*sprite_pix))+4*attribute+pattern]) : read(&memory[(0x3f00|(0x10*sprite_pix))]);
+
             //printf("POS(%i,%i) - TILEIND $%04x: %02x, ATTRIBUTE: %04x, PATTERN - $%04x: %02x %02x,bit: %i, val: %i, finey: %i\n",scycle-1,scanline,tile_addr,read(&memory[tile_addr]),attr_addr,(((*PPUCTRL)&0x10)<<8)|((read(&memory[tile_addr]))<<4)|(((v&0x7000)>>12)&0x07),ptlow,pthigh, internalx, pattern,(((v&7000)>>12)&0x07));
             //write some pixel to image here
             int color_ind = pixel*3;
@@ -125,6 +235,13 @@ void PPU::cycle() {
         } else if (scycle == 257 && rendering) {
             v&=~0x41F;
             v|=(t&0x41F);
+            oam_addr = 0;
+            memcpy(scanlinesprites,secondary_oam,sprites*4); //copy sprites
+            scanlinespritenum = sprites;
+            active_sprites = 0;
+            for (int i=0; i<sprites; i++) {
+                sprite_patterns[i]=7; //set bit to 7 for each sprite pattern
+            }
         }
         if (intile==7 && rendering && (scycle>=329 || scycle<=257)) {
             v_horiz();
@@ -141,14 +258,19 @@ void PPU::cycle() {
 
         }
     } else if (scanline==261) { // pre-render scanline
+        if (scycle==2) {
+            (*PPUSTATUS)&=~0x60; //clear overflow and sprite 0 hit
+        }
         if (scycle>=280 && scycle<=304 && rendering) {
             v &= ~0x7BE0;
             v |= (t&0x7BE0);
         }
         if (scycle == 340 && vblank == true) {
             if (rendering) {
+                //update vertical component of v with vertical component of t
                 v &= ~0x7BE0;
                 v |= (t&0x7BE0);
+
                 //v = t;
                 //v = 0x2000+(0x400*(*PPUCTRL&0x3));
             }
