@@ -39,52 +39,64 @@ void CPU::start_nmi() {
 
 void CPU::write(int8_t* address, int8_t value) {
     map_memory(&address);
-    uint16_t mem = get_addr(address); 
+    long long mem = get_addr(address); 
+
+    if (debug) {
+        printf("%04x=>%02x\n",mem,value&0xff);
+    }
     switch(mem) {
         //write to OAMADDR (0x2001) is handled implicitly
         //write to OAMADDR (0x2003) is handled implicitly
         case 0x2000:
-            ppu->t &= 0xf3ff;
+            //printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
+            ppu->t &= ~0xC00;
             ppu->t |= (value&0x3)<<10;
+            //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
         case 0x2004: //write to OAMDATA
             ppu->oam[(uint8_t)memory[0x2003]] = value;
             memory[0x2003]++;
             break;
         case 0x2005: //write to PPUSCROLL
+            //printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             if (!ppu->w) {
-                ppu->t &= 0xffe0; //mask for bit replacement
-                ppu->t |= ((uint8_t)value)>>3;
+                ppu->t &= ~0x1F; //mask for bit replacement
+                ppu->t |= (((uint8_t)value)>>3)&0x1F;
                 ppu->x = value&0x7;
                 ppu->w = 1;
             } else {
-                ppu->t &= 0x8c1f; //another bit mask for replace bits;
+                ppu->t &= ~0x73e0; //another bit mask for replace bits;
                 ppu->t |= (value&0xf8)<<2;
                 ppu->t |= (value&0x7)<<12;
                 ppu->w = 0;
             }
+            //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
         case 0x2006: //write to PPUADDR
+            //printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             if (!ppu->w) {
-                ppu->t &= 0x80ff;
+                ppu->t &= ~0x3F00;
                 ppu->t |= (value&0x3f)<<8;
-                ppu->t &= 0x3fff;
+                ppu->t &= ~0x4000;
                 ppu->w = 1;
             } else {
-                ppu->t &= 0xff00;
-                ppu->t |= (uint8_t)value;
+                ppu->t &= ~0xff;
+                ppu->t |= value&0xff;
                 ppu->v = ppu->t;
                 ppu->w = 0;
             }
+            //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
         case 0x2007: // write to PPUDATA
             {
+            //printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             uint16_t bit14 = (ppu->v)&0x3fff;
             //printf("ppu->%04x: %02x\n",bit14,(uint8_t)value);
             ppu->write(&(ppu->memory[bit14]),value); // write method takes mapper into account
             bit14+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
             ppu->v&=~0x3fff;
             ppu->v|=bit14;
+            //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
             }
         case 0x4014: //write to OAMDMA
@@ -98,23 +110,37 @@ void CPU::write(int8_t* address, int8_t value) {
             if (0x8000<=mem && mem<=0xFFFF) { //MMC1 shift register
                 if (value&0x80) {
                     rom->mmc1shift = 0x10;
+                    memcpy(&memory[0xC000],rom->get_prg_bank((rom->get_prgsize()/0x4000)-1),0x4000);
                 } else {
                     bool full = rom->mmc1shift&1; //1 in bit 0
                     rom->mmc1shift>>=1;
                     rom->mmc1shift|=(value&1)<<4;
+                    printf("SHIFT: %02x\n",rom->mmc1shift);
                     if (full) {
                         bool eightkb = rom->mmc1bankmode&0x10;
                         uint8_t prgmode = (rom->mmc1bankmode&0xC)>>2;
-                        //printf("%04x: %02x\n",mem,rom->mmc1shift);
+                        printf("MMC1 Stuff - %04x: %02x\n",mem,rom->mmc1shift);
                         if (0x8000<=mem && mem<=0x9FFF) { //MMC1 control
                             rom->mmc1bankmode = rom->mmc1shift;
+                            eightkb = rom->mmc1bankmode&0x10;
+                            prgmode = (rom->mmc1bankmode&0xC)>>2;
+                            printf("PRGMODE: %i\n",prgmode);
                             uint8_t mirror = rom->mmc1shift&0x3;
                             if (mirror==2) {
                                 rom->mirrormode = VERTICAL;
                             } else if (mirror ==3) {
                                 rom->mirrormode = HORIZONTAL;
                             } else {
-                                //other thing - one-screen "lower" and "upper" bank. Not quite sure what that means.
+                                //other thing - one-screen - "everything mirrors"
+                            }
+                            if (prgmode==2) {
+                                printf("BEFORE: %02x\n",memory[0x8000]);
+                                memcpy(&memory[0x8000],rom->get_prg_bank(0),0x4000);
+                                printf("AFTER: %02x\n",memory[0x8000]);
+                            } else if (prgmode==3) {
+                                memcpy(&memory[0xC000],rom->get_prg_bank((rom->get_prgsize()/0x4000)-1),0x4000);
+                            } else {
+                                memcpy(&memory[0x8000],rom->get_prg_bank(rom->mmc1prgloc),0x8000);
                             }
                         } else if (0xA000<=mem && mem<=0xBFFF) { //CHR bank 0
                             uint8_t mask = 0x1e|eightkb; // test for 8kb mode in chr
@@ -123,6 +149,10 @@ void CPU::write(int8_t* address, int8_t value) {
                                 rom->mmc1chrloc = 0;
                                 memcpy(ppu->memory,rom->get_chr_bank(rom->mmc1shift&mask),0x1000<<(!eightkb));
                             } else {
+                                printf("NOT CHR-RAM\n");
+                                rom->mmc1chrbank = rom->mmc1shift;
+                                rom->mmc1chrloc = rom->mmc1shift&(0xff-eightkb);
+                                memcpy(ppu->memory,rom->get_chr_bank(rom->mmc1shift&mask),0x1000<<(!eightkb));
                                 throw(0); //TODO
                             }
                         } else if (0xC000<=mem && mem<=0xDFFF && !eightkb) { //CHR bank 1
@@ -131,9 +161,14 @@ void CPU::write(int8_t* address, int8_t value) {
                                 rom->mmc1chrloc = 1;
                                 memcpy(&(ppu->memory[0x1000]),rom->get_chr_bank(rom->mmc1shift),0x1000);
                             } else {
+                                printf("NOT CHR-RAM\n");
+                                rom->mmc1chrbank = rom->mmc1shift;
+                                rom->mmc1chrloc = rom->mmc1shift;
+                                memcpy(&(ppu->memory[0x1000]),rom->get_chr_bank(rom->mmc1shift),0x1000);
                                 throw(0); //TODO
                             }
                         } else if (0xE000<=mem && mem<=0xFFFF) { //PRG bank
+                            rom->mmc1prgloc = rom->mmc1shift &0xf;
                             if (prgmode==2) {
                                 memcpy(&memory[0x8000],rom->get_prg_bank(0),0x4000);
                                 memcpy(&memory[0xC000],rom->get_prg_bank(rom->mmc1shift&0xf),0x4000);
@@ -141,6 +176,7 @@ void CPU::write(int8_t* address, int8_t value) {
                                 memcpy(&memory[0xC000],rom->get_prg_bank((rom->get_prgsize()/0x4000)-1),0x4000);
                                 memcpy(&memory[0x8000],rom->get_prg_bank(rom->mmc1shift&0xf),0x4000);
                             } else {
+                                rom->mmc1prgloc = rom->mmc1shift &0xe;
                                 memcpy(&memory[0x8000],rom->get_prg_bank(rom->mmc1shift&0xe),0x8000);
                             }
                         }
@@ -151,7 +187,9 @@ void CPU::write(int8_t* address, int8_t value) {
             }
             break;
     }
-    *address = value;
+    if (!(0x8000<=mem && mem<=0xffff)) {
+        *address = value;
+    }
 }
 
 int8_t CPU::read(int8_t* address) {
@@ -283,7 +321,10 @@ int CPU::emulated_clock_speed() {
 
 void CPU::reset() {
     int8_t * res = &memory[RESET];
+    printf("Before: %04x\n",get_addr(res));
     map_memory(&res);
+    printf("After: %04x\n",get_addr(res));
+    printf("%02x %02x\n",*res,*(res+1));
     pc = abs(res);
     //for test purposes: remove this later.
     //pc = &memory[0xc000];
@@ -295,8 +336,10 @@ void CPU::loadRom(ROM *r) {
     switch(m) {
         case 0:
             memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
+            break;
         case 1:
-            memcpy(&memory[0xc000],rom->get_prg_bank(0),0x4000);
+            memcpy(&memory[0xc000],rom->get_prg_bank((rom->get_prgsize()/0x4000)-1),0x4000);
+            break;
     }
     reset();
 

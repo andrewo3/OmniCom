@@ -12,15 +12,16 @@ class ROM {
         void load_file(const char* src);
         const char* src_filename;
         bool is_valid() { return valid_rom; }
-        int8_t* prg;
-        int8_t* chr;
+        uint8_t* prg;
+        uint8_t* chr;
         uint8_t mmc1shift = 0x10;
         uint8_t mmc1bankmode = 0x00;
         uint8_t mmc1chrbank = 0x00;
         uint8_t mmc1prgbank = 0x00;
         uint8_t mmc1chrloc = 0;
-        int8_t *get_prg_bank(int bank_num);
-        int8_t *get_chr_bank(int bank_num);
+        uint8_t mmc1prgloc = 0;
+        uint8_t *get_prg_bank(int bank_num);
+        uint8_t *get_chr_bank(int bank_num);
         uint8_t get_mapper() {return mapper;}
         int get_prgsize() {return prgsize;}
         int get_chrsize() {return chrsize;}

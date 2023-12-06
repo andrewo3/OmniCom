@@ -31,6 +31,8 @@ GLuint shaderProgram;
 GLuint vertexShader;
 GLuint fragmentShader;
 
+CPU *cpu_ptr;
+
 int usage_error() {
     printf("Usage: nes rom_filename\n");
     return -1;
@@ -56,7 +58,16 @@ void get_filename(char** path) {
 void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
     printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",total_ticks/(epoch()-start)*1000,total_ticks/(epoch()-start)*1000/1789773.0*100);
+    //for test purpose: remove once done testing!!
+    std::FILE* memory_dump = fopen("dump.txt","w");
+    fwrite(&cpu_ptr->memory[0x6000],sizeof(uint8_t),0x8000-0x6000,memory_dump);
+    fclose(memory_dump);
+
     interrupted = 1;
+    if (signal==SIGSEGV) {
+        printf("Segfault!\n");
+    }
+    exit(EXIT_FAILURE);
 }
 
 void init_shaders() {
@@ -117,13 +128,15 @@ void init_shaders() {
 void NESLoop(ROM* r_ptr) {
     printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
     printf("Mirrormode: %i\n",r_ptr->mirrormode);
-    CPU cpu(false);
+    CPU cpu(true);
+    cpu_ptr = &cpu;
     printf("CPU Initialized.\n");
 
     cpu.loadRom(r_ptr);
     printf("ROM loaded into CPU.\n");
 
     PPU ppu(&cpu);
+    ppu.debug = true;
     printf("PPU Initialized\n");
     //emulator loop
     while (!interrupted) {
@@ -139,14 +152,14 @@ void NESLoop(ROM* r_ptr) {
             printf("scanline: %i, cycle: %i\n",ppu.scanline,ppu.scycle);
         }
         total_ticks = cpu.cycles;
+        
     }
-    std::FILE* memory_dump = fopen("dump.txt","w");
-    fwrite(&cpu.memory[0x6000],sizeof(uint8_t),0x8000-0x6000,memory_dump);
-    fclose(memory_dump);
+    
 }
 
 int main(int argc, char ** argv) {
     std::signal(SIGINT,quit);
+    std::signal(SIGSEGV,quit);
     if (argc!=2) {
         return usage_error();
     }

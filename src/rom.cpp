@@ -55,8 +55,8 @@ void ROM::load_file(const char* src) {
         prgsize = header[4]*0x4000;
         chrsize = header[5]*0x2000;
     }
-    prg = (int8_t *)malloc(prgsize*sizeof(int8_t));
-    chr = (int8_t *)malloc(chrsize*sizeof(int8_t));
+    prg = (uint8_t *)malloc(prgsize*sizeof(uint8_t));
+    chr = (uint8_t *)malloc(chrsize*sizeof(uint8_t));
     if (trainer_present) { // if trainer is present
         std::fread(trainer,512,1,rp);
     }
@@ -67,7 +67,7 @@ void ROM::load_file(const char* src) {
     std::fclose(rp);
 }
 
-int8_t* ROM::get_prg_bank(int bank_num) { //size = 0x4000
+uint8_t* ROM::get_prg_bank(int bank_num) { //size = 0x4000
     if (bank_num>prgsize/0x4000) {
         printf("Bank number out of bounds\n");
         throw(1);
@@ -75,7 +75,7 @@ int8_t* ROM::get_prg_bank(int bank_num) { //size = 0x4000
     return prg+0x4000*bank_num;
 }
 
-int8_t* ROM::get_chr_bank(int bank_num) { //size = 0x1000
+uint8_t* ROM::get_chr_bank(int bank_num) { //size = 0x1000
     if (chrsize!=0 && bank_num>chrsize/0x1000) {
         printf("Bank number %i out of bounds - %i, %i\n",bank_num,chrsize,chrsize/0x1000);
         throw(1);

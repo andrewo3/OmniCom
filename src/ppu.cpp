@@ -88,7 +88,7 @@ void PPU::v_vert() {
 }
 
 void PPU::cycle() {
-    bool rendering = ((*PPUMASK)&0xC); //checks if rendering is enabled
+    bool rendering = !((~(*PPUMASK))&0xC); //checks if rendering is enabled
     if (0<=scanline && scanline<=239) { // visible scanlines
         int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
         if (1<=scycle && scycle<=256 && rendering) { //TODO: fetching background and sprite data during visible scanlines
@@ -100,10 +100,11 @@ void PPU::cycle() {
                 internalx = x;
                 ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
                 pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
-            } else if (intile==7) { // end of tile
-                v_horiz();
+            } if (intile==7) { // end of tile
                 if (scycle==256) { // dot 256 of scanline
                     v_vert();
+                } else {
+                    v_horiz();
                 }
                 //printf("%04x, %04x - %i, %i, %04x\n",tile_addr, attr_addr, scycle, scanline, v);
             }
@@ -127,9 +128,9 @@ void PPU::cycle() {
             internalx%=8;
 
         } else if (scycle>=328 && intile==7 && rendering) { // after the first few dots
-                
+            v_horiz(); 
         }   else if (scycle == 257 && rendering) {
-            v&=0xFBE0;
+            v&=~0x41F;
             v|=(t&0x41F);
         }
     } else if (241<=scanline && scanline<=260) { //vblank
@@ -143,14 +144,14 @@ void PPU::cycle() {
 
         }
     } else if (scanline==261) { // pre-render scanline
-        if (((*PPUMASK)&0xC)) {
-            v &= 0x841F;
+        if (((*PPUMASK)&0xC) && scycle>=280 && scycle<=304) {
+            v &= ~0x7BE0;
             v |= (t&0x7BE0);
         }
         if (scycle == 340 && vblank == true) {
             if (((*PPUMASK)&0xC)) {
-                v &= 0x841F;
-                v |= (t&0x7BE0);
+                //v &= 0x841F;
+                //v |= (t&0x7BE0);
                 t = v;
                 //v = 0x2000+(0x400*(*PPUCTRL&0x3));
             }

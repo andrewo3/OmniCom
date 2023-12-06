@@ -21,7 +21,7 @@ int8_t* CPU::indy(int8_t* args) {
     ins_size = 2;
     cycles += 3;
     uint8_t u_val = read((int8_t*)u);
-    uint16_t ind = (uint8_t)read(&memory[u_val]) | (uint16_t)(((uint8_t)read(&memory[u_val+1]))<<8);
+    uint16_t ind = (uint8_t)read(&memory[u_val]) | (uint16_t)(((uint8_t)read(&memory[(u_val+1)&0xff]))<<8);
     return &memory[ind+(uint8_t)y];
 }
 
@@ -157,11 +157,10 @@ void CPU::BPL(int8_t* args) {
 
 void CPU::BRK(int8_t* args) {
     // push high byte first
-    uint16_t last_ptr = get_addr(pc+ins_size);
+    uint16_t last_ptr = get_addr(pc+ins_size)+1;
     stack_push((int8_t)(last_ptr>>8));
     stack_push((int8_t)(last_ptr&0xff));
-    uint8_t flagspush = flags;
-    flagspush|=0x18;
+    flags|=0x30;
     stack_push(flags);
     cycles += 5;
     pc = this->abs(&memory[IRQ])-ins_size;

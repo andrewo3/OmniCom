@@ -43,7 +43,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main",
             "args": [
-                "${workspaceRoot}/res/roms/Donkey Kong (U) (PRG1) [!p].nes"
+                "/WIN_D/Downloads/Misc/test_roms/instr_test-v5/rom_singles/01-basics.nes"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
