@@ -49,6 +49,7 @@ class CPU {
         void start_nmi();
         bool recv_nmi = false;
         uint8_t status() { return flags;}
+        bool input_strobe = 0;
     private:
 
         //---- instructions ----

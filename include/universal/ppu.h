@@ -49,7 +49,7 @@ class PPU {
         uint8_t read_buffer = 0;
     private:
         void map_memory(int8_t** addr);
-        uint16_t get_addr(int8_t* ptr);
+        long long get_addr(int8_t* ptr);
         void apply_and_update_registers();
         uint16_t upcoming_pattern;
         uint8_t internalx;

@@ -22,7 +22,8 @@
 std::mutex interruptedMutex;
 
 const int NES_DIM[2] = {256,240};
-const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
+int WINDOW_INIT[2];
+const int FLAGS = SDL_WINDOW_FULLSCREEN_DESKTOP|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
 
 volatile sig_atomic_t interrupted = 0;
 
@@ -79,6 +80,15 @@ void quit(int signal) {
         printf("Segfault!\n");
     }
     exit(EXIT_FAILURE);
+}
+
+void viewportBox(int** viewportBox,int width, int height) {
+    float aspect_ratio = (float)NES_DIM[0]/NES_DIM[1];
+    bool horiz = (float)width/height>aspect_ratio;
+    (*viewportBox)[0] = horiz ? (width-aspect_ratio*height)/2.0 : 0;
+    (*viewportBox)[1] = horiz ? 0 : (height-width/aspect_ratio)/2.0;
+    (*viewportBox)[2] = horiz ? aspect_ratio*height : width;
+    (*viewportBox)[3] = horiz ? height : width/aspect_ratio;
 }
 
 void init_shaders() {
@@ -180,6 +190,7 @@ void NESLoop() {
 
 void AudioLoop(void* userdata, uint8_t* stream, int len) {
     for (int i=0; i<len; i+=2) {
+        //int frame = apu_ptr->mixer();
         int16_t v = (int16_t)(32767*sin(t));
         //stream[i] = v&0xff;
         //stream[i+1] = (v>>8)&0xff;
@@ -210,12 +221,18 @@ int main(int argc, char ** argv) {
     memcpy(filename,argv[1],strlen(argv[1])+1);
     get_filename(&filename);
 
-    int dim[3] = {256,240,3};
-    //GLubyte* img = stbi_load("res/test_image2.jpg", &dim[0],&dim[1],&dim[2],STBI_default);
-    printf("%i %i %i\n",dim[0],dim[1],dim[2]);
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
+    SDL_ShowCursor(0);
     printf("SDL Initialized\n");
+
+    //set display dimensions
+    SDL_DisplayMode DM;
+    SDL_GetDesktopDisplayMode(0,&DM);
+    WINDOW_INIT[0] = DM.w;
+    WINDOW_INIT[1] = DM.h;
+
+    //audio
     audio_spec.samples = BUFFER_LEN;
     audio_spec.freq = 44100;
     audio_spec.format = AUDIO_S16SYS;  // 16-bit signed, little-endian
@@ -232,13 +249,15 @@ int main(int argc, char ** argv) {
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,NES_DIM[0],NES_DIM[1],FLAGS);
+    int* viewport = new int[4];
+    viewportBox(&viewport,WINDOW_INIT[0],WINDOW_INIT[1]);
+    SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WINDOW_INIT[0],WINDOW_INIT[1],FLAGS);
     delete[] original_start;
     printf("Window Created\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
     glewExperimental = GL_TRUE;
     glewInit();
-    glViewport(0, 0, NES_DIM[0], NES_DIM[1]);
+    glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
     printf("OpenGL Initialized.\n");
     GLenum error = glGetError();
     SDL_Event event;
@@ -279,16 +298,17 @@ int main(int argc, char ** argv) {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim[0],dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glGenerateMipmap(GL_TEXTURE_2D);
 
     glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
+    glUniform1f(glGetUniformLocation(shaderProgram, "iTime"), (float)(epoch()-start));
     
     printf("Window texture bound and mapped.\n");
 
@@ -332,16 +352,24 @@ int main(int argc, char ** argv) {
                     break;
                 case SDL_WINDOWEVENT:
                     if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        glViewport(0,0,event.window.data1,event.window.data2);
+                        int* new_viewport = new int[4];
+                        int new_width = event.window.data1;
+                        int new_height = event.window.data2;
+                        viewportBox(&new_viewport,new_width,new_height);
+                        printf("%i %i %i %i\n",new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+                        glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+                        //glViewport(0,0,new_width,new_height);
+                        delete[] new_viewport;
                     }
             }
         }
         //logic is executed in nes thread
 
         //render texture from nes (temporarily test_image.jpg)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dim[0],dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
 
         glUseProgram(shaderProgram);
+        glUniform1f(glGetUniformLocation(shaderProgram, "iTime"), (float)(epoch()-start));
         
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);

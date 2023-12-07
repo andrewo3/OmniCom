@@ -9,7 +9,7 @@ PPU::PPU() {
     this->set_registers();
 }
 
-uint16_t PPU::get_addr(int8_t* ptr) {
+long long PPU::get_addr(int8_t* ptr) {
     return ptr-memory;
 }
 
@@ -243,7 +243,6 @@ void PPU::cycle() {
                 }
             }
             uint8_t pixel = pattern ? read(&memory[(0x3f00|(0x10*sprite_pix))+4*attribute+pattern]) : read(&memory[(0x3f00|(0x10*sprite_pix))]);
-
             //printf("POS(%i,%i) - TILEIND $%04x: %02x, ATTRIBUTE: %04x, PATTERN - $%04x: %02x %02x,bit: %i, val: %i, finey: %i\n",scycle-1,scanline,tile_addr,read(&memory[tile_addr]),attr_addr,(((*PPUCTRL)&0x10)<<8)|((read(&memory[tile_addr]))<<4)|(((v&0x7000)>>12)&0x07),ptlow,pthigh, internalx, pattern,(((v&7000)>>12)&0x07));
             //write some pixel to image here
             int color_ind = pixel*3;
@@ -324,7 +323,7 @@ void PPU::apply_and_update_registers() {
 }
 
 void PPU::map_memory(int8_t** addr) {
-    uint16_t location = get_addr(*addr);
+    long long location = get_addr(*addr);
     if (0x2000<=location && location<0x3000) { //map according to rom, which could also include CHR bankswitching
         switch(rom->mirrormode) {
             case HORIZONTAL:
@@ -339,6 +338,8 @@ void PPU::map_memory(int8_t** addr) {
     }
     else if (0x3000<=location && location<0x3F00) {
         *addr-=0x1000;
+    } else if (location==0x3f10 || location==0x3f14 || location==0x3f18 || location==0x3f1c) {
+        *addr-=0x10;
     } else if (0x3F20<=location&&location<0x4000) {
         *addr-=(location-0x3f00)/0x20*0x20;
     }
