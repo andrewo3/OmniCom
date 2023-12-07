@@ -115,14 +115,15 @@ void CPU::write(int8_t* address, int8_t value) {
         case 0x4014: //write to OAMDMA
             //memcpy(ppu->oam,&memory[(uint16_t)((value&0xff)<<8)],256);
             for (int i=0; i<256; i++) {
-                ppu->oam[(uint8_t)(ppu->oam_addr+i)] = read(&memory[(uint16_t)((value&0xff)<<8)+i]);
+                ppu->oam[(uint8_t)(ppu->oam_addr+i)] = read(&memory[(uint16_t)((value&0xff)<<8)+i])&0xff;
                 if (i%4==2) {
                     ppu->oam[i] &= ~0x1C;
                 }
                 ppu->oam[i]&=0xff;
             }
+            ppu->oam_addr--;
             if (debug) {
-            printf("New OAM: [");
+                printf("New OAM: [");
                 for (int i=0; i<256; i++) {
                     printf("%02x,",ppu->oam[i]);
                 }
@@ -244,12 +245,20 @@ int8_t CPU::read(int8_t* address) {
         case 0x2004: //OAMDATA
             value = ppu->oam[ppu->oam_addr];
             break;
-        case 0x2007:
-            if (ppu->vblank) {
-                ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+        case 0x2007: //PPUDATA
+            {
+            uint16_t bit14 = (ppu->v)&0x3fff;
+            if (bit14<=0x3eff) {
+                value = ppu->read_buffer;
+                ppu->read_buffer = ppu->memory[bit14];
+            } else {
+                value = ppu->memory[bit14];
             }
+            ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            
             //ppu->v %= 0x4000;
             break;
+            }
         case 0x4016:
             value = (bool)(inputs&0x80);
             inputs<<=1;

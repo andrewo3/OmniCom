@@ -112,9 +112,10 @@ void PPU::cycle() {
                 pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
             }
 
-            if (scycle<=64 && rendering) { //secondary oam initialize
+            if (scycle<=64 && ((*PPUMASK)&0x10)) { //secondary oam initialize
                 for (int i=0; i<32; i++) {
                     secondary_oam[scycle/2]=0xff;
+                    secondary_oam[scycle/2+1]=0xff;
                 }
                 sprites = 0;
                 sprite_eval_n = 0;
@@ -204,7 +205,7 @@ void PPU::cycle() {
                             sprite_bit = 7+8*h16-sprite_bit;
                         }
                         sprite_priority = sprite_attr&0x20;
-                        uint8_t sprite_x = scanlinesprites[4*i+3];
+                        uint8_t sprite_x = scanlinesprites[4*i+3]&0xff;
                         
                         uint8_t new_sprite_pattern = ((read(&memory[sprite_tile])>>sprite_bit)&1)|(((read(&memory[sprite_tile|8])>>sprite_bit)&1)<<1);
                         if (new_sprite_pattern!=0) {
@@ -236,6 +237,10 @@ void PPU::cycle() {
             pattern = (sprite_pix &&((*PPUMASK)&0x10))  ? sprite_pattern : bg_pattern;
             if (sprite_pix) {
                 attribute = sprite_palette;
+            } else {
+                if (!((*PPUMASK)&0x8)) {
+                    pattern = 0;
+                }
             }
             uint8_t pixel = pattern ? read(&memory[(0x3f00|(0x10*sprite_pix))+4*attribute+pattern]) : read(&memory[(0x3f00|(0x10*sprite_pix))]);
 
@@ -272,7 +277,7 @@ void PPU::cycle() {
                 sprite_patterns[i]=7; //set bit to 7 for each sprite pattern
             }
         }
-        if (intile==7 && rendering && (scycle>=329 || scycle<=257)) {
+        if (intile==7 && rendering && (scycle>=337 || scycle<256)) {
             v_horiz();
         }
     } else if (241<=scanline && scanline<=260) { //vblank
@@ -287,7 +292,6 @@ void PPU::cycle() {
 
         }
     } else if (scanline==261) { // pre-render scanline
-        
         if (scycle==2) {
             (*PPUSTATUS)&=~0x60; //clear overflow and sprite 0 hit
         }
@@ -295,12 +299,10 @@ void PPU::cycle() {
             v &= ~0x7BE0;
             v |= (t&0x7BE0);
         }
-        if (scycle==340) {
-            if (vblank==true) {
-                *PPUSTATUS&=0x7F;
-                vblank = false;
+        if (vblank==true) {
+            *PPUSTATUS&=0x7F;
+            vblank = false;
             }
-        }
 
     }
 

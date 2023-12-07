@@ -30,6 +30,8 @@ class PPU {
         //rw
         int8_t read(int8_t* address);
         void write(int8_t* address, int8_t value);
+        void v_horiz();
+        void v_vert();
 
         // registers
         uint16_t v = 0;
@@ -44,14 +46,13 @@ class PPU {
         uint16_t pthigh; //pattern table high bit data
         uint16_t ptlow; //pattern table low bit data
         uint8_t pattern;
+        uint8_t read_buffer = 0;
     private:
         void map_memory(int8_t** addr);
         uint16_t get_addr(int8_t* ptr);
         void apply_and_update_registers();
         uint16_t upcoming_pattern;
         uint8_t internalx;
-        void v_horiz();
-        void v_vert();
 
         //sprite stuff
         uint8_t sprite_eval_n;

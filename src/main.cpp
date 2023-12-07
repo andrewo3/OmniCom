@@ -183,6 +183,8 @@ void AudioLoop(void* userdata, uint8_t* stream, int len) {
         int16_t v = (int16_t)(32767*sin(t));
         //stream[i] = v&0xff;
         //stream[i+1] = (v>>8)&0xff;
+        stream[i] = 0;
+        stream[i+1] = 0;
         t+=(2.0*M_PI*500.0)/audio_spec.freq;
         
     }
@@ -310,9 +312,9 @@ int main(int argc, char ** argv) {
     ppu_ptr = &ppu;
     ppu.debug = false;
     printf("PPU Initialized\n");
-    //std::thread NESThread(NESLoop);
-    std::thread tCPU(CPUThread);
-    std::thread tPPU(PPUThread);
+    std::thread NESThread(NESLoop);
+    //std::thread tCPU(CPUThread);
+    //std::thread tPPU(PPUThread);
     //std::thread AudioThread(AudioLoop);
 
     printf("NES thread started. Starting main window loop...\n");
@@ -361,9 +363,9 @@ int main(int argc, char ** argv) {
     SDL_DestroyWindow(window);
     SDL_CloseAudioDevice(audio_device);
     SDL_Quit();
-    //NESThread.join();
-    tCPU.join();
-    tPPU.join();
+    NESThread.join();
+    //tCPU.join();
+    //tPPU.join();
     //stbi_image_free(img);
     return 0;
 }
