@@ -61,7 +61,7 @@ void CPU::write(int8_t* address, int8_t value) {
             if (ppu->oam_addr%4==2) {
                 value &= ~0x1C;
             }
-            ppu->oam[ppu->oam_addr] = value;
+            ppu->oam[ppu->oam_addr] = value&0xff;
             ppu->oam_addr++;
             break;
         case 0x2005: //write to PPUSCROLL
@@ -113,9 +113,20 @@ void CPU::write(int8_t* address, int8_t value) {
             apu->p2_count=(value&0xF8)>>3;
             break;
         case 0x4014: //write to OAMDMA
-            memcpy(ppu->oam,&memory[(uint16_t)value<<8],256);
-            for (int i=2; i<256; i+=4) {
-                ppu->oam[i] &= ~0x1C;
+            //memcpy(ppu->oam,&memory[(uint16_t)((value&0xff)<<8)],256);
+            for (int i=0; i<256; i++) {
+                ppu->oam[(uint8_t)(ppu->oam_addr+i)] = read(&memory[(uint16_t)((value&0xff)<<8)+i]);
+                if (i%4==2) {
+                    ppu->oam[i] &= ~0x1C;
+                }
+                ppu->oam[i]&=0xff;
+            }
+            if (debug) {
+            printf("New OAM: [");
+                for (int i=0; i<256; i++) {
+                    printf("%02x,",ppu->oam[i]);
+                }
+                printf("]\n");
             }
             break;
         case 0x4016: //controller input 1

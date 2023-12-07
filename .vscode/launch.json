@@ -43,7 +43,8 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main",
             "args": [
-                "/WIN_D/Downloads/Misc/test_roms/instr_test-v5/rom_singles/01-basics.nes"
+                "res/roms/Pac-Man (U) (Namco) [!p].nes"
+
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

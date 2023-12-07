@@ -36,6 +36,7 @@ GLuint vertexShader;
 GLuint fragmentShader;
 
 CPU *cpu_ptr;
+PPU *ppu_ptr;
 APU * apu_ptr;
 SDL_AudioDeviceID audio_device;
 char* device_name;
@@ -135,40 +136,43 @@ void init_shaders() {
     delete[] fragment_source;
 }
 
-void NESLoop(ROM* r_ptr) {
-    printf("Mapper: %i\n",r_ptr->get_mapper()); //https://www.nesdev.org/wiki/Mapper
-    printf("Mirrormode: %i\n",r_ptr->mirrormode);
-    CPU cpu(false);
-    cpu_ptr = &cpu;
-    printf("CPU Initialized.\n");
+void CPUThread() {
+    while(!interrupted) {
+        cpu_ptr->clock();
+        total_ticks = cpu_ptr->cycles;
+    }
+    
+}
 
-    APU apu;
-    cpu.apu = &apu;
-    apu_ptr = &apu;
-    apu.cpu = &cpu;
-    printf("APU set");
+void PPUThread() {
+    while(!interrupted) {
+        if (ppu_ptr->cycles<cpu_ptr->cycles*3) {
+            ppu_ptr->cycle();
+            if (ppu_ptr->debug) {
+                printf("PPU REGISTERS: ");
+                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
+                printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
+            }
+        }
+    }
+}
 
-    cpu.loadRom(r_ptr);
-    printf("ROM loaded into CPU.\n");
-
-    PPU ppu(&cpu);
-    ppu.debug = false;
-    printf("PPU Initialized\n");
+void NESLoop() {
     
     //emulator loop
     while (!interrupted) {
-        cpu.clock();
+        cpu_ptr->clock();
         // 3 dots per cpu cycle
-        while (ppu.cycles<cpu.cycles*3) {
-            ppu.cycle();
-            if (ppu.debug) {
+        while (ppu_ptr->cycles<cpu_ptr->cycles*3) {
+            ppu_ptr->cycle();
+            if (ppu_ptr->debug) {
                 printf("PPU REGISTERS: ");
-                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu.vblank, (uint8_t)cpu.memory[0x2000],(uint8_t)cpu.memory[0x2001],(uint8_t)cpu.memory[0x2002],ppu.v);
-                printf("scanline: %i, cycle: %i\n",ppu.scanline,ppu.scycle);
+                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
+                printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
             }
             //printf("%i\n",ppu.v);
         }
-        total_ticks = cpu.cycles;
+        total_ticks = cpu_ptr->cycles;
         
     }
     
@@ -195,6 +199,10 @@ int main(int argc, char ** argv) {
     if (!rom.is_valid()) {
         return invalid_error();
     }
+
+    printf("Mapper: %i\n",rom.get_mapper()); //https://www.nesdev.org/wiki/Mapper
+    printf("Mirrormode: %i\n",rom.mirrormode);
+
     char* filename = new char[strlen(argv[1])+1];
     char* original_start = filename;
     memcpy(filename,argv[1],strlen(argv[1])+1);
@@ -285,7 +293,26 @@ int main(int argc, char ** argv) {
     //Enter NES logic loop alongside window loop
     start = epoch();
     start_nano = epoch_nano();
-    std::thread NESThread(NESLoop,&rom);
+
+    CPU cpu(false);
+    cpu_ptr = &cpu;
+    printf("CPU Initialized.\n");
+    APU apu;
+    cpu.apu = &apu;
+    apu_ptr = &apu;
+    apu.cpu = &cpu;
+    printf("APU set");
+
+    cpu.loadRom(&rom);
+    printf("ROM loaded into CPU.\n");
+
+    PPU ppu(&cpu);
+    ppu_ptr = &ppu;
+    ppu.debug = false;
+    printf("PPU Initialized\n");
+    //std::thread NESThread(NESLoop);
+    std::thread tCPU(CPUThread);
+    std::thread tPPU(PPUThread);
     //std::thread AudioThread(AudioLoop);
 
     printf("NES thread started. Starting main window loop...\n");
@@ -334,7 +361,9 @@ int main(int argc, char ** argv) {
     SDL_DestroyWindow(window);
     SDL_CloseAudioDevice(audio_device);
     SDL_Quit();
-    NESThread.join();
+    //NESThread.join();
+    tCPU.join();
+    tPPU.join();
     //stbi_image_free(img);
     return 0;
 }
