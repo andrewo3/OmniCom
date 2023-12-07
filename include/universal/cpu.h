@@ -2,16 +2,20 @@
 #define cpu_h
 
 #include "rom.h"
+#include "apu.h"
 #include "util.h"
 #include <cstdint>
 
 class PPU;
+
+class APU;
 
 class CPU {
     public:
         CPU();
         CPU(bool dbug);
         PPU* ppu;
+        APU* apu;
         int CLOCK_SPEED = 1789773;
         //int CLOCK_SPEED = 2147483647; //for test purposes
         int emulated_clock_speed();

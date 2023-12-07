@@ -106,8 +106,17 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
             }
+        case 0x4003:
+            apu->p1_count=(value&0xF8)>>3;
+            break;
+        case 0x4007:
+            apu->p2_count=(value&0xF8)>>3;
+            break;
         case 0x4014: //write to OAMDMA
             memcpy(ppu->oam,&memory[(uint16_t)value<<8],256);
+            for (int i=2; i<256; i+=4) {
+                ppu->oam[i] &= ~0x1C;
+            }
             break;
         case 0x4016: //controller input 1
             if (value==1) {
@@ -122,6 +131,8 @@ void CPU::write(int8_t* address, int8_t value) {
                 (state[SDL_SCANCODE_SPACE]<<7); //A
             }
             break;
+        case 0x4017:
+            apu->fcmode = value;
     }
     // special mapper cases
     switch (rom->get_mapper()) {

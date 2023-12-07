@@ -215,7 +215,7 @@ void PPU::cycle() {
                     sprite_pix = true;
                 }
             }
-            if (sprite_pix && spritezeropresent && sprite_index==0) { //if sprite pixel was chosen, sprite zero is in the secondary oam, and sprite index was the first one (which must have been sprite 0), this is a sprite 0 hit
+            if (spritezeropresent && sprite_index==0 && ((*PPUMASK)&0x8) && ((*PPUMASK)&0x10) && !(sprite_pattern == 0) && !(bg_pattern == 0)) { //if sprite zero is in the secondary oam, and sprite index was the first one (which must have been sprite 0), this is a sprite 0 hit
                 //sprite 0 hit
                 (*PPUSTATUS)|=0x40;
             }
@@ -278,7 +278,6 @@ void PPU::cycle() {
             *PPUSTATUS&=0x7F;
             vblank = false;
         }
-
 
     }
 

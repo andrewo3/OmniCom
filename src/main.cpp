@@ -5,6 +5,7 @@
 #include "rom.h"
 #include "cpu.h"
 #include "ppu.h"
+#include "apu.h"
 #include "util.h"
 #include "shader_data.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -28,12 +29,14 @@ volatile sig_atomic_t interrupted = 0;
 long long total_ticks;
 long long start;
 long long start_nano;
+double t = 0;
 
 GLuint shaderProgram;
 GLuint vertexShader;
 GLuint fragmentShader;
 
 CPU *cpu_ptr;
+APU * apu_ptr;
 SDL_AudioDeviceID audio_device;
 char* device_name;
 SDL_AudioSpec audio_spec;
@@ -139,6 +142,12 @@ void NESLoop(ROM* r_ptr) {
     cpu_ptr = &cpu;
     printf("CPU Initialized.\n");
 
+    APU apu;
+    cpu.apu = &apu;
+    apu_ptr = &apu;
+    apu.cpu = &cpu;
+    printf("APU set");
+
     cpu.loadRom(r_ptr);
     printf("ROM loaded into CPU.\n");
 
@@ -165,40 +174,15 @@ void NESLoop(ROM* r_ptr) {
     
 }
 
-void AudioLoop() {
-    int16_t buffer[BUFFER_LEN*2];
-    int16_t copy[BUFFER_LEN*2];
-    SDL_PauseAudioDevice(audio_device,0);
-    printf("SAMPLES: %i\n",audio_spec.samples);
-    printf("FREQUENCY: %i\n",audio_spec.freq);
-    printf("CHANNELS: %i\n",audio_spec.channels);
-    printf("SILENCE: %i\n",audio_spec.silence);
-    printf("SIZE: %i\n",audio_spec.size);
-    printf("FORMAT: %i\n",audio_spec.format);
-    //long long x=0;
-    double t_time = SDL_GetTicks()/1000.0;
-    while (!interrupted) {
-        //test audio
-        //printf("Buffer: [");
-        //double t_time = (epoch_nano()-start_nano)/1000000000.0f;
-        
-        //printf("%f\n",t_time);
-        for (int i=0; i<BUFFER_LEN; i++) {
-            double t = t_time+(double)i/audio_spec.freq;
-            double s_value = sin(t*2*M_PI*500.0);
-            //printf("%lf,",s_value);
-            buffer[2*i]=(int16_t)(s_value*((1<<15)-1));
-            buffer[2*i+1]=(int16_t)(s_value*((1<<15)-1));
-            //x++;
-        }
-        //printf("]\n");
-        SDL_QueueAudio(audio_device,buffer,BUFFER_LEN*2*sizeof(int16_t));
-        //SDL_PauseAudioDevice(audio_device,1);
-        t_time = SDL_GetTicks()/1000.0;
-        //int delay = 1000;
-        //SDL_Delay(delay);
+void AudioLoop(void* userdata, uint8_t* stream, int len) {
+    for (int i=0; i<len; i+=2) {
+        int16_t v = (int16_t)(32767*sin(t));
+        //stream[i] = v&0xff;
+        //stream[i+1] = (v>>8)&0xff;
+        t+=(2.0*M_PI*500.0)/audio_spec.freq;
         
     }
+        
 }
 
 int main(int argc, char ** argv) {
@@ -222,13 +206,13 @@ int main(int argc, char ** argv) {
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
     printf("SDL Initialized\n");
-    printf("SAMPLES: %i\n",audio_spec.samples);
-    if (SDL_GetDefaultAudioInfo(&device_name,&audio_spec,0)) { //get default output
-        printf("Failed to open audio device.");
-        return -1;
-    }
     audio_spec.samples = BUFFER_LEN;
-    audio_spec.size = audio_spec.samples * sizeof(int16_t) * audio_spec.channels;
+    audio_spec.freq = 44100;
+    audio_spec.format = AUDIO_S16SYS;  // 16-bit signed, little-endian
+    audio_spec.channels = 1;            // Mono
+    audio_spec.samples = BUFFER_LEN;
+    //audio_spec.size = audio_spec.samples * sizeof(int16_t) * audio_spec.channels;
+    audio_spec.callback = AudioLoop;
     audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
     //stream = SDL_NewAudioStream(AUDIO_U8,1,44100,);
     printf("SDL audio set up.\n");
@@ -302,11 +286,15 @@ int main(int argc, char ** argv) {
     start = epoch();
     start_nano = epoch_nano();
     std::thread NESThread(NESLoop,&rom);
-    std::thread AudioThread(AudioLoop);
+    //std::thread AudioThread(AudioLoop);
 
     printf("NES thread started. Starting main window loop...\n");
+    float t_time = SDL_GetTicks()/1000.0;
+    int16_t buffer[BUFFER_LEN*2];
+    SDL_PauseAudioDevice(audio_device,0);
     //main window loop
     while (!interrupted) {
+        t_time = SDL_GetTicks()/1000.0;
         // event loop
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
@@ -347,7 +335,6 @@ int main(int argc, char ** argv) {
     SDL_CloseAudioDevice(audio_device);
     SDL_Quit();
     NESThread.join();
-    AudioThread.join();
     //stbi_image_free(img);
     return 0;
 }
