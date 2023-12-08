@@ -23,7 +23,7 @@ std::mutex interruptedMutex;
 
 const int NES_DIM[2] = {256,240};
 int WINDOW_INIT[2];
-const int FLAGS = SDL_WINDOW_FULLSCREEN_DESKTOP|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
+const int FLAGS = SDL_WINDOW_FULLSCREEN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
 
 volatile sig_atomic_t interrupted = 0;
 
