@@ -348,7 +348,7 @@ void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
 
 void CPU::map_memory(int8_t** address) {
     uint8_t m = rom->get_mapper();
-    int addr = *address-memory;
+    long long addr = *address-memory;
     switch(m) {
         case 0:
             if (rom->get_prgsize()/0x4000==1) {
@@ -360,6 +360,8 @@ void CPU::map_memory(int8_t** address) {
     }
     if (0x0800<=addr && addr < 0x2000) {
         *address-=addr/0x800*0x800;
+    } else if (0x2008<=addr && addr < 0x4000) {
+        *address-=addr/0x8*0x8;
     }
 }
 

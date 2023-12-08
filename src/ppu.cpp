@@ -107,7 +107,7 @@ void PPU::cycle() {
                 attr_addr = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
                 uint8_t tile_val = read(&memory[tile_addr]);
                 uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
-                internalx = x;
+                internalx = x&0x7;
                 ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
                 pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
             }
@@ -133,7 +133,7 @@ void PPU::cycle() {
                             memcpy(&secondary_oam[sprites*4+1],&oam[sprite_eval_n+1],3);
                             next_sprite_x_counters[sprites] = (uint8_t)secondary_oam[sprites*4+3];
                             if (sprite_eval_n==0) {
-                                nextspritezeropresent = true;
+                                spritezeropresent = true;
                             }
                             sprites++;
                         }
@@ -230,7 +230,7 @@ void PPU::cycle() {
                     sprite_pix = true;
                 }
             }
-            if (spritezeropresent && sprite_index==0 && ((*PPUMASK)&0x8) && ((*PPUMASK)&0x10) && !(sprite_pattern == 0) && !(bg_pattern == 0)) { //if sprite zero is in the secondary oam, and sprite index was the first one (which must have been sprite 0), this is a sprite 0 hit
+            if (nextspritezeropresent && sprite_index==0 && ((*PPUMASK)&0x8) && ((*PPUMASK)&0x10) && !(sprite_pattern == 0) && !(bg_pattern == 0)) { //if sprite zero is in the secondary oam, and sprite index was the first one (which must have been sprite 0), this is a sprite 0 hit
                 //sprite 0 hit
                 (*PPUSTATUS)|=0x40;
             }
@@ -261,7 +261,9 @@ void PPU::cycle() {
             }
             
             internalx++;
-            internalx%=8;
+            if (internalx==8) {
+                internalx%=8;
+            }
 
         } else if (scycle == 257 && rendering) {
             v&=~0x41F;

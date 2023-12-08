@@ -199,13 +199,14 @@ template <typename T> int sgn(T val) {
 }
 void AudioLoop(void* userdata, uint8_t* stream, int len) {
     for (int i=0; i<len; i+=2) {
-        int16_t v=mix(apu_ptr);
+        //int16_t v=mix(apu_ptr);
+        int16_t v = 0;
         //v = (int16_t)(32767*sin(t));
         stream[i] = v&0xff;
         stream[i+1] = (v>>8)&0xff;
         //stream[i] = 0;
         //stream[i+1] = 0;
-        t+=(2.0*M_PI*500.0)/audio_spec.freq;
+        //t+=(2.0*M_PI*500.0)/audio_spec.freq;
         
     }
         

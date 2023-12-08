@@ -66,7 +66,7 @@ int16_t mix(APU* a_ptr) {
         } else {
             pulse_out = 0;
         }
-        printf("pulse_out: %f - %i, %i\n",pulse_out,pulse1, pulse2);
+        //printf("pulse_out: %f - %i, %i\n",pulse_out,pulse1, pulse2);
     if (!(tri==0)) {
         tnd_out = 159.79/(1/(tri/8227)+100.0);
     } else {
