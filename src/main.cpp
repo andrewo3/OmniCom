@@ -396,6 +396,7 @@ int main(int argc, char ** argv) {
         SDL_GL_SwapWindow(window);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        SDL_Delay(1000/60);
     }
     glDetachShader(shaderProgram,vertexShader);
     glDetachShader(shaderProgram,fragmentShader);

@@ -26,7 +26,7 @@ CPU::CPU(bool dbug) {
 }
 
 void CPU::start_nmi() {
-    //printf("NMI\n");
+    printf("NMI\n");
     recv_nmi = false;
     uint16_t push = get_addr(pc);
     stack_push((uint8_t)(push>>8));
@@ -348,7 +348,7 @@ void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
 
 void CPU::map_memory(int8_t** address) {
     uint8_t m = rom->get_mapper();
-    long long addr = *address-memory;
+    long long addr = get_addr(*address);
     switch(m) {
         case 0:
             if (rom->get_prgsize()/0x4000==1) {
