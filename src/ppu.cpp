@@ -126,7 +126,7 @@ void PPU::cycle() {
                 spritezeropresent = false;
             } else if (scycle<=256 && rendering) { //sprite evaluation
                 if (!(scycle%2) && sprites<8) {
-                    uint8_t sprite_y = oam[sprite_eval_n];
+                    uint8_t sprite_y = oam[sprite_eval_n]+1;
                     if (!sprite_eval_end) { // if you havent already reached the end of oam once
                         secondary_oam[sprites*4] = sprite_y; // copy y pos
                         bool h16 = (*PPUCTRL)&0x20;
@@ -180,6 +180,7 @@ void PPU::cycle() {
             uint8_t sprite_palette = 0;
             uint8_t sprite_index = 0;
             bool sprite_priority = 1;
+            uint8_t sprite_y = 0;
             for (int i=scanlinespritenum-1; i>=0; i--) { // go in reverse to get lower priority first. This will result in highest priority pixels on top.
                 
                 if (active_sprites&(1<<i)) { //if sprite is active
@@ -187,7 +188,7 @@ void PPU::cycle() {
                     uint8_t sprite_bit = sprite_patterns[i];
                     if (sprite_bit>=0) {
                         sprite_index = i;
-                        uint8_t sprite_y=scanlinesprites[4*i];
+                        sprite_y=scanlinesprites[4*i];
                         uint8_t sprite_tile_ind = scanlinesprites[4*i+1];
                         bool sprite_bank = (*PPUCTRL)&0x8;
                         bool h16 = (*PPUCTRL)&0x20;
