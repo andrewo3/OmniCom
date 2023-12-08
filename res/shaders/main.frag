@@ -35,13 +35,13 @@ void main() {
     float glitchIntensityY = .0002; // Intensity of the vertical jitter
     
     // Vertical Band settings
-    float bandSpeed = 1.0;
-    float bandHeight = 0.01;
-    float bandIntensity = 0.03;
-    float bandChoppiness = 0.02;
+    float bandSpeed = 0.014;
+    float bandHeight = 0.02;
+    float bandIntensity = 0.1;
+    float bandChoppiness = 0.04;
     float staticAmount = 0.02;
-    float warpFactor = .05;
-    float chromaAmount = .3;
+    float warpFactor = .003;
+    float chromaAmount = .1;
     
     // Moving VHS effect
     float scanline = sin((uv.y - iTime * scrollSpeed) * (1.0/scanlineHeight));

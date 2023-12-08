@@ -108,12 +108,40 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
             }
+        case 0x4000:
+            apu->pulse_halt[0]=(value&0x20);
+            apu->pulse_duty[0] = (value&0xC0)>>6;
+            apu->pulse_const[0] = value&0x10;
+            apu->pulse_vols[0] = value&0xf;
+            apu->pulse_start[0] = apu->audio_frame;
+            apu->pulse_step[0] = 0;
+            break;
         case 0x4003:
-            apu->p1_count=(value&0xF8)>>3;
+            apu->pulse_lengths[0]=(value&0xF8)>>3;
+            apu->pulse_start[0] = apu->audio_frame;
+            apu->pulse_step[0] = 0;
+            break;
+        case 0x4004:
+            apu->pulse_halt[1]=(value&0x20);
+            apu->pulse_duty[1] = (value&0xC0)>>6;
+            apu->pulse_const[1] = value&0x10;
+            apu->pulse_vols[1] = value&0xf;
+            apu->pulse_start[1] = apu->audio_frame;
+            apu->pulse_step[1] = 0;
             break;
         case 0x4007:
-            apu->p2_count=(value&0xF8)>>3;
+            apu->pulse_lengths[1]=(value&0xF8)>>3;
+            apu->pulse_start[1] = apu->audio_frame;
+            apu->pulse_step[1] = 0;
             break;
+        case 0x4008:
+            apu->tri_linear = value&0x7F;
+            apu->tri_halt = value&0x80;
+            apu->tri_start = apu->audio_frame;
+            apu->tri_step = 0;
+            break;
+        case 0x400B:
+            apu->tri_length = (value&0xF8)>>3;
         case 0x4014: //write to OAMDMA
             //memcpy(ppu->oam,&memory[(uint16_t)((value&0xff)<<8)],256);
             for (int i=0; i<256; i++) {
@@ -147,8 +175,6 @@ void CPU::write(int8_t* address, int8_t value) {
                 
             }
             break;
-        case 0x4017:
-            apu->fcmode = value;
     }
     // special mapper cases
     switch (rom->get_mapper()) {
