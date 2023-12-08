@@ -26,7 +26,7 @@ CPU::CPU(bool dbug) {
 }
 
 void CPU::start_nmi() {
-    printf("NMI\n");
+    //printf("NMI\n");
     recv_nmi = false;
     uint16_t push = get_addr(pc);
     stack_push((uint8_t)(push>>8));
