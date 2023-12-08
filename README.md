@@ -16,6 +16,14 @@ Next, to compile the program, cd to this project directory and run the following
 
 In theory, these commands should also work with clang but I haven't tried it myself.
 
+Also, if you edit the shaders, run 
+```xxd -n fragment -i res/shaders/main.frag > include/universal/shader_data.h```
+and
+```xxd -n vertex -i res/shaders/main.vert >> include/universal/shader_data.h```
+(in that order)
+
+This will update the shader data header so that it is included in the final executable without the file having to be there with the final compilation.
+
 Once you've compiled - Using the program is as easy as running ```bin/main```, followed by the path to any ROM you want to play.
 
 At the moment none of the roms have audio because I couldn't get it working in time.
@@ -34,6 +42,6 @@ For all ROMs, the controls are as follows:
 
 This is the configuration I found works well and makes the most sense for a lot of games.
 
-Most ROMs in the res/roms folder do not work, so I made a (small) folder called res/working_roms with the roms I tested and that I know work.
+Most ROMs in the res/roms folder do not work (because they use mappers other than mapper 0), so I made a small folder called res/working_roms with the roms I tested and that I know work. At the moment this includes Donkey Kong, Pac-Man, Mario, and two hello world tests I used.
 
 Happy emulating!

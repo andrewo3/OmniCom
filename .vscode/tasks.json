@@ -3,29 +3,8 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++ build active file (Mac)",
-            "command": "g++-11",
-            "args": [
-                "-v",
-                "src/util.cpp",
-                "src/rom.cpp",
-                "src/cpu.cpp",
-                "src/cpu_helper.cpp",
-                "src/ppu.cpp",
-                "src/apu.cpp",
-                "-g",
-                "src/main.cpp",
-                "-I./include/universal",
-                "-I./include/unix",
-                "-L./lib",
-                "-F./bin",
-                "-framework",
-                "SDL2",
-                "-framework",
-                "OpenGL",
-                "-lGLEW",
-                "-o",
-                "${workspaceRoot}/bin/main"
-            ],
+            "command": "./bin/mac_build_script.sh",
+            "args": [],
             "options": {
                 "cwd": "${workspaceRoot}"
             },

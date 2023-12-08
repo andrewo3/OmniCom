@@ -265,11 +265,11 @@ int8_t CPU::read(int8_t* address) {
             }
         case 0x4016:
             if (!input_strobe) {
-                value = (bool)(inputs&0x80);
+                value = (inputs&0x80)>>7;
                 inputs<<=1;
                 inputs|=1;
             } else {
-                value = (bool)(inputs&0x80);
+                value = (inputs&0x80)>>7;
             }
             break;
 

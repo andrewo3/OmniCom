@@ -1,0 +1,3 @@
+xxd -n fragment -i res/shaders/main.frag > include/universal/shader_data.h
+xxd -n vertex -i res/shaders/main.vert >> include/universal/shader_data.h
+g++-11 -v src/util.cpp src/rom.cpp src/cpu.cpp src/cpu_helper.cpp src/ppu.cpp src/apu.cpp -g src/main.cpp -I./include/universal -I./include/unix -L./lib -F./bin -framework SDL2 -framework OpenGL -lGLEW -o /Users/andrewogundimu/code_projects/NES/bin/main

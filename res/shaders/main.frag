@@ -35,9 +35,9 @@ void main() {
     float glitchIntensityY = .0002; // Intensity of the vertical jitter
     
     // Vertical Band settings
-    float bandSpeed = 0.014;
-    float bandHeight = 0.02;
-    float bandIntensity = 0.1;
+    float bandSpeed = 0.0004;
+    float bandHeight = 0.1;
+    float bandIntensity = 0.2;
     float bandChoppiness = 0.04;
     float staticAmount = 0.02;
     float warpFactor = .003;
