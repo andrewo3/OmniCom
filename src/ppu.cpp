@@ -108,6 +108,7 @@ void PPU::cycle() {
                 uint8_t tile_val = read(&memory[tile_addr]);
                 uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
                 internalx = x&0x7;
+                //internalx = 0;
                 ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
                 pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
             }
@@ -263,6 +264,22 @@ void PPU::cycle() {
             internalx++;
             if (internalx==8) {
                 internalx%=8;
+                uint16_t fake_v = v;
+                //increment v horizontally
+                //pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
+                if ((fake_v&0x001F)==0x1F) { // if coarse X == 31, that means you reached the end of the nametable row (next would be 32)
+                    fake_v &= ~0x001F; //un set coarse x to make it 0 again
+                    fake_v^= 0x0400; // switch nametable
+                } else {
+                    fake_v++;
+                }
+                tile_addr = 0x2000 | (fake_v & 0x0fff);
+                attr_addr = 0x23c0 | (fake_v & 0x0c00) | ((fake_v >> 4) & 0x38) | ((fake_v >> 2) & 0x07);
+                uint8_t tile_val = read(&memory[tile_addr]);
+                uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
+                //internalx = 0;
+                ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
+                pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
             }
 
         } else if (scycle == 257 && rendering) {
@@ -300,10 +317,10 @@ void PPU::cycle() {
             v &= ~0x7BE0;
             v |= (t&0x7BE0);
         }
-        if (vblank==true) {
+        if (scycle==340 && vblank==true) {
             *PPUSTATUS&=0x7F;
             vblank = false;
-            }
+        }
 
     }
 
