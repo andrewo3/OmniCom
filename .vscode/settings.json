@@ -79,8 +79,7 @@
         "__config": "cpp",
         "__debug": "cpp",
         "__verbose_abort": "cpp",
-        "csignal": "cpp",
-        "queue": "cpp"
+        "csignal": "cpp"
     },
     "terminal.integrated.env.windows": {
         "PATH": "C:\\mingw64\\bin;${env:PATH}"

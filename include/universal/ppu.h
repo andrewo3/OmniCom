@@ -17,10 +17,10 @@ class PPU {
         void set_registers();
         ROM* rom;
         long long cycles = 0; // total cycles
-        int8_t memory[0x4000] = {0}; // general memory
-        int8_t chr_ram[0x8000] = {0}; //chr-ram (used by some mappers)
-        int8_t oam[256] = {0}; // OAM (Object Attribute Memory) for sprites
-        int8_t secondary_oam[32] = {0}; //sprites to draw on each scanline.
+        int8_t memory[0x4000]; // general memory
+        int8_t chr_ram[0x8000]; //chr-ram (used by some mappers)
+        int8_t oam[256]; // OAM (Object Attribute Memory) for sprites
+        int8_t secondary_oam[32]; //sprites to draw on each scanline.
         bool vram_twice = 0;
         int scanline = 261;
         int scycle = 0;

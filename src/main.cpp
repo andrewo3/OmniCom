@@ -23,7 +23,7 @@ std::mutex interruptedMutex;
 
 const int NES_DIM[2] = {256,240};
 int WINDOW_INIT[2];
-const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
+const int FLAGS = SDL_WINDOW_FULLSCREEN_DESKTOP|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
 
 volatile sig_atomic_t interrupted = 0;
 
@@ -74,14 +74,12 @@ void quit(int signal) {
     std::FILE* memory_dump = fopen("dump","w");
     fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
     fclose(memory_dump);
-    while (!audio_buffer.empty()) {
-        audio_buffer.pop();
-    }
+
     interrupted = 1;
     if (signal==SIGSEGV) {
         printf("Segfault!\n");
-        exit(EXIT_FAILURE);
     }
+    exit(EXIT_FAILURE);
 }
 
 void viewportBox(int** viewportBox,int width, int height) {
@@ -174,10 +172,6 @@ void NESLoop() {
     //emulator loop
     while (!interrupted) {
         cpu_ptr->clock();
-        //*(cpu_ptr->CLOCK_SPEED/4)
-        while (apu_ptr->frames<cpu_ptr->cycles/2) {
-            apu_ptr->cycle();
-        }
         // 3 dots per cpu cycle
         while (ppu_ptr->cycles<cpu_ptr->cycles*3) {
             ppu_ptr->cycle();
@@ -194,19 +188,15 @@ void NESLoop() {
     
 }
 
-template <typename T> int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
-}
 void AudioLoop(void* userdata, uint8_t* stream, int len) {
     for (int i=0; i<len; i+=2) {
-        //int16_t v=mix(apu_ptr);
-        int16_t v = 0;
-        //v = (int16_t)(32767*sin(t));
-        stream[i] = v&0xff;
-        stream[i+1] = (v>>8)&0xff;
-        //stream[i] = 0;
-        //stream[i+1] = 0;
-        //t+=(2.0*M_PI*500.0)/audio_spec.freq;
+        //int frame = apu_ptr->mixer();
+        int16_t v = (int16_t)(32767*sin(t));
+        //stream[i] = v&0xff;
+        //stream[i+1] = (v>>8)&0xff;
+        stream[i] = 0;
+        stream[i+1] = 0;
+        t+=(2.0*M_PI*500.0)/audio_spec.freq;
         
     }
         
@@ -226,26 +216,6 @@ int main(int argc, char ** argv) {
     printf("Mapper: %i\n",rom.get_mapper()); //https://www.nesdev.org/wiki/Mapper
     printf("Mirrormode: %i\n",rom.mirrormode);
 
-    start = epoch();
-    start_nano = epoch_nano();
-
-    static CPU cpu(false);
-    cpu_ptr = &cpu;
-    printf("CPU Initialized.\n");
-    static APU apu;
-    cpu.apu = &apu;
-    apu_ptr = &apu;
-    apu.setCPU(&cpu);
-    printf("APU set");
-
-    cpu.loadRom(&rom);
-    printf("ROM loaded into CPU.\n");
-
-    static PPU ppu(&cpu);
-    ppu_ptr = &ppu;
-    ppu.debug = false;
-    printf("PPU Initialized\n");
-    
     char* filename = new char[strlen(argv[1])+1];
     char* original_start = filename;
     memcpy(filename,argv[1],strlen(argv[1])+1);
@@ -259,8 +229,20 @@ int main(int argc, char ** argv) {
     //set display dimensions
     SDL_DisplayMode DM;
     SDL_GetDesktopDisplayMode(0,&DM);
-    WINDOW_INIT[0] = DM.w/5;
-    WINDOW_INIT[1] = DM.h/5;
+    WINDOW_INIT[0] = DM.w;
+    WINDOW_INIT[1] = DM.h;
+
+    //audio
+    audio_spec.samples = BUFFER_LEN;
+    audio_spec.freq = 44100;
+    audio_spec.format = AUDIO_S16SYS;  // 16-bit signed, little-endian
+    audio_spec.channels = 1;            // Mono
+    audio_spec.samples = BUFFER_LEN;
+    //audio_spec.size = audio_spec.samples * sizeof(int16_t) * audio_spec.channels;
+    audio_spec.callback = AudioLoop;
+    audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
+    //stream = SDL_NewAudioStream(AUDIO_U8,1,44100,);
+    printf("SDL audio set up.\n");
 
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // for linux
     
@@ -330,30 +312,35 @@ int main(int argc, char ** argv) {
     
     printf("Window texture bound and mapped.\n");
 
+    //Enter NES logic loop alongside window loop
+    start = epoch();
+    start_nano = epoch_nano();
+
+    CPU cpu(false);
+    cpu_ptr = &cpu;
+    printf("CPU Initialized.\n");
+    APU apu;
+    cpu.apu = &apu;
+    apu_ptr = &apu;
+    apu.cpu = &cpu;
+    printf("APU set");
+
+    cpu.loadRom(&rom);
+    printf("ROM loaded into CPU.\n");
+
+    PPU ppu(&cpu);
+    ppu_ptr = &ppu;
+    ppu.debug = false;
+    printf("PPU Initialized\n");
+    std::thread NESThread(NESLoop);
     //std::thread tCPU(CPUThread);
     //std::thread tPPU(PPUThread);
     //std::thread AudioThread(AudioLoop);
 
-    printf("NES thread started.\n");
-
-    //audio
-    audio_spec.samples = BUFFER_LEN;
-    audio_spec.freq = 44100;
-    audio_spec.format = AUDIO_S16SYS;  // 16-bit signed, little-endian
-    audio_spec.channels = 1;            // Mono
-    audio_spec.samples = BUFFER_LEN;
-    apu.setSampleRate(audio_spec.freq);
-    //audio_spec.size = audio_spec.samples * sizeof(int16_t) * audio_spec.channels;
-    audio_spec.callback = AudioLoop;
-    audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
-    //stream = SDL_NewAudioStream(AUDIO_U8,1,44100,);
-    printf("SDL audio set up. Starting main loop...\n");
-
+    printf("NES thread started. Starting main window loop...\n");
     float t_time = SDL_GetTicks()/1000.0;
     int16_t buffer[BUFFER_LEN*2];
     SDL_PauseAudioDevice(audio_device,0);
-    //Enter NES logic loop alongside window loop
-    std::thread NESThread(NESLoop);
     //main window loop
     while (!interrupted) {
         t_time = SDL_GetTicks()/1000.0;

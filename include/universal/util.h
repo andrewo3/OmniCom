@@ -2,7 +2,6 @@
 #define UTIL_H
 
 #include <chrono>
-#include <queue>
 
 // get time in milliseconds since epoch
 inline long long epoch() {
@@ -19,8 +18,6 @@ inline long long epoch_nano() {
     return nanosecondsSinceEpoch.count();
 }
 extern unsigned char out_img[184320]; //output image
-
-extern std::queue<int16_t> audio_buffer;
 
 extern const uint8_t* state;
 
