@@ -1,6 +1,6 @@
 # Nes2Exec
 
-[Project Video](https://youtu.be/LFtGt4CH8QM)
+[Project Video](https://youtu.be/7l0gG79EPss)
 
 Using (the poorly named) Nes2Exec program is simple. First, [SDL2](https://wiki.libsdl.org/SDL2/Installation), [OpenGL](https://www.khronos.org/opengl/wiki/Getting_Started#Downloading_OpenGL),  and [GLEW](https://glew.sourceforge.net/) need to be available and usable on your system. If using Mac, I recommend installing SDL2 and GLEW with [homebrew](https://brew.sh/). It's really easy to download (one command), and it just works out of the box. I packaged the libraries and headers within this project, but in my testing it seems sometimes some computers just don't detect them and instead look in system directories, so make sure they are installed. 
 
