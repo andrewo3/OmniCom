@@ -1,7 +1,21 @@
+#define ARGS 1
+#ifndef ROM_NAME
+    #define ROM_NAME argv[1]
+    #define ARGS 2
+#endif
+#ifndef DATAROM
+    #define DATAROM placeholder
+    #define ARGS 2
+#endif
+#ifndef DATALENGTH
+    #define DATALENGTH 0
+#endif
+
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
 #include "GL/glew.h"
 
+#include "rom_data.h"
 #include "rom.h"
 #include "cpu.h"
 #include "ppu.h"
@@ -23,7 +37,7 @@ std::mutex interruptedMutex;
 
 const int NES_DIM[2] = {256,240};
 int WINDOW_INIT[2];
-const int FLAGS = SDL_WINDOW_FULLSCREEN_DESKTOP|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
+const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
 
 volatile sig_atomic_t interrupted = 0;
 
@@ -31,6 +45,7 @@ long long total_ticks;
 long long start;
 long long start_nano;
 double t = 0;
+bool fullscreen_toggle = 0;
 
 GLuint shaderProgram;
 GLuint vertexShader;
@@ -57,9 +72,11 @@ int invalid_error() {
 
 void get_filename(char** path) {
     int l = strlen(*path);
+    bool end_set = false;
     for (int i=l-1; i>=0; i--) {
-        if ((*path)[i]=='.') {
+        if ((*path)[i]=='.' && !end_set) {
             (*path)[i] = '\0';
+            end_set = true;
         } else if ((*path)[i]=='/' || (*path)[i]=='\\') {
             *path = &(*path)[i+1];
             return;
@@ -71,9 +88,9 @@ void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
     printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",total_ticks/(epoch()-start)*1000,total_ticks/(epoch()-start)*1000/1789773.0*100);
     //for test purpose: remove once done testing!!
-    std::FILE* memory_dump = fopen("dump","w");
-    fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
-    fclose(memory_dump);
+    //std::FILE* memory_dump = fopen("dump","w");
+    //fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
+    //fclose(memory_dump);
 
     interrupted = 1;
     if (signal==SIGSEGV) {
@@ -205,20 +222,29 @@ void AudioLoop(void* userdata, uint8_t* stream, int len) {
 int main(int argc, char ** argv) {
     std::signal(SIGINT,quit);
     std::signal(SIGSEGV,quit);
-    if (argc!=2) {
+    if (argc!=ARGS) {
         return usage_error();
     }
-    ROM rom(argv[1]);
-    if (!rom.is_valid()) {
-        return invalid_error();
+    ROM rom;
+    if (ARGS==2) { //nothing specified to replace at compile time
+        rom.load_file(ROM_NAME);
+        if (!rom.is_valid()) {
+            return invalid_error();
+        }
+    } else {
+        unsigned char* placeholder; // if DATAROM not defined - should never actually be used.
+        rom.load_arr(DATALENGTH,DATAROM);
+        if (!rom.is_valid()) {
+            return invalid_error();
+        }
     }
 
     printf("Mapper: %i\n",rom.get_mapper()); //https://www.nesdev.org/wiki/Mapper
     printf("Mirrormode: %i\n",rom.mirrormode);
 
-    char* filename = new char[strlen(argv[1])+1];
+    char* filename = new char[strlen(ROM_NAME)+1];
     char* original_start = filename;
-    memcpy(filename,argv[1],strlen(argv[1])+1);
+    memcpy(filename,ROM_NAME,strlen(ROM_NAME)+1);
     get_filename(&filename);
 
     // SDL initialize
@@ -229,8 +255,8 @@ int main(int argc, char ** argv) {
     //set display dimensions
     SDL_DisplayMode DM;
     SDL_GetDesktopDisplayMode(0,&DM);
-    WINDOW_INIT[0] = DM.w;
-    WINDOW_INIT[1] = DM.h;
+    WINDOW_INIT[0] = DM.w/2;
+    WINDOW_INIT[1] = DM.h/2;
 
     //audio
     audio_spec.samples = BUFFER_LEN;
@@ -359,6 +385,18 @@ int main(int argc, char ** argv) {
                         printf("%i %i %i %i\n",new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
                         glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
                         //glViewport(0,0,new_width,new_height);
+                        delete[] new_viewport;
+                    }
+                case SDL_KEYDOWN:
+                    if (event.key.keysym.sym==SDLK_F11) {
+                        fullscreen_toggle = fullscreen_toggle ? false : true;
+                        SDL_SetWindowFullscreen(window,fullscreen_toggle*SDL_WINDOW_FULLSCREEN_DESKTOP);
+                        SDL_SetWindowSize(window,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
+                        SDL_SetWindowPosition(window,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED);
+                        int* new_viewport = new int[4];
+                        viewportBox(&new_viewport,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
+                        printf("%i %i %i %i\n",new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+                        glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
                         delete[] new_viewport;
                     }
             }

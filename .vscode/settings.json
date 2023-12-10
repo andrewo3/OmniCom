@@ -85,5 +85,6 @@
         "PATH": "C:\\mingw64\\bin;${env:PATH}"
     },
     "code-runner.runInTerminal": true,
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "C_Cpp.errorSquiggles": "disabled"
 }
