@@ -22,19 +22,14 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main.exe",
             "args": [
-                "${workspaceRoot}\\res\\roms\\Pac-Man (U) (Namco) [!p].nes"
+                "D:\\Downloads\\Misc\\test_roms\\soundtest\\SNDTEST.NES"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
-            "environment": [
-                {
-                    "name": "PATH",
-                    "value": "${env:PATH};C:\\mingw64\\bin"
-                }
-            ],
+            "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "C:\\mingw64\\bin\\gdb.exe",
+            "miDebuggerPath": "D:\\mingw64\\bin\\gdb.exe",
             "preLaunchTask": "C/C++: g++ build active file (Windows)"
         },
         {
@@ -43,7 +38,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main",
             "args": [
-                "res/roms/Pac-Man (U) (Namco) [!p].nes"
+                "${workspaceRoot}\\res\\roms\\Donkey Kong (U) (PRG1) [!p].nes"
 
             ],
             "stopAtEntry": false,

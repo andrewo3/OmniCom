@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstdbool>
+#include <mutex>
 #include "rom.h"
 
 class CPU;
@@ -26,6 +27,7 @@ class PPU {
         int scycle = 0;
         bool debug = false;
         bool vblank = false;
+        std::mutex image_mutex;
 
         //rw
         int8_t read(int8_t* address);

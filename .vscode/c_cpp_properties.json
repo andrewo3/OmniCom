@@ -6,7 +6,8 @@
                 "C:\\mingw64\\include\\**",
                 "${workspaceRoot}/include/**",
                 "/opt/homebrew/include",
-                "${workspaceFolder}/include/universal"
+                "${workspaceFolder}/include/universal",
+                "${workspaceFolder}/src/ntsc-filter"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/g++",

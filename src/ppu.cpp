@@ -3,6 +3,7 @@
 #include "ppu.h"
 #include "cpu.h"
 #include <cstring>
+#include <mutex>
 
 PPU::PPU() {
     this->scanline = 0;
@@ -127,7 +128,7 @@ void PPU::cycle() {
             } else if (scycle<=256 && rendering) { //sprite evaluation
                 if (!(scycle%2) && sprites<8) {
                     uint8_t sprite_y = oam[sprite_eval_n]+1;
-                    if (!sprite_eval_end) { // if you havent already reached the end of oam once
+                    if (!sprite_eval_end && sprite_y!=0) { // if you havent already reached the end of oam once
                         secondary_oam[sprites*4] = sprite_y; // copy y pos
                         bool h16 = (*PPUCTRL)&0x20;
                         if ((scanline+1-sprite_y)<(8<<h16) && (scanline+1-sprite_y)>=0 && sprite_y<240) {
@@ -303,6 +304,7 @@ void PPU::cycle() {
         //printf("vblank!\n");
         if (vblank==false && scycle>=1) { //start vblank as soon as you reach this
             vblank = true;
+            image_mutex.unlock();
             *PPUSTATUS|=0x80;
             if ((*PPUCTRL)&0x80) { // if ppu is configured to generate nmi, do so.
                 cpu->recv_nmi = true;
@@ -311,16 +313,17 @@ void PPU::cycle() {
 
         }
     } else if (scanline==261) { // pre-render scanline
-        if (scycle==2) {
+        if (scycle==1) {
             (*PPUSTATUS)&=~0x60; //clear overflow and sprite 0 hit
         }
         if (scycle>=280 && scycle<=304 && rendering) {
             v &= ~0x7BE0;
             v |= (t&0x7BE0);
         }
-        if (scycle==340 && vblank==true) {
-            *PPUSTATUS&=0x7F;
+        if (scycle==1 && vblank==true) {
+            *PPUSTATUS&=~0x80;
             vblank = false;
+            image_mutex.lock();
         }
 
     }

@@ -25,6 +25,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "crt_core.h"
+
 #include <cstdio>
 #include <string>
 #include <csignal>
@@ -33,10 +35,21 @@
 #include <thread>
 #include <mutex>
 
+//ntsc filter options
+static struct CRT crt;
+static struct NTSC_SETTINGS ntsc;
+static int color = 1;
+static int noise = 4;
+static int field = 0;
+static int raw = 0;
+static int hue = 0;
+
+
 std::mutex interruptedMutex;
 
 const int NES_DIM[2] = {256,240};
 int WINDOW_INIT[2];
+int filtered_res_scale = 8;
 const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
 
 volatile sig_atomic_t interrupted = 0;
@@ -46,6 +59,8 @@ long long start;
 long long start_nano;
 double t = 0;
 bool fullscreen_toggle = 0;
+bool shader_toggle = false;
+static int16_t audio_pt = 0;
 
 GLuint shaderProgram;
 GLuint vertexShader;
@@ -88,9 +103,9 @@ void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
     printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",total_ticks/(epoch()-start)*1000,total_ticks/(epoch()-start)*1000/1789773.0*100);
     //for test purpose: remove once done testing!!
-    //std::FILE* memory_dump = fopen("dump","w");
-    //fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
-    //fclose(memory_dump);
+    std::FILE* memory_dump = fopen("dump","w");
+    fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
+    fclose(memory_dump);
 
     interrupted = 1;
     if (signal==SIGSEGV) {
@@ -190,6 +205,9 @@ void NESLoop() {
     while (!interrupted) {
         cpu_ptr->clock();
         // 3 dots per cpu cycle
+        while (apu_ptr->frames<cpu_ptr->cycles*240/(cpu_ptr->CLOCK_SPEED)) {
+            apu_ptr->cycle();
+        }
         while (ppu_ptr->cycles<cpu_ptr->cycles*3) {
             ppu_ptr->cycle();
             if (ppu_ptr->debug) {
@@ -207,16 +225,16 @@ void NESLoop() {
 
 void AudioLoop(void* userdata, uint8_t* stream, int len) {
     for (int i=0; i<len; i+=2) {
-        //int frame = apu_ptr->mixer();
-        int16_t v = (int16_t)(32767*sin(t));
-        //stream[i] = v&0xff;
-        //stream[i+1] = (v>>8)&0xff;
-        stream[i] = 0;
-        stream[i+1] = 0;
-        t+=(2.0*M_PI*500.0)/audio_spec.freq;
-        
+        int16_t v=mix(apu_ptr);
+        audio_pt = 0;
+        //int16_t v = (int16_t)(16384*sin(t));
+        stream[i] = audio_pt&0xff;
+        stream[i+1] = (audio_pt>>8)&0xff;
+        //stream[i] = 0;
+        //stream[i+1] = 0;
+        //t+=(2.0*M_PI*500.0)/audio_spec.freq;
+
     }
-        
 }
 
 int main(int argc, char ** argv) {
@@ -248,8 +266,11 @@ int main(int argc, char ** argv) {
     get_filename(&filename);
 
     // SDL initialize
-    SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
+    SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
     SDL_ShowCursor(0);
+    int controller_index = 0;
+    controller = SDL_JoystickOpen(controller_index);
+    printf("%s\n",SDL_JoystickNameForIndex(controller_index));
     printf("SDL Initialized\n");
 
     //set display dimensions
@@ -292,6 +313,16 @@ int main(int argc, char ** argv) {
     init_shaders();
     printf("Shaders compiled and linked.\n");
 
+    //ntsc filter init
+
+    /* pass it the buffer to be drawn on screen */
+    unsigned char * filtered = (unsigned char*)malloc(NES_DIM[0]*NES_DIM[1]*filtered_res_scale*filtered_res_scale*3*sizeof(char));
+    crt_init(&crt, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, CRT_PIX_FORMAT_RGB, &filtered[0]);
+    /* specify some settings */
+    crt.blend = 1;
+    crt.scanlines = 1;
+
+
     //VBO & VAO init for the fullscreen texture
     GLuint VBO, VAO;
     glGenVertexArrays(1,&VAO);
@@ -329,12 +360,13 @@ int main(int argc, char ** argv) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     glGenerateMipmap(GL_TEXTURE_2D);
 
     glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
     glUniform1f(glGetUniformLocation(shaderProgram, "iTime"), (float)(epoch()-start));
+    glUniform1f(glGetUniformLocation(shaderProgram, "enabled"), false);
     
     printf("Window texture bound and mapped.\n");
 
@@ -345,7 +377,8 @@ int main(int argc, char ** argv) {
     CPU cpu(false);
     cpu_ptr = &cpu;
     printf("CPU Initialized.\n");
-    APU apu;
+    static APU apu;
+    apu.sample_rate = audio_spec.freq;
     cpu.apu = &apu;
     apu_ptr = &apu;
     apu.cpu = &cpu;
@@ -387,28 +420,64 @@ int main(int argc, char ** argv) {
                         //glViewport(0,0,new_width,new_height);
                         delete[] new_viewport;
                     }
+                    break;
                 case SDL_KEYDOWN:
-                    if (event.key.keysym.sym==SDLK_F11) {
-                        fullscreen_toggle = fullscreen_toggle ? false : true;
-                        SDL_SetWindowFullscreen(window,fullscreen_toggle*SDL_WINDOW_FULLSCREEN_DESKTOP);
-                        SDL_SetWindowSize(window,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
-                        SDL_SetWindowPosition(window,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED);
-                        int* new_viewport = new int[4];
-                        viewportBox(&new_viewport,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
-                        printf("%i %i %i %i\n",new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
-                        glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
-                        delete[] new_viewport;
+                    switch (event.key.keysym.sym) {
+                        case SDLK_F11:
+                            {
+                            fullscreen_toggle = fullscreen_toggle ? false : true;
+                            SDL_SetWindowFullscreen(window,fullscreen_toggle*SDL_WINDOW_FULLSCREEN_DESKTOP);
+                            SDL_SetWindowSize(window,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
+                            SDL_SetWindowPosition(window,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED);
+                            int* new_viewport = new int[4];
+                            viewportBox(&new_viewport,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
+                            printf("%i %i %i %i\n",new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+                            glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+                            delete[] new_viewport;
+                            break;
+                            }
+                        case SDLK_d:
+                            cpu.debug = cpu.debug ? false : true;
+                            break;
+                        case SDLK_s:
+                            shader_toggle = shader_toggle ? false : true;
+                            glBindTexture(GL_TEXTURE_2D, texture);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                            break;
                     }
             }
         }
         //logic is executed in nes thread
 
-        //render texture from nes (temporarily test_image.jpg)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
+
+        //apply ntsc filter before drawing
+        if (shader_toggle) {
+            ntsc.data = out_img; /* buffer from your rendering */
+            ntsc.format = CRT_PIX_FORMAT_RGB;
+            ntsc.w = NES_DIM[0];
+            ntsc.h = NES_DIM[1];
+            ntsc.as_color = color;
+            ntsc.field = field & 1;
+            ntsc.raw = raw;
+            ntsc.hue = hue;
+            if (ntsc.field == 0) {
+            ntsc.frame ^= 1;
+            }
+            crt_modulate(&crt, &ntsc);
+            crt_demodulate(&crt, noise);
+            field ^= 1;
+
+            //render texture from nes (temporarily test_image.jpg)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
+        } else {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
+        }
 
         glUseProgram(shaderProgram);
         glUniform1f(glGetUniformLocation(shaderProgram, "iTime"), (float)(epoch()-start));
-        
+        glUniform1f(glGetUniformLocation(shaderProgram, "enabled"), false);
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
 
@@ -421,8 +490,8 @@ int main(int argc, char ** argv) {
         SDL_GL_SwapWindow(window);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-        SDL_Delay(1000/60);
     }
+    NESThread.join();
     glDetachShader(shaderProgram,vertexShader);
     glDetachShader(shaderProgram,fragmentShader);
     glDeleteProgram(shaderProgram);
@@ -430,7 +499,7 @@ int main(int argc, char ** argv) {
     SDL_DestroyWindow(window);
     SDL_CloseAudioDevice(audio_device);
     SDL_Quit();
-    NESThread.join();
+    free(filtered);
     //tCPU.join();
     //tPPU.join();
     //stbi_image_free(img);

@@ -1,1 +1,1 @@
-g++ -DGLEW_STATIC src/util.cpp src/rom.cpp src/cpu.cpp src/cpu_helper.cpp src/ppu.cpp src/apu.cpp -g src/main.cpp -Iinclude/universal -lglew32s -Llib -lSDL2 -lopengl32  -o bin/main
+g++ -DGLEW_STATIC src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/util.cpp src/rom.cpp src/cpu.cpp src/cpu_helper.cpp src/ppu.cpp src/apu.cpp -g src/main.cpp -Isrc\ntsc-filter -Iinclude/universal -lglew32s -Llib -lSDL2 -lopengl32  -o bin/main

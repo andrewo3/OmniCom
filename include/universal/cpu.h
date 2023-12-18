@@ -50,6 +50,7 @@ class CPU {
         bool recv_nmi = false;
         uint8_t status() { return flags;}
         bool input_strobe = 0;
+        bool debug = false;
     private:
 
         //---- instructions ----
@@ -135,7 +136,6 @@ class CPU {
         void map_memory(int8_t** address); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.
         char* debug_opcodes[256] = {0};
         char* debug_addr[256] = {0};
-        bool debug = false;
 };
 
 #endif

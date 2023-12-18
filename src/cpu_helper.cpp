@@ -73,7 +73,7 @@ int8_t* CPU::ind(int8_t* args) {
 
 int8_t* CPU::rel(int8_t* args) {
     ins_size = 2;
-    return &memory[this->get_addr(pc)+read(args)];
+    return &memory[(uint16_t)(this->get_addr(pc)+read(args))];
 }
 
 int8_t* CPU::acc(int8_t* args) {
@@ -157,7 +157,8 @@ void CPU::BPL(int8_t* args) {
 
 void CPU::BRK(int8_t* args) {
     // push high byte first
-    uint16_t last_ptr = get_addr(pc+ins_size)+1;
+    //printf("BRK @ %04x/%04x\n",get_addr(pc),get_addr(pc+ins_size));
+    uint16_t last_ptr = (uint16_t)(get_addr(pc+ins_size))+1;
     stack_push((int8_t)(last_ptr>>8));
     stack_push((int8_t)(last_ptr&0xff));
     flags|=0x30;

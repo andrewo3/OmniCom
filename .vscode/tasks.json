@@ -25,29 +25,10 @@
         {
             "type": "cppbuild",
             "label": "C/C++: g++ build active file (Windows)",
-            "command": "g++",
-            "args": [
-                "-v",
-                "src/rom.cpp",
-                "src/cpu.cpp",
-                "src/cpu_helper.cpp",
-                "src/ppu.cpp",
-                "src/apu.cpp",
-                "-Iinclude/universal",
-                "-Iinclude/win32",
-                "-g",
-                "src/main.cpp",
-                "-Llib",
-                "-lSDL2main",
-                "-lSDL2",
-                "-o",
-                "${workspaceRoot}/bin/main"
-            ],
+            "command": ".\\bin\\win_build_script.bat",
+            "args": [],
             "options": {
-                "cwd": "${workspaceRoot}",
-                "env": {
-                    "PATH": "C:\\mingw64\\bin;${env:PATH}"
-                }
+                "cwd": "${workspaceRoot}"
             },
             "problemMatcher": [
                 "$gcc"

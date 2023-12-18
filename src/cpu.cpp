@@ -108,14 +108,45 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
             }
+        case 0x4000:
+            apu->pulse_halt[0]=(value&0x20);
+            apu->pulse_duty[0] = (value&0xC0)>>6;
+            apu->pulse_const[0] = value&0x10;
+            apu->pulse_vols[0] = value&0xf;
+            apu->pulse_start[0] = apu->audio_frame;
+            apu->pulse_step[0] = 0;
+            break;
         case 0x4003:
-            apu->p1_count=(value&0xF8)>>3;
+            apu->pulse_lengths[0]=apu->length_lookup((value&0xF8)>>3);
+            apu->pulse_start[0] = apu->audio_frame;
+            apu->pulse_step[0] = 0;
+            break;
+        case 0x4004:
+            apu->pulse_halt[1]=(value&0x20);
+            apu->pulse_duty[1] = (value&0xC0)>>6;
+            apu->pulse_const[1] = value&0x10;
+            apu->pulse_vols[1] = value&0xf;
+            apu->pulse_start[1] = apu->audio_frame;
+            apu->pulse_step[1] = 0;
             break;
         case 0x4007:
-            apu->p2_count=(value&0xF8)>>3;
+            apu->pulse_lengths[1]=apu->length_lookup((value&0xF8)>>3);
+            apu->pulse_start[1] = apu->audio_frame;
+            apu->pulse_step[1] = 0;
             break;
+        case 0x4008:
+            apu->tri_linear = value&0x7F;
+            apu->tri_halt = value&0x80;
+            apu->tri_start = apu->audio_frame;
+            apu->tri_step = 0;
+            break;
+        case 0x400B:
+            apu->tri_length = (value&0xF8)>>3;
+            break;
+        
         case 0x4014: //write to OAMDMA
             //memcpy(ppu->oam,&memory[(uint16_t)((value&0xff)<<8)],256);
+            {uint8_t old_oam = ppu->oam_addr;
             for (int i=0; i<256; i++) {
                 ppu->oam[(uint8_t)(ppu->oam_addr+i)] = read(&memory[(uint16_t)((value&0xff)<<8)+i])&0xff;
                 if (i%4==2) {
@@ -123,7 +154,7 @@ void CPU::write(int8_t* address, int8_t value) {
                 }
                 ppu->oam[i]&=0xff;
             }
-            ppu->oam_addr--;
+            ppu->oam_addr = old_oam;
             if (debug) {
                 printf("New OAM: [");
                 for (int i=0; i<256; i++) {
@@ -131,24 +162,21 @@ void CPU::write(int8_t* address, int8_t value) {
                 }
                 printf("]\n");
             }
-            break;
+            break;}
         case 0x4016: //controller input 1
             input_strobe = value&1;
             if (value==1) {
                 //poll input
-                inputs = state[SDL_SCANCODE_RIGHT]| //right
-                (state[SDL_SCANCODE_LEFT]<<1)| //left
-                (state[SDL_SCANCODE_DOWN]<<2)| //down
-                (state[SDL_SCANCODE_UP]<<3)| //up
-                (state[SDL_SCANCODE_RETURN]<<4)| //start
-                (state[SDL_SCANCODE_TAB]<<5)| //select
-                (state[SDL_SCANCODE_LSHIFT]<<6)| //B
-                (state[SDL_SCANCODE_SPACE]<<7); //A
-                
+                inputs = (state[SDL_SCANCODE_RIGHT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_RIGHT)|(SDL_JoystickGetAxis(controller,0)>500))| //right
+                ((state[SDL_SCANCODE_LEFT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_LEFT)|(SDL_JoystickGetAxis(controller,0)<-500))<<1)| //left
+                ((state[SDL_SCANCODE_DOWN]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_DOWN)|(SDL_JoystickGetAxis(controller,1)>500))<<2)| //down
+                ((state[SDL_SCANCODE_UP]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_UP)|(SDL_JoystickGetAxis(controller,1)<-500))<<3)| //up
+                ((state[SDL_SCANCODE_RETURN]|SDL_JoystickGetButton(controller,7))<<4)| //start
+                ((state[SDL_SCANCODE_TAB]|SDL_JoystickGetButton(controller,6))<<5)| //select
+                ((state[SDL_SCANCODE_LSHIFT]|SDL_JoystickGetButton(controller,2)|SDL_JoystickGetButton(controller,3))<<6)| //B
+                ((state[SDL_SCANCODE_SPACE]|SDL_JoystickGetButton(controller,1)|SDL_JoystickGetButton(controller,0))<<7); //A
             }
             break;
-        case 0x4017:
-            apu->fcmode = value;
     }
     // special mapper cases
     switch (rom->get_mapper()) {
@@ -233,7 +261,9 @@ void CPU::write(int8_t* address, int8_t value) {
             break;
     }
     if (!(0x8000<=mem && mem<=0xffff)) {
-        *address = value;
+        if (mem!=0x2002) {
+            *address = value;
+        }
     }
 }
 
@@ -335,7 +365,7 @@ void CPU::map_memory(int8_t** address) {
     if (0x0800<=addr && addr < 0x2000) {
         *address-=addr/0x800*0x800;
     } else if (0x2008<=addr && addr < 0x4000) {
-        *address-=addr/0x8*0x8;
+        *address-=(addr-0x2000)/0x8*0x8;
     }
 }
 
@@ -370,6 +400,9 @@ void CPU::clock() {
         (this->*exec)(arg); // execute instruction
         ins_num++;
         pc+=ins_size; // increment by instruction size (determined by addressing mode)
+        if (pc-memory>=0x10000) {
+            pc = memory+(pc-memory)%0x10000;
+        }
         if (recv_nmi) {
             start_nmi();
         }

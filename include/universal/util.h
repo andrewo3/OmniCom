@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <chrono>
+#include <SDL2/SDL.h>
 
 // get time in milliseconds since epoch
 inline long long epoch() {
@@ -20,6 +21,8 @@ inline long long epoch_nano() {
 extern unsigned char out_img[184320]; //output image
 
 extern const uint8_t* state;
+
+extern SDL_Joystick* controller;
 
 static uint8_t NTSC_TO_RGB[192] = {
             0x60,0x60,0x60, //0x00
