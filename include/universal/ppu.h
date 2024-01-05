@@ -18,6 +18,7 @@ class PPU {
         void set_registers();
         ROM* rom;
         long long cycles = 0; // total cycles
+        long long frames = 0;
         int8_t memory[0x4000]; // general memory
         int8_t chr_ram[0x8000]; //chr-ram (used by some mappers)
         int8_t oam[256]; // OAM (Object Attribute Memory) for sprites
@@ -28,6 +29,9 @@ class PPU {
         bool debug = false;
         bool vblank = false;
         std::mutex image_mutex;
+
+        //test
+        int vbl_count = 0;
 
         //rw
         int8_t read(int8_t* address);

@@ -54,6 +54,7 @@ class CPU {
     private:
 
         //---- instructions ----
+        void define_timings();
         void define_opcodes();
         void ADC(int8_t* args);
         void AND(int8_t* args);
@@ -135,6 +136,8 @@ class CPU {
         uint8_t stack_pull(void);
         void map_memory(int8_t** address); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.
         char* debug_opcodes[256] = {0};
+        uint8_t inst_cycles[256] = {0};
+        uint8_t inst_cycles_pagecross[256] = {0};
         char* debug_addr[256] = {0};
 };
 

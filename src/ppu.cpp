@@ -3,6 +3,7 @@
 #include "ppu.h"
 #include "cpu.h"
 #include <cstring>
+#include <cstdlib>
 #include <mutex>
 
 PPU::PPU() {
@@ -188,14 +189,13 @@ void PPU::cycle() {
                     //draw sprite
                     uint8_t sprite_bit = sprite_patterns[i];
                     if (sprite_bit>=0) {
-                        sprite_index = i;
                         sprite_y=scanlinesprites[4*i];
-                        uint8_t sprite_tile_ind = scanlinesprites[4*i+1];
+                        uint8_t sprite_tile_ind = scanlinesprites[4*i+1]&0xff;
                         bool sprite_bank = (*PPUCTRL)&0x8;
                         bool h16 = (*PPUCTRL)&0x20;
                         if (h16) {
                             sprite_tile_ind = sprite_tile_ind&0xfe;
-                            sprite_bank = sprite_tile_ind*0x1;
+                            sprite_bank = sprite_tile_ind;
                         }
                         uint8_t sprite_attr = scanlinesprites[4*i+2];
                         uint8_t new_sprite_palette = sprite_attr&0x3;
@@ -207,13 +207,14 @@ void PPU::cycle() {
                         if (flip_x) {
                             sprite_bit = 7+8*h16-sprite_bit;
                         }
-                        sprite_priority = sprite_attr&0x20;
                         uint8_t sprite_x = scanlinesprites[4*i+3]&0xff;
                         
                         uint8_t new_sprite_pattern = ((read(&memory[sprite_tile])>>sprite_bit)&1)|(((read(&memory[sprite_tile|8])>>sprite_bit)&1)<<1);
                         if (new_sprite_pattern!=0) {
                             sprite_pattern = new_sprite_pattern;
                             sprite_palette = new_sprite_palette;
+                            sprite_index = i;
+                            sprite_priority = sprite_attr&0x20;
                         }
                     }
                 }
@@ -233,9 +234,11 @@ void PPU::cycle() {
                     sprite_pix = true;
                 }
             }
-            if (nextspritezeropresent && sprite_index==0 && ((*PPUMASK)&0x8) && ((*PPUMASK)&0x10) && !(sprite_pattern == 0) && !(bg_pattern == 0)) { //if sprite zero is in the secondary oam, and sprite index was the first one (which must have been sprite 0), this is a sprite 0 hit
+            bool sprite0hit = false;
+            if (nextspritezeropresent && sprite_index==0 && ((*PPUMASK)&0x8) && ((*PPUMASK)&0x10) && !(sprite_pattern == 0) && !(bg_pattern == 0) && !((*PPUSTATUS)&0x40)) { //if sprite zero is in the secondary oam, and sprite index was the first one (which must have been sprite 0), this is a sprite 0 hit
                 //sprite 0 hit
                 (*PPUSTATUS)|=0x40;
+                sprite0hit = true;
             }
             pattern = (sprite_pix &&((*PPUMASK)&0x10))  ? sprite_pattern : bg_pattern;
             if (sprite_pix) {
@@ -314,7 +317,7 @@ void PPU::cycle() {
         }
     } else if (scanline==261) { // pre-render scanline
         if (scycle==1) {
-            (*PPUSTATUS)&=~0x60; //clear overflow and sprite 0 hit
+            (*PPUSTATUS)&=~0xE0; //clear overflow, sprite 0 hit, and vbl
         }
         if (scycle>=280 && scycle<=304 && rendering) {
             v &= ~0x7BE0;
@@ -327,6 +330,12 @@ void PPU::cycle() {
         }
 
     }
+    if (*PPUSTATUS&0x80) {
+        vbl_count++;
+    } else if (vbl_count!=0) {
+        //printf("VBL PPU Clocks: %i\n",vbl_count);
+        vbl_count = 0;
+    }
 
     // increment
     scycle++;
@@ -335,6 +344,11 @@ void PPU::cycle() {
     if (scycle==0) {
         scanline++;
         scanline%=262;
+        if (frames%2==1 && scanline==0 && rendering) { // skip odd frames when rendering
+            cycles++;
+            scycle++;
+        }
+        frames++;
     }
     apply_and_update_registers();
 }

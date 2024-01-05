@@ -18,11 +18,13 @@
 
 CPU::CPU() {
     define_opcodes();
+    define_timings();
 }
 
 CPU::CPU(bool dbug) {
     this->debug = dbug;
     define_opcodes();
+    define_timings();
 }
 
 void CPU::start_nmi() {
@@ -165,12 +167,12 @@ void CPU::write(int8_t* address, int8_t value) {
             break;}
         case 0x4016: //controller input 1
             input_strobe = value&1;
-            if (value==1) {
+            if (input_strobe) {
                 //poll input
-                inputs = (state[SDL_SCANCODE_RIGHT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_RIGHT)|(SDL_JoystickGetAxis(controller,0)>500))| //right
-                ((state[SDL_SCANCODE_LEFT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_LEFT)|(SDL_JoystickGetAxis(controller,0)<-500))<<1)| //left
-                ((state[SDL_SCANCODE_DOWN]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_DOWN)|(SDL_JoystickGetAxis(controller,1)>500))<<2)| //down
-                ((state[SDL_SCANCODE_UP]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_UP)|(SDL_JoystickGetAxis(controller,1)<-500))<<3)| //up
+                inputs = (state[SDL_SCANCODE_RIGHT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_RIGHT)|(joystickDir(controller)==0))| //right
+                ((state[SDL_SCANCODE_LEFT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_LEFT)|(joystickDir(controller)==2))<<1)| //left
+                ((state[SDL_SCANCODE_DOWN]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_DOWN)|(joystickDir(controller)==1))<<2)| //down
+                ((state[SDL_SCANCODE_UP]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_UP)|(joystickDir(controller)==3))<<3)| //up
                 ((state[SDL_SCANCODE_RETURN]|SDL_JoystickGetButton(controller,7))<<4)| //start
                 ((state[SDL_SCANCODE_TAB]|SDL_JoystickGetButton(controller,6))<<5)| //select
                 ((state[SDL_SCANCODE_LSHIFT]|SDL_JoystickGetButton(controller,2)|SDL_JoystickGetButton(controller,3))<<6)| //B
@@ -286,7 +288,7 @@ int8_t CPU::read(int8_t* address) {
                 value = ppu->read_buffer;
                 ppu->read_buffer = ppu->read(&(ppu->memory[bit14]));
             } else {
-                value = read(&(ppu->memory[bit14]));
+                value = ppu->read(&(ppu->memory[bit14]));
             }
             ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
             
@@ -301,7 +303,11 @@ int8_t CPU::read(int8_t* address) {
             } else {
                 value = (inputs&0x80)>>7;
             }
+            value &= ~0xF8;
+            value |= 0x40;
             break;
+        case 0x4017:
+            value = 0x40;
 
     }
     return value;
@@ -370,42 +376,50 @@ void CPU::map_memory(int8_t** address) {
 }
 
 void CPU::clock() {
-    if (emulated_clock_speed()<=CLOCK_SPEED) { //limit clock speed
-        ins_size = 1;
-        cycles+=2;
-        int8_t* ins = pc;
-        //map_memory(&ins);
-        uint8_t ins_value = read(ins);
-        instruction exec = this->opcodes[ins_value]; // get instruction from lookup table
-        addressing_mode addr = this->addrmodes[ins_value]; // get addressing mode from another lookup table
-        int8_t* arg = &ins[1];
-        if (addr!=nullptr) {
-            arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
+    ins_size = 1;
+    int8_t* ins = pc;
+    //map_memory(&ins);
+    uint8_t ins_value = read(ins);
+    //cycles+=inst_cycles[ins_value];
+    instruction exec = this->opcodes[ins_value]; // get instruction from lookup table
+    addressing_mode addr = this->addrmodes[ins_value]; // get addressing mode from another lookup table
+    int8_t* arg = &ins[1];
+    bool xpage = ((uint16_t)(read(arg)&0xff)+(uint16_t)(x&0xff)) > 0xff;
+    bool ypage = ((uint16_t)(read(arg)&0xff)+(uint16_t)(y&0xff)) > 0xff;
+    if (addr!=nullptr) {
+        arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
+    }
+    if ((addr==&absx && xpage)||((addr==&absy || addr==&indy) && ypage)) {
+        cycles+=inst_cycles_pagecross[ins_value];
+    } else {
+        cycles+=inst_cycles[ins_value];   
+    }
+    /*if (!(!(ins_value&0xf) && (ins_value&0x10)) && ins_value<0xE4) { // if not a branch instruction
+        cycles--;
+    }*/
+    //map_memory(&arg); // update banks and registers as needed
+    if (debug) { //print instruction
+        char w[256] = {0};
+        ins_str_mem(w,(uint8_t*)ins,arg);
+        printf("%s ",w);
+        //print stack
+        printf("SP: %02x [",sp);
+        if (sp!=0xff) {
+            printf("%02x",(uint8_t)memory[0x01ff]);
         }
-        //map_memory(&arg); // update banks and registers as needed
-        if (debug) { //print instruction
-            char w[256] = {0};
-            ins_str_mem(w,(uint8_t*)ins,arg);
-            printf("%s ",w);
-            //print stack
-            printf("SP: %02x [",sp);
-            if (sp!=0xff) {
-                printf("%02x",(uint8_t)memory[0x01ff]);
-            }
-            for (int i=0xfe; i>sp; i--) {
-                printf(",%02x",(uint8_t)memory[0x100+i]);
-            }
-            printf("]\n");
+        for (int i=0xfe; i>sp; i--) {
+            printf(",%02x",(uint8_t)memory[0x100+i]);
         }
-        (this->*exec)(arg); // execute instruction
-        ins_num++;
-        pc+=ins_size; // increment by instruction size (determined by addressing mode)
-        if (pc-memory>=0x10000) {
-            pc = memory+(pc-memory)%0x10000;
-        }
-        if (recv_nmi) {
-            start_nmi();
-        }
+        printf("]\n");
+    }
+    (this->*exec)(arg); // execute instruction
+    ins_num++;
+    pc+=ins_size; // increment by instruction size (determined by addressing mode)
+    if (pc-memory>=0x10000) {
+        pc = memory+(pc-memory)%0x10000;
+    }
+    if (recv_nmi) {
+        start_nmi();
     }
 
     

@@ -8,7 +8,6 @@
 
 int8_t* CPU::xind(int8_t* args) {
     ins_size = 2;
-    cycles += 4;
     int8_t r = read(args);
     int8_t* u = &memory[((uint8_t)r+(uint8_t)x)&0xff];
     int8_t* u_high = &memory[((uint8_t)r+(uint8_t)x+1)&0xff];
@@ -19,54 +18,54 @@ int8_t* CPU::xind(int8_t* args) {
 int8_t* CPU::indy(int8_t* args) {
     uint8_t* u = (uint8_t*)args;
     ins_size = 2;
-    cycles += 3;
     uint8_t u_val = read((int8_t*)u);
     uint16_t ind = (uint8_t)read(&memory[u_val]) | (uint16_t)(((uint8_t)read(&memory[(u_val+1)&0xff]))<<8);
-    return &memory[ind+(uint8_t)y];
+    return &memory[(uint16_t)(ind+(uint8_t)y)];
 }
 
 int8_t* CPU::zpg(int8_t* args) {
     ins_size = 2;
-    cycles += 1;
     return &memory[(uint8_t)read(args)];
 }
 
 int8_t* CPU::zpgx(int8_t* args) {
     ins_size = 2;
-    cycles += 2;
     return &memory[(uint8_t)((uint8_t)read(args)+(uint8_t)x)];
 }
 
 int8_t* CPU::zpgy(int8_t* args) {
     ins_size = 2;
-    cycles += 2;
     return &memory[(uint8_t)((uint8_t)read(args)+(uint8_t)y)];
 }
 
 int8_t* CPU::abs(int8_t* args) {
     ins_size = 3;
-    cycles += 2;
     return &memory[(uint16_t)(((uint16_t)(read(args)&0xff))|((uint16_t)(read(args+1)&0xff)<<8))];
 }
 
 int8_t* CPU::absx(int8_t* args) {
     ins_size = 3;
-    cycles += 2;
     uint8_t u = x;
-    return &memory[(uint16_t)((((uint8_t)(read(args)&0xff))|((uint16_t)(read(args+1)&0xff)<<8))+(uint16_t)u)];
+    uint16_t lb = read(args)&0xff;
+    if ((lb+u)>0xff) {
+        
+    }
+    return &memory[(uint16_t)((((uint8_t)lb)|((uint16_t)(read(args+1)&0xff)<<8))+(uint16_t)u)];
 }
 
 int8_t* CPU::absy(int8_t* args) {
     ins_size = 3;
-    cycles += 2;
     uint8_t u = y;
-    return &memory[(uint16_t)((((uint8_t)(read(args)&0xff))|((uint16_t)(read(args+1)&0xff)<<8))+(uint16_t)u)];
+    uint16_t lb = read(args)&0xff;
+    if ((lb+u)>0xff) {
+        
+    }
+    return &memory[(uint16_t)((((uint8_t)lb)|((uint16_t)(read(args+1)&0xff)<<8))+(uint16_t)u)];
 }
 
 int8_t* CPU::ind(int8_t* args) {
     map_memory(&args);
     ins_size = 3;
-    cycles += 3;
     uint16_t* full = (uint16_t*)args;
     return &memory[(uint16_t)((read(&memory[full[0]])&0xff) | ((uint16_t)(read(&memory[(full[0]&0xff00)|((full[0]+1)&0xff)])&0xff)<<8))];
 }
@@ -105,27 +104,44 @@ void CPU::ASL(int8_t* args) {
     uint8_t r = read(args);
     uint8_t result = (r<<1)&0xfe;
     write(args,result&0xff);
-    cycles += 2;
     this->set_flag('C',r&0x80);
     this->set_flag('Z',!result);
     this->set_flag('N',result&0x80);
 }
 
 void CPU::BCC(int8_t* args) {
+    cycles+=2;
     if (!get_flag('C')) {
+        cycles++;
+        uint8_t old_page = (get_addr(pc)&0xff00)>>8;
         pc = args;
+        if (((get_addr(pc+ins_size)&0xff00)>>8)!=old_page) {
+            cycles++;
+        }
     }
 }
 
 void CPU::BCS(int8_t* args) {
+    cycles+=2;
     if (get_flag('C')) {
+        cycles++;
+        uint8_t old_page = (get_addr(pc)&0xff00)>>8;
         pc = args;
+        if (((get_addr(pc+ins_size)&0xff00)>>8)!=old_page) {
+            cycles++;
+        }
     }
 }
 
 void CPU::BEQ(int8_t* args) {
+    cycles+=2;
     if (get_flag('Z')) {
+        cycles++;
+        uint8_t old_page = (get_addr(pc)&0xff00)>>8;
         pc = args;
+        if (((get_addr(pc+ins_size)&0xff00)>>8)!=old_page) {
+            cycles++;
+        }
     }
 }
 
@@ -138,44 +154,73 @@ void CPU::BIT(int8_t* args) {
 }
 
 void CPU::BMI(int8_t* args) {
+    cycles+=2;
     if (get_flag('N')) {
+        cycles++;
+        uint8_t old_page = (get_addr(pc)&0xff00)>>8;
         pc = args;
+        if (((get_addr(pc+ins_size)&0xff00)>>8)!=old_page) {
+            cycles++;
+        }
     }
 }
 
 void CPU::BNE(int8_t* args) {
+    cycles+=2;
     if (!get_flag('Z')) {
-        pc = args;   
+        cycles++;
+        uint8_t old_page = (get_addr(pc)&0xff00)>>8;
+        pc = args;
+        if (((get_addr(pc+ins_size)&0xff00)>>8)!=old_page) {
+            cycles++;
+        }
     }
 }
 
 void CPU::BPL(int8_t* args) {
+    cycles+=2;
     if (!get_flag('N')) {
+        cycles++;
+        uint8_t old_page = (get_addr(pc)&0xff00)>>8;
         pc = args;
+        if (((get_addr(pc+ins_size)&0xff00)>>8)!=old_page) {
+            cycles++;
+        }
     }
 }
 
 void CPU::BRK(int8_t* args) {
     // push high byte first
-    //printf("BRK @ %04x/%04x\n",get_addr(pc),get_addr(pc+ins_size));
+    //printf("BRK @ %04x/%04x\n",get_addr(pc),get_addr(pc+ins_size))
     uint16_t last_ptr = (uint16_t)(get_addr(pc+ins_size))+1;
     stack_push((int8_t)(last_ptr>>8));
     stack_push((int8_t)(last_ptr&0xff));
     flags|=0x30;
     stack_push(flags);
-    cycles += 5;
     pc = this->abs(&memory[IRQ])-ins_size;
 }
 
 void CPU::BVC(int8_t* args) {
+    cycles+=2;
     if (!get_flag('V')) {
+        cycles++;
+        uint8_t old_page = (get_addr(pc)&0xff00)>>8;
         pc = args;
+        if (((get_addr(pc+ins_size)&0xff00)>>8)!=old_page) {
+            cycles++;
+        }
     }
 }
 
 void CPU::BVS(int8_t* args) {
+    cycles+=2;
     if(get_flag('V')) {
+        cycles++;
+        uint8_t old_page = (get_addr(pc)&0xff00)>>8;
         pc = args;
+        if (((get_addr(pc+ins_size)&0xff00)>>8)!=old_page) {
+            cycles++;
+        }
     }
 }
 
@@ -219,7 +264,6 @@ void CPU::DEC(int8_t* args) {
     uint8_t r = read(args);
     r--;
     write(args,r);
-    cycles += 2;
     this->set_flag('Z',!r);
     this->set_flag('N',r&0x80);
 }
@@ -247,7 +291,6 @@ void CPU::INC(int8_t* args) {
     uint8_t r = read(args);
     r++;
     write(args,r);
-    cycles += 2;
     this->set_flag('Z',!r);
     this->set_flag('N',r&0x80);
 }
@@ -301,7 +344,6 @@ void CPU::LSR(int8_t* args) {
     this->set_flag('C',r&1);
     uint8_t result = r>>1;
     write(args,result&0xff);
-    cycles += 2;
     this->set_flag('Z',!result);
     this->set_flag('N',0);
 }
@@ -344,7 +386,6 @@ void CPU::ROL(int8_t* args) {
     changed |= this->get_flag('C')&1;
     this->set_flag('C',r&0x80);
     write(args,changed);
-    cycles += 2;
     this->set_flag('N',changed&0x80);
     this->set_flag('Z',!changed);
 }
@@ -355,7 +396,6 @@ void CPU::ROR(int8_t* args) {
     changed |= (this->get_flag('C')<<7);
     this->set_flag('C',r&1);
     write(args,changed);
-    cycles += 2;
     this->set_flag('N',changed&0x80);
     this->set_flag('Z',!changed);
 }
@@ -365,14 +405,12 @@ void CPU::RTI(int8_t* args) {
     flags = stack_pull();
     uint16_t new_pc = stack_pull();
     new_pc |=stack_pull()<<8;
-    cycles += 4;
     pc = &memory[new_pc]-1;
 }
 
 void CPU::RTS(int8_t* args) {
     uint16_t new_pc = (uint8_t)(stack_pull());
     new_pc |=((uint8_t)stack_pull())<<8;
-    cycles += 4;
     pc = &memory[new_pc];
 }
 
@@ -858,5 +896,66 @@ void CPU::define_opcodes() {
                 break;
         }   
         
+    }
+}
+
+void CPU::define_timings() {
+    char *edit_str = 
+    "7608335532224466"
+    "0508446624274477"
+    "6608335542224466"
+    "0508446624274477"
+    "6608335532223466"
+    "0508446624274477"
+    "6608335542225466"
+    "0508446624274477"
+    "2626333322224444"
+    "0606444425255555"
+    "2626333322224444"
+    "0505444424244444"
+    "2628335522224466"
+    "0508446624274477"
+    "2628335522224466"
+    "0508446624274477";
+    /*
+    char *edit_str = 
+    "6508324521124356"
+    "0408435613274367"
+    "6608335542224466"
+    "0508446624274477"
+    "6608335532223466"
+    "0508446624274477"
+    "6608335542225466"
+    "0508446624274477"
+    "2626333322224444"
+    "0606444425255555"
+    "2626333322224444"
+    "0505444424244444"
+    "2628335522224466"
+    "0508446624274477"
+    "2628335522224466"
+    "0508446624274477";*/
+    for (int i=0; i<0xff; i++) {
+        inst_cycles[i] = edit_str[i]-'0';
+    }
+    edit_str = 
+    "7608335532224466"
+    "0608446625275577"
+    "6608335542224466"
+    "0608446625275577"
+    "6608335532223466"
+    "0608446625275577"
+    "6608335542225466"
+    "0608446625275577"
+    "2626333322224444"
+    "0606444425255555"
+    "2626333322224444"
+    "0606444425255555"
+    "2628335522224466"
+    "0608446625275577"
+    "2628335522224466"
+    "0608446625275577";
+    for (int i=0; i<0xff; i++) {
+        inst_cycles_pagecross[i] = edit_str[i]-'0';
     }
 }

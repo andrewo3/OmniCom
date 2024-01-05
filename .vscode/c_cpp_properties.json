@@ -10,7 +10,7 @@
                 "${workspaceFolder}/src/ntsc-filter"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/g++",
+            "compilerPath": "C:\\mingw64\\bin\\g++",
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "msvc-x64"

@@ -91,5 +91,5 @@ static uint8_t NTSC_TO_RGB[192] = {
             0x00,0x00,0x00  //0x3F
         }; //lookup nesoutput*3 for the r,g,b for that value.
         
-
+int joystickDir(SDL_Joystick* joy);
 #endif

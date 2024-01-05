@@ -58,7 +58,7 @@ int main(int argc, char ** argv) {
     command_stream << "g++ -DGLEW_STATIC -DROM_NAME=\"\\\"" << fixed(argv[1]);
     command_stream << "\\\"\" -DDATAROM="<<xxdstring(argv[1])<<" -DDATALENGTH="<<xxdstring(argv[1])<<"_len ";
     get_filename(&argv[1]);
-    command_stream << "src/util.cpp src/rom.cpp src/cpu.cpp src/cpu_helper.cpp src/ppu.cpp src/apu.cpp -g src/main.cpp -Iinclude/universal -Llib -lglew32s -lSDL2 -lopengl32 -o \"bin/" << argv[1] << ".exe\" -mwindows";
+    command_stream << "-static-libgcc -static-libstdc++ src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/ntsc-filter/crt_nesrgb.c src/util.cpp src/rom.cpp src/cpu.cpp src/cpu_helper.cpp src/ppu.cpp src/apu.cpp src/main.cpp -Iinclude/universal -Iinclude/win32 -Isrc\\ntsc-filter -Llib -lSDL2main -lSDL2 -lglew32s -lopengl32 -o \"bin/" << argv[1] << ".exe\" -mwindows";
     std::string command = command_stream.str();
     printf("%s\n",command.c_str());
     int result = std::system(command.c_str());

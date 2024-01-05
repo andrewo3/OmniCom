@@ -39,7 +39,7 @@
 static struct CRT crt;
 static struct NTSC_SETTINGS ntsc;
 static int color = 1;
-static int noise = 4;
+static int noise = 6;
 static int field = 0;
 static int raw = 0;
 static int hue = 0;
@@ -49,7 +49,7 @@ std::mutex interruptedMutex;
 
 const int NES_DIM[2] = {256,240};
 int WINDOW_INIT[2];
-int filtered_res_scale = 8;
+int filtered_res_scale = 2;
 const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
 
 volatile sig_atomic_t interrupted = 0;
@@ -76,7 +76,7 @@ SDL_AudioSpec audio_spec;
 const int BUFFER_LEN = 1024;
 
 int usage_error() {
-    printf("Usage: nes rom_filename\n");
+    printf("Usage: main rom_filename\n");
     return -1;
 }
 
@@ -203,21 +203,23 @@ void NESLoop() {
     
     //emulator loop
     while (!interrupted) {
-        cpu_ptr->clock();
-        // 3 dots per cpu cycle
-        while (apu_ptr->frames<cpu_ptr->cycles*240/(cpu_ptr->CLOCK_SPEED)) {
-            apu_ptr->cycle();
-        }
-        while (ppu_ptr->cycles<cpu_ptr->cycles*3) {
-            ppu_ptr->cycle();
-            if (ppu_ptr->debug) {
-                printf("PPU REGISTERS: ");
-                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
-                printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
+        if (cpu_ptr->emulated_clock_speed()<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
+            cpu_ptr->clock();
+            // 3 dots per cpu cycle
+            while (apu_ptr->frames<cpu_ptr->cycles*240/(cpu_ptr->CLOCK_SPEED)) {
+                apu_ptr->cycle();
             }
-            //printf("%i\n",ppu.v);
+            while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
+                ppu_ptr->cycle();
+                if (ppu_ptr->debug) {
+                    printf("PPU REGISTERS: ");
+                    printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
+                    printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
+                }
+                //printf("%i\n",ppu.v);
+            }
+            total_ticks = cpu_ptr->cycles;
         }
-        total_ticks = cpu_ptr->cycles;
         
     }
     
@@ -225,7 +227,7 @@ void NESLoop() {
 
 void AudioLoop(void* userdata, uint8_t* stream, int len) {
     for (int i=0; i<len; i+=2) {
-        int16_t v=mix(apu_ptr);
+        int16_t audio_pt=mix(apu_ptr);
         audio_pt = 0;
         //int16_t v = (int16_t)(16384*sin(t));
         stream[i] = audio_pt&0xff;
@@ -299,7 +301,6 @@ int main(int argc, char ** argv) {
     int* viewport = new int[4];
     viewportBox(&viewport,WINDOW_INIT[0],WINDOW_INIT[1]);
     SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WINDOW_INIT[0],WINDOW_INIT[1],FLAGS);
-    delete[] original_start;
     printf("Window Created\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
     glewExperimental = GL_TRUE;
@@ -319,7 +320,7 @@ int main(int argc, char ** argv) {
     unsigned char * filtered = (unsigned char*)malloc(NES_DIM[0]*NES_DIM[1]*filtered_res_scale*filtered_res_scale*3*sizeof(char));
     crt_init(&crt, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, CRT_PIX_FORMAT_RGB, &filtered[0]);
     /* specify some settings */
-    crt.blend = 1;
+    crt.blend = 0;
     crt.scanlines = 1;
 
 
@@ -398,11 +399,16 @@ int main(int argc, char ** argv) {
 
     printf("NES thread started. Starting main window loop...\n");
     float t_time = SDL_GetTicks()/1000.0;
+    float last_time = SDL_GetTicks()/1000.0;
     int16_t buffer[BUFFER_LEN*2];
     SDL_PauseAudioDevice(audio_device,0);
     //main window loop
     while (!interrupted) {
-        t_time = SDL_GetTicks()/1000.0;
+        float diff = t_time-last_time;
+        last_time = SDL_GetTicks()/1000.0;
+        char * new_title = new char[255];
+        sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
+        SDL_SetWindowTitle(window,new_title);
         // event loop
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
@@ -442,8 +448,8 @@ int main(int argc, char ** argv) {
                         case SDLK_s:
                             shader_toggle = shader_toggle ? false : true;
                             glBindTexture(GL_TEXTURE_2D, texture);
-                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, shader_toggle ? GL_LINEAR : GL_NEAREST);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, shader_toggle ? GL_LINEAR : GL_NEAREST);
                             break;
                     }
             }
@@ -490,6 +496,7 @@ int main(int argc, char ** argv) {
         SDL_GL_SwapWindow(window);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        t_time = SDL_GetTicks()/1000.0;
     }
     NESThread.join();
     glDetachShader(shaderProgram,vertexShader);
@@ -500,6 +507,7 @@ int main(int argc, char ** argv) {
     SDL_CloseAudioDevice(audio_device);
     SDL_Quit();
     free(filtered);
+    delete[] original_start;
     //tCPU.join();
     //tPPU.join();
     //stbi_image_free(img);
