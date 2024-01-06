@@ -272,7 +272,8 @@ int main(int argc, char ** argv) {
     SDL_ShowCursor(0);
     int controller_index = 0;
     controller = SDL_JoystickOpen(controller_index);
-    printf("%s\n",SDL_JoystickNameForIndex(controller_index));
+    auto c_name = SDL_JoystickNameForIndex(controller_index);
+    printf("%s\n",c_name ? c_name : "null");
     printf("SDL Initialized\n");
 
     //set display dimensions
