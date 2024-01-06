@@ -103,9 +103,9 @@ void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
     printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",total_ticks/(epoch()-start)*1000,total_ticks/(epoch()-start)*1000/1789773.0*100);
     //for test purpose: remove once done testing!!
-    std::FILE* memory_dump = fopen("dump","w");
+    /*std::FILE* memory_dump = fopen("dump","w");
     fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
-    fclose(memory_dump);
+    fclose(memory_dump);*/
 
     interrupted = 1;
     if (signal==SIGSEGV) {
@@ -446,11 +446,23 @@ int main(int argc, char ** argv) {
                             cpu.debug = cpu.debug ? false : true;
                             break;
                         case SDLK_s:
+                            {
                             shader_toggle = shader_toggle ? false : true;
                             glBindTexture(GL_TEXTURE_2D, texture);
                             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, shader_toggle ? GL_LINEAR : GL_NEAREST);
                             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, shader_toggle ? GL_LINEAR : GL_NEAREST);
+                            GLfloat new_vertices[] = {
+                                -1.0f, 1.0f,0.0f,0.0f,
+                                -1.0f, -1.0f,0.0f,1-0.04f*shader_toggle,
+                                1.0f, -1.0f,1.0f,1-0.04f*shader_toggle,
+                                1.0f, 1.0f, 1.0f,0.0f
+                            };
+                            memcpy(vertices,new_vertices,16*sizeof(GLfloat));
+                            glBindBuffer(GL_ARRAY_BUFFER,VBO);
+                            glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), vertices, GL_STATIC_DRAW);
+                            glBindBuffer(GL_ARRAY_BUFFER,0);
                             break;
+                            }
                     }
             }
         }

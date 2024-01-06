@@ -146,7 +146,7 @@ uint8_t* ROM::get_chr_bank(int bank_num) { //size = 0x1000
         throw(1);
     } else if (chrsize==0) { // using chr-ram
         //something else will be done
-        return (&chr_ram[0])+mmc1chrbank*0x1000;
+        return 0;
     }
     return chr+0x1000*bank_num;
 }
