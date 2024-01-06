@@ -309,7 +309,7 @@ void CPU::clock() {
     if (addr!=nullptr) {
         arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
     }
-    if ((addr==&absx && xpage)||((addr==&absy || addr==&indy) && ypage)) {
+    if ((addr==&CPU::absx && xpage)||((addr==&CPU::absy || addr==&CPU::indy) && ypage)) {
         cycles+=inst_cycles_pagecross[ins_value];
     } else {
         cycles+=inst_cycles[ins_value];   
