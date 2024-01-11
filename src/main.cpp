@@ -206,19 +206,19 @@ void NESLoop() {
         if (cpu_ptr->emulated_clock_speed()<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
             cpu_ptr->clock();
             // 3 dots per cpu cycle
-            while (apu_ptr->frames<cpu_ptr->cycles*240/(cpu_ptr->CLOCK_SPEED)) {
+            total_ticks = cpu_ptr->cycles;
+        }
+        while (apu_ptr->frames<cpu_ptr->cycles*240/(cpu_ptr->CLOCK_SPEED)) {
                 apu_ptr->cycle();
             }
-            while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
-                ppu_ptr->cycle();
-                if (ppu_ptr->debug) {
-                    printf("PPU REGISTERS: ");
-                    printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
-                    printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
-                }
-                //printf("%i\n",ppu.v);
+        while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
+            ppu_ptr->cycle();
+            if (ppu_ptr->debug) {
+                printf("PPU REGISTERS: ");
+                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
+                printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
             }
-            total_ticks = cpu_ptr->cycles;
+            //printf("%i\n",ppu.v);
         }
         
     }
@@ -384,7 +384,7 @@ int main(int argc, char ** argv) {
     cpu.apu = &apu;
     apu_ptr = &apu;
     apu.cpu = &cpu;
-    printf("APU set");
+    printf("APU set\n");
 
     cpu.loadRom(&rom);
     printf("ROM loaded into CPU.\n");
@@ -463,6 +463,14 @@ int main(int argc, char ** argv) {
                             glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), vertices, GL_STATIC_DRAW);
                             glBindBuffer(GL_ARRAY_BUFFER,0);
                             break;
+                            }
+                        case SDLK_r:
+                            if (state[SDL_SCANCODE_LCTRL]) {
+                                interrupted = true;
+                                NESThread.join();
+                                cpu.loadRom(&rom);
+                                interrupted = false;
+                                NESThread = std::thread(NESLoop);
                             }
                     }
             }

@@ -2,6 +2,7 @@
 #include "rom.h"
 #include "ppu.h"
 #include "cpu.h"
+#include "mapper.h"
 #include <cstring>
 #include <cstdlib>
 #include <mutex>
@@ -195,17 +196,18 @@ void PPU::cycle() {
                         bool h16 = (*PPUCTRL)&0x20;
                         if (h16) {
                             sprite_tile_ind = sprite_tile_ind&0xfe;
-                            sprite_bank = sprite_tile_ind;
+                            sprite_bank = sprite_tile_ind&0x1;
                         }
                         uint8_t sprite_attr = scanlinesprites[4*i+2];
                         uint8_t new_sprite_palette = sprite_attr&0x3;
                         bool flip_x = sprite_attr&0x40;
                         bool flip_y = sprite_attr&0x80;
                         uint8_t local_y = flip_y ? 7+8*h16-(scanline-sprite_y) : (scanline-sprite_y);
+                        sprite_tile_ind+=local_y/8;
                         uint16_t sprite_tile;
                         sprite_tile = (sprite_bank<<12)|((sprite_tile_ind<<4)+(local_y>7))|(local_y&0x7);
                         if (flip_x) {
-                            sprite_bit = 7+8*h16-sprite_bit;
+                            sprite_bit = 7-sprite_bit;
                         }
                         uint8_t sprite_x = scanlinesprites[4*i+3]&0xff;
                         
@@ -384,8 +386,8 @@ void PPU::map_memory(int8_t** addr) {
 
 void PPU::loadRom(ROM *r) {
     rom = r;
-    uint8_t m = rom->get_mapper();
-    switch(m) {
+    Mapper m = rom->get_mapper();
+    switch(m.type) {
         case 0:
             memcpy(memory,rom->chr,rom->get_chrsize());
     }

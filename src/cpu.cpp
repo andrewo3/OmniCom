@@ -181,7 +181,7 @@ void CPU::write(int8_t* address, int8_t value) {
             break;
     }
     // TODO: special mapper cases
-
+    
     if (!(0x8000<=mem && mem<=0xffff)) {
         if (mem!=0x2002) {
             *address = value;
@@ -277,9 +277,9 @@ void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
 }
 
 void CPU::map_memory(int8_t** address) {
-    uint8_t m = rom->get_mapper();
+    Mapper m = rom->get_mapper();
     long long addr = get_addr(*address);
-    switch(m) {
+    switch(m.type) {
         case 0:
             if (rom->get_prgsize()/0x4000==1) {
                 if (0xC000<=addr && addr<=0xFFFF) {
@@ -365,9 +365,17 @@ void CPU::reset() {
 }
 
 void CPU::loadRom(ROM *r) {
+    for (int i=0; i<=0xFFFF; i++) {
+        memory[i] = 0;
+    }
+    flags = 0x24;
+    accumulator = 0;
+    x = 0;
+    y = 0;
+    sp = 0xff;
     rom = r;
-    uint8_t m = rom->get_mapper();
-    switch(m) {
+    Mapper m = rom->get_mapper();
+    switch(m.type) {
         case 0:
             memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
             break;

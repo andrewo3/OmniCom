@@ -11,7 +11,7 @@ void APU::setCPU(CPU* c_ptr) {
 
 int8_t APU::pulse(bool index) {
     long long pulse_frame = audio_frame;
-    pulse_frame %=sample_rate;
+    //pulse_frame %=sample_rate;
     uint16_t t = (cpu->memory[0x4002+4*index]&0xff)|(((cpu->memory[0x4003+4*index])&0x7)<<8);
     int frequency = cpu->CLOCK_SPEED/(16*(t+1));
     float duty = pulse_duty[index] ? .25*pulse_duty[index] : .125;
@@ -28,21 +28,31 @@ int8_t APU::pulse(bool index) {
 int8_t APU::tri() {
     //if index == 0, its pulse 1
     //if index == 1, its pulse 2
-    uint16_t t = cpu->memory[0x400A]|((cpu->memory[0x400B]&0x7)<<8);
-    int frequency = cpu->CLOCK_SPEED/(16*(t+1));
-
-    int ratefreq = sample_rate/frequency;
-    //double x = (double)frame/sample_rate;
-    float triangle_value = 0;
-    return tri_vol*(triangle_value);
+    long long pulse_frame = audio_frame;
+    //pulse_frame %=sample_rate;
+    uint16_t t = (cpu->memory[0x400A]&0xff)|((cpu->memory[0x400B]&0x7)<<8);
+    int frequency = cpu->CLOCK_SPEED/(32*(t+1));
+    if (frequency!=0 && t>=2 && tri_length>0) {
+        int period = sample_rate/frequency;
+        //double x = (double)frame/sample_rate;
+        int tp = (pulse_frame%(period/2))-(period/4); //index along half of triangle using abs as shape
+        //printf("%i\n",tp);
+        float triangle_value = (abs(tp)*4.0/period-1)*(-1+2*((pulse_frame/(period/2))%2)); //scale and flip abs as nevessary
+        return 15*triangle_value;
+    } else {
+        //printf("Length Counter and Halt: %i %i\n",tri_length, tri_halt);
+        return 0;
+    }
 
 }
 
 int16_t mix(APU* a_ptr) {
     int8_t pulse1 = a_ptr->pulse(false);
     int8_t pulse2 = a_ptr->pulse(true);
+    int8_t tri = a_ptr->tri();
+    //pulse1/60.0+pulse2/60.0+
     a_ptr->audio_frame++;
-    int16_t output = ((int16_t)32767*(pulse1/15.0+pulse2/15.0));
+    int16_t output = ((int16_t)(32767.0*(tri/60.0)));
     //printf("out: %f\n", (float)output/32767);
     return output;
 }
@@ -63,6 +73,11 @@ void APU::cycle() { //frame counter quarter frame
                     pulse_vols[i]--;
                 }
             }*/
+        }
+    }
+    if (tri_length>0) {
+        if (!tri_halt) {
+            tri_length--;
         }
     }
     last_aud_frame = audio_frame;

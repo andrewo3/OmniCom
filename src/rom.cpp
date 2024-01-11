@@ -1,4 +1,5 @@
 #include "rom.h"
+#include "mapper.h"
 #include <string.h>
 #include <cstdio>
 #include <cstdlib>
@@ -34,7 +35,15 @@ void ROM::load_arr(int length, unsigned char* data) {
     }
 
     bool trainer_present = header[6]&0x04;
-    mapper = ((header[6]&0xF0)>>4)|(header[7]&0xF0);
+    int mapper_num = ((header[6]&0xF0)>>4)|(header[7]&0xF0);
+    switch (mapper_num) {
+        case 0:
+            mapper = NROM();
+            break;
+        case 1:
+            mapper = MMC1();
+            break;
+    }
     if (header[6]&0x08) {
         mirrormode = FOURSCREEN;
     } else {
@@ -94,7 +103,15 @@ void ROM::load_file(const char* src) {
     }
 
     bool trainer_present = header[6]&0x04;
-    mapper = ((header[6]&0xF0)>>4)|(header[7]&0xF0);
+    int mapper_num = ((header[6]&0xF0)>>4)|(header[7]&0xF0);
+    switch (mapper_num) {
+        case 0:
+            mapper = NROM();
+            break;
+        case 1:
+            mapper = MMC1();
+            break;
+    }
     if (header[6]&0x08) {
         mirrormode = FOURSCREEN;
     } else {
