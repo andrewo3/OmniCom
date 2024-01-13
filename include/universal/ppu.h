@@ -29,6 +29,7 @@ class PPU {
         bool debug = false;
         bool vblank = false;
         std::mutex image_mutex;
+        int chr_bank_num = 0;
 
         //test
         int vbl_count = 0;

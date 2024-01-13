@@ -26,7 +26,7 @@ class ROM {
         uint8_t mmc1prgloc = 0;
         uint8_t *get_prg_bank(int bank_num);
         uint8_t *get_chr_bank(int bank_num);
-        Mapper get_mapper() {return mapper;}
+        Mapper* get_mapper() {return mapper;}
         int get_prgsize() {return prgsize;}
         int get_chrsize() {return chrsize;}
         uint8_t chr_ram[0x2000];
@@ -40,7 +40,7 @@ class ROM {
         int8_t trainer[512]; //load at $7000 if present
         int prgsize;
         int chrsize;
-        Mapper mapper;
+        Mapper* mapper;
 };
 
 #endif

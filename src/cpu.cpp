@@ -2,6 +2,7 @@
 #include "cpu.h"
 #include "ppu.h"
 #include "util.h"
+#include "mapper.h"
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -181,7 +182,9 @@ void CPU::write(int8_t* address, int8_t value) {
             break;
     }
     // TODO: special mapper cases
-    
+    void* system[3] = {this,ppu,apu};
+    rom->get_mapper()->map_write(&system[0],address,value);
+
     if (!(0x8000<=mem && mem<=0xffff)) {
         if (mem!=0x2002) {
             *address = value;
@@ -230,6 +233,8 @@ int8_t CPU::read(int8_t* address) {
             value = 0x40;
 
     }
+    void* system[3] = {this,ppu,apu};
+    rom->get_mapper()->map_read(&system[0],address);
     return value;
 }
 
@@ -277,10 +282,17 @@ void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
 }
 
 void CPU::map_memory(int8_t** address) {
-    Mapper m = rom->get_mapper();
+    Mapper* m = rom->get_mapper();
     long long addr = get_addr(*address);
-    switch(m.type) {
+    switch(m->type) {
         case 0:
+            if (rom->get_prgsize()/0x4000==1) {
+                if (0xC000<=addr && addr<=0xFFFF) {
+                    *address-=0x4000; //mirror first table
+                }
+            }
+            break;
+        case 3:
             if (rom->get_prgsize()/0x4000==1) {
                 if (0xC000<=addr && addr<=0xFFFF) {
                     *address-=0x4000; //mirror first table
@@ -374,13 +386,17 @@ void CPU::loadRom(ROM *r) {
     y = 0;
     sp = 0xff;
     rom = r;
-    Mapper m = rom->get_mapper();
-    switch(m.type) {
+    Mapper* m = rom->get_mapper();
+    //printf("test %i\n",rom->get_prgsize());
+    switch(m->type) {
         case 0:
             memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
             break;
         case 1:
             memcpy(&memory[0xc000],rom->get_prg_bank((rom->get_prgsize()/0x4000)-1),0x4000);
+            break;
+        case 3:
+            memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
             break;
     }
     reset();

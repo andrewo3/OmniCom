@@ -259,7 +259,7 @@ int main(int argc, char ** argv) {
         }
     }
 
-    printf("Mapper: %i\n",rom.get_mapper()); //https://www.nesdev.org/wiki/Mapper
+    printf("Mapper: %i\n",rom.get_mapper()->type); //https://www.nesdev.org/wiki/Mapper
     printf("Mirrormode: %i\n",rom.mirrormode);
 
     char* filename = new char[strlen(ROM_NAME)+1];

@@ -386,11 +386,7 @@ void PPU::map_memory(int8_t** addr) {
 
 void PPU::loadRom(ROM *r) {
     rom = r;
-    Mapper m = rom->get_mapper();
-    switch(m.type) {
-        case 0:
-            memcpy(memory,rom->chr,rom->get_chrsize());
-    }
+    memcpy(memory,rom->get_chr_bank(chr_bank_num),0x2000);
 
 }
 

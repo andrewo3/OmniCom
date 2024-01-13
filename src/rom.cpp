@@ -38,10 +38,23 @@ void ROM::load_arr(int length, unsigned char* data) {
     int mapper_num = ((header[6]&0xF0)>>4)|(header[7]&0xF0);
     switch (mapper_num) {
         case 0:
-            mapper = NROM();
+            mapper = new NROM();
             break;
         case 1:
-            mapper = MMC1();
+            mapper = new MMC1();
+            break;
+        case 2:
+            mapper = new UxROM();
+            break;
+        case 3:
+            mapper = new CNROM();
+            break;
+        case 4:
+            mapper = new MMC3();
+            break;
+        default:
+            mapper = new DEFAULT_MAPPER(mapper_num);
+            printf("UNRECOGNIZED MAPPER!\n");
             break;
     }
     if (header[6]&0x08) {
@@ -106,10 +119,23 @@ void ROM::load_file(const char* src) {
     int mapper_num = ((header[6]&0xF0)>>4)|(header[7]&0xF0);
     switch (mapper_num) {
         case 0:
-            mapper = NROM();
+            mapper = new NROM();
             break;
         case 1:
-            mapper = MMC1();
+            mapper = new MMC1();
+            break;
+        case 2:
+            mapper = new UxROM();
+            break;
+        case 3:
+            mapper = new CNROM();
+            break;
+        case 4:
+            mapper = new MMC3();
+            break;
+        default:
+            mapper = new DEFAULT_MAPPER(mapper_num);
+            printf("UNRECOGNIZED MAPPER!\n");
             break;
     }
     if (header[6]&0x08) {
@@ -158,17 +184,18 @@ uint8_t* ROM::get_prg_bank(int bank_num) { //size = 0x4000
 }
 
 uint8_t* ROM::get_chr_bank(int bank_num) { //size = 0x1000
-    if (chrsize!=0 && bank_num>chrsize/0x1000) {
-        printf("Bank number %i out of bounds - %i, %i\n",bank_num,chrsize,chrsize/0x1000);
+    if (chrsize!=0 && bank_num>chrsize/0x2000) {
+        printf("Bank number %i out of bounds - %i, %i\n",bank_num,chrsize,chrsize/0x2000);
         throw(1);
     } else if (chrsize==0) { // using chr-ram
         //something else will be done
         return 0;
     }
-    return chr+0x1000*bank_num;
+    return chr+0x2000*bank_num;
 }
 
 ROM::~ROM() {
     free(prg);
     free(chr);
+    delete mapper;
 }

@@ -22,7 +22,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main.exe",
             "args": [
-                "D:\\Downloads\\Misc\\test_roms\\soundtest\\SNDTEST.NES"
+                "D:\\C++ Projects\\NES\\Nes2Execv2\\res\\roms\\Paperboy (U) [!].nes"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
