@@ -41,6 +41,23 @@ void CPU::start_nmi() {
     pc = abs(res); 
 }
 
+void CPU::start_irq() {
+    //printf("NMI\n");
+    
+    if (!get_flag('I')) {
+        recv_irq = false;
+        printf("IRQ Started!\n");
+        uint16_t push = get_addr(pc);
+        stack_push((uint8_t)(push>>8));
+        stack_push((uint8_t)(push&0xff));
+        stack_push(flags);
+        set_flag('I',true);
+
+        int8_t * res = &memory[IRQ];
+        pc = abs(res); 
+    }
+}
+
 void CPU::write(int8_t* address, int8_t value) {
     map_memory(&address);
     long long mem = get_addr(address); 
@@ -181,9 +198,9 @@ void CPU::write(int8_t* address, int8_t value) {
             }
             break;
     }
-    // TODO: special mapper cases
+    // special mapper cases
     void* system[3] = {this,ppu,apu};
-    rom->get_mapper()->map_write(&system[0],address,value);
+    rom->get_mapper()->map_write(&system[0],address,&value);
 
     if (!(0x8000<=mem && mem<=0xffff)) {
         if (mem!=0x2002) {
@@ -353,13 +370,21 @@ void CPU::clock() {
     if (recv_nmi) {
         start_nmi();
     }
+    if (recv_irq) {
+        start_irq();
+    }
+    long long change = epoch_nano() - last;
+    //while ((epoch_nano() - last) < 1000000000LL/CLOCK_SPEED) {}
+    elapsed_time += change;
+    last = epoch_nano();
 
     
 }
 
 int CPU::emulated_clock_speed() {
-    if (epoch()!=start) {
-        return cycles/(epoch()-start)*1000;
+    if (elapsed_time!=0) {
+        //printf("total time: %lli\n",elapsed_time);
+        return (cycles*1000000000)/(elapsed_time+(epoch_nano()-last));
     } else {
         return 0;
     }
@@ -377,29 +402,28 @@ void CPU::reset() {
 }
 
 void CPU::loadRom(ROM *r) {
-    for (int i=0; i<=0xFFFF; i++) {
-        memory[i] = 0;
-    }
-    flags = 0x24;
-    accumulator = 0;
-    x = 0;
-    y = 0;
-    sp = 0xff;
     rom = r;
     Mapper* m = rom->get_mapper();
     //printf("test %i\n",rom->get_prgsize());
+    //printf("CPU PRG SIZE: %i\n",rom->get_prgsize());
     switch(m->type) {
         case 0:
             memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
             break;
         case 1:
-            memcpy(&memory[0xc000],rom->get_prg_bank((rom->get_prgsize()/0x4000)-1),0x4000);
+            memcpy(&memory[0xc000],rom->get_prg_bank((rom->get_prgsize()/0x400)-16),0x4000);
+            break;
+        case 2:
+            memcpy(&memory[0x8000],rom->get_prg_bank(prg_bank_num),0x4000);
+            memcpy(&memory[0xc000],rom->get_prg_bank((rom->get_prgsize()/0x400)-16),0x4000);
             break;
         case 3:
             memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
             break;
+        case 4:
+            memcpy(&memory[0xc000],rom->get_prg_bank((rom->get_prgsize()/0x400)-16),0x4000);
+            break;
     }
-    reset();
 
 }
 

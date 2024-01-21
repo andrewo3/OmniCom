@@ -386,7 +386,10 @@ void PPU::map_memory(int8_t** addr) {
 
 void PPU::loadRom(ROM *r) {
     rom = r;
-    memcpy(memory,rom->get_chr_bank(chr_bank_num),0x2000);
+    //printf("PPU CHR SIZE: %i\n",rom->get_chrsize());
+    if (rom->get_chrsize()>0) {
+        memcpy(memory,rom->get_chr_bank(chr_bank_num),0x2000);
+    }
 
 }
 

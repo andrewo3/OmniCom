@@ -59,8 +59,10 @@ long long start;
 long long start_nano;
 double t = 0;
 bool fullscreen_toggle = 0;
-bool shader_toggle = false;
+bool shader_toggle = true;
 static int16_t audio_pt = 0;
+bool paused = false;
+long clock_speed = 0;
 
 GLuint shaderProgram;
 GLuint vertexShader;
@@ -101,7 +103,7 @@ void get_filename(char** path) {
 
 void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
-    printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",total_ticks/(epoch()-start)*1000,total_ticks/(epoch()-start)*1000/1789773.0*100);
+    printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",clock_speed,clock_speed/1789773.0*100);
     //for test purpose: remove once done testing!!
     /*std::FILE* memory_dump = fopen("dump","w");
     fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
@@ -203,22 +205,30 @@ void NESLoop() {
     
     //emulator loop
     while (!interrupted) {
-        if (cpu_ptr->emulated_clock_speed()<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
-            cpu_ptr->clock();
-            // 3 dots per cpu cycle
-            total_ticks = cpu_ptr->cycles;
-        }
-        while (apu_ptr->frames<cpu_ptr->cycles*240/(cpu_ptr->CLOCK_SPEED)) {
-                apu_ptr->cycle();
+        if (!paused) {
+            if (cpu_ptr->emulated_clock_speed()<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
+                //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
+                cpu_ptr->clock();
+                clock_speed = cpu_ptr->emulated_clock_speed();
+                // 3 dots per cpu cycle
+                total_ticks = cpu_ptr->cycles;
             }
-        while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
-            ppu_ptr->cycle();
-            if (ppu_ptr->debug) {
-                printf("PPU REGISTERS: ");
-                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
-                printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
+            while (apu_ptr->frames<cpu_ptr->cycles*240/(cpu_ptr->CLOCK_SPEED)) {
+                    apu_ptr->cycle();
+                }
+            while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
+                ppu_ptr->cycle();
+
+                void* system[3] = {cpu_ptr,ppu_ptr,apu_ptr};
+                ppu_ptr->rom->get_mapper()->clock(&system[0]);
+                
+                if (ppu_ptr->debug) {
+                    printf("PPU REGISTERS: ");
+                    printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
+                    printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
+                }
+                //printf("%i\n",ppu.v);
             }
-            //printf("%i\n",ppu.v);
         }
         
     }
@@ -335,8 +345,8 @@ int main(int argc, char ** argv) {
     // vertices of quad covering entire screen with tex coords
     GLfloat vertices[] = {
         -1.0f, 1.0f,0.0f,0.0f,
-        -1.0f, -1.0f,0.0f,1.0f,
-        1.0f, -1.0f,1.0f,1.0f,
+        -1.0f, -1.0f,0.0f,1-0.04f*shader_toggle,
+        1.0f, -1.0f,1.0f,1-0.04f*shader_toggle,
         1.0f, 1.0f, 1.0f,0.0f
     };
 
@@ -387,6 +397,7 @@ int main(int argc, char ** argv) {
     printf("APU set\n");
 
     cpu.loadRom(&rom);
+    cpu.reset();
     printf("ROM loaded into CPU.\n");
 
     PPU ppu(&cpu);
@@ -445,6 +456,7 @@ int main(int argc, char ** argv) {
                             }
                         case SDLK_d:
                             cpu.debug = cpu.debug ? false : true;
+                            cpu.elapsed_time = cpu.cycles/cpu.CLOCK_SPEED*1000000000; // reset timing
                             break;
                         case SDLK_s:
                             {
@@ -468,10 +480,17 @@ int main(int argc, char ** argv) {
                             if (state[SDL_SCANCODE_LCTRL]) {
                                 interrupted = true;
                                 NESThread.join();
+                                cpu.init_vals();
                                 cpu.loadRom(&rom);
+                                cpu.reset();
                                 interrupted = false;
                                 NESThread = std::thread(NESLoop);
                             }
+                            break;
+                        case SDLK_p:
+                            paused = paused ? false : true;
+                            cpu.last = epoch_nano(); // reset timing
+                            break;
                     }
             }
         }

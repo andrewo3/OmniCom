@@ -175,23 +175,23 @@ void ROM::load_file(const char* src) {
     std::fclose(rp);
 }
 
-uint8_t* ROM::get_prg_bank(int bank_num) { //size = 0x4000
-    if (bank_num>prgsize/0x4000) {
+uint8_t* ROM::get_prg_bank(int bank_num) { //gets banks in 1 KB units
+    if (bank_num>prgsize/0x400) {
         printf("Bank number out of bounds\n");
         throw(1);
    }
-    return prg+0x4000*bank_num;
+    return prg+0x400*bank_num;
 }
 
-uint8_t* ROM::get_chr_bank(int bank_num) { //size = 0x1000
-    if (chrsize!=0 && bank_num>chrsize/0x2000) {
-        printf("Bank number %i out of bounds - %i, %i\n",bank_num,chrsize,chrsize/0x2000);
+uint8_t* ROM::get_chr_bank(int bank_num) { //gets banks in 1 KB units
+    if (chrsize!=0 && bank_num>(chrsize/0x400-1)) {
+        printf("Bank number %i out of bounds - %i, %i\n",bank_num,chrsize,chrsize/0x400);
         throw(1);
     } else if (chrsize==0) { // using chr-ram
         //something else will be done
         return 0;
     }
-    return chr+0x2000*bank_num;
+    return chr+0x400*bank_num;
 }
 
 ROM::~ROM() {

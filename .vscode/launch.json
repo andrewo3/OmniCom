@@ -22,7 +22,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main.exe",
             "args": [
-                "D:\\C++ Projects\\NES\\Nes2Execv2\\res\\roms\\Paperboy (U) [!].nes"
+                "D:\\C++ Projects\\NES\\Nes2Execv2\\res\\roms\\Peek-A-Boo Poker (Unl) [!].nes"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

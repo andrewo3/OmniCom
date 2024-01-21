@@ -40,6 +40,16 @@ class CPU {
         void ins_str(char * write,uint8_t opcode);
         void ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr);
         void loadRom(ROM *r);
+        void init_vals() {
+            for (int i=0; i<=0xffff; i++) {
+                memory[i] = 0;
+            }
+            flags = 0x24;
+            accumulator = 0;
+            x = 0;
+            y = 0;
+            sp = 0xff;
+        }
         long long ins_num = 0;
         int8_t memory[0x10000] ={0};
         ROM* rom;
@@ -47,10 +57,15 @@ class CPU {
         int8_t read(int8_t* address);
         long long cycles = 0;
         void start_nmi();
+        void start_irq();
         bool recv_nmi = false;
+        bool recv_irq = false;
         uint8_t status() { return flags;}
         bool input_strobe = 0;
         bool debug = false;
+        int prg_bank_num = 0;
+        long long last = epoch_nano();
+        long long elapsed_time = 0;
     private:
 
         //---- instructions ----

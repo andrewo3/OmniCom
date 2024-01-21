@@ -71,7 +71,7 @@ int main(int argc, char ** argv) {
     command_stream << "g++ -DGLEW_STATIC -DROM_NAME=\"\\\"" << fixed(argv[1]);
     command_stream << "\\\"\" -DDATAROM="<<xxdstring(argv[1])<<" -DDATALENGTH="<<xxdstring(argv[1])<<"_len ";
     get_filename(&argv[1]);
-    command_stream << "-Iinclude\\win32 -Isrc\\ntsc-filter -Iinclude\\universal src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/util.cpp src/rom.cpp src/cpu.cpp src/cpu_helper.cpp src/ppu.cpp src/apu.cpp src/main.cpp -Llib -static-libgcc -static-libstdc++ -Wl,-Bstatic -lmingw32 -lSDL2main -lSDL2 -lm -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8 -lglew32s -Wl,-Bdynamic -lopengl32 -o \"" << original_path.string() << "\\" << argv[1] << ".exe\" -mwindows";
+    command_stream << "-Iinclude\\win32 -Isrc\\ntsc-filter -Iinclude\\universal src/mapper.cpp src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/util.cpp src/rom.cpp src/cpu.cpp src/cpu_helper.cpp src/ppu.cpp src/apu.cpp src/main.cpp -Llib -static-libgcc -static-libstdc++ -Wl,-Bstatic -lmingw32 -lSDL2main -lSDL2 -lm -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8 -lglew32s -Wl,-Bdynamic -lopengl32 -o \"" << original_path.string() << "\\" << argv[1] << ".exe\" -mwindows";
     std::string command = command_stream.str();
     printf("%s\n",command.c_str());
     int result = std::system(command.c_str());
