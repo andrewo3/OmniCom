@@ -91,6 +91,9 @@ void PPU::v_vert() {
 void PPU::cycle() {
     bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
     if (0<=scanline && scanline<=239) { // visible scanlines
+        if (!mutex_locked && image_mutex.try_lock()) {
+            mutex_locked = true;
+        }
         int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
         if (1<=scycle && scycle<=256) {
             for (int i=0; i<scanlinespritenum; i++) {
@@ -310,6 +313,7 @@ void PPU::cycle() {
         if (vblank==false && scycle>=1) { //start vblank as soon as you reach this
             vblank = true;
             image_mutex.unlock();
+            mutex_locked = false;
             *PPUSTATUS|=0x80;
             if ((*PPUCTRL)&0x80) { // if ppu is configured to generate nmi, do so.
                 cpu->recv_nmi = true;
@@ -328,7 +332,9 @@ void PPU::cycle() {
         if (scycle==1 && vblank==true) {
             *PPUSTATUS&=~0x80;
             vblank = false;
-            image_mutex.lock();
+            if (!mutex_locked && image_mutex.try_lock()) {
+                mutex_locked = true;
+            }
         }
 
     }

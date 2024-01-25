@@ -51,6 +51,7 @@ const int NES_DIM[2] = {256,240};
 int WINDOW_INIT[2];
 int filtered_res_scale = 2;
 const int FLAGS = SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE;
+float init_window_scale = 1/4.0;
 
 volatile sig_atomic_t interrupted = 0;
 
@@ -63,6 +64,7 @@ bool shader_toggle = true;
 static int16_t audio_pt = 0;
 bool paused = false;
 long clock_speed = 0;
+int diffs[10] = {0};
 
 GLuint shaderProgram;
 GLuint vertexShader;
@@ -289,8 +291,8 @@ int main(int argc, char ** argv) {
     //set display dimensions
     SDL_DisplayMode DM;
     SDL_GetDesktopDisplayMode(0,&DM);
-    WINDOW_INIT[0] = DM.w/2;
-    WINDOW_INIT[1] = DM.h/2;
+    WINDOW_INIT[0] = DM.w*init_window_scale;
+    WINDOW_INIT[1] = DM.h*init_window_scale;
 
     //audio
     audio_spec.samples = BUFFER_LEN;
@@ -495,29 +497,32 @@ int main(int argc, char ** argv) {
             }
         }
         //logic is executed in nes thread
-
-
         //apply ntsc filter before drawing
-        if (shader_toggle) {
-            ntsc.data = out_img; /* buffer from your rendering */
-            ntsc.format = CRT_PIX_FORMAT_RGB;
-            ntsc.w = NES_DIM[0];
-            ntsc.h = NES_DIM[1];
-            ntsc.as_color = color;
-            ntsc.field = field & 1;
-            ntsc.raw = raw;
-            ntsc.hue = hue;
-            if (ntsc.field == 0) {
-            ntsc.frame ^= 1;
+        if (!paused) {
+            if (shader_toggle) {
+                ppu_ptr->image_mutex.lock();
+                ntsc.data = out_img; /* buffer from your rendering */
+                ntsc.format = CRT_PIX_FORMAT_RGB;
+                ntsc.w = NES_DIM[0];
+                ntsc.h = NES_DIM[1];
+                ntsc.as_color = color;
+                ntsc.field = field & 1;
+                ntsc.raw = raw;
+                ntsc.hue = hue;
+                if (ntsc.field == 0) {
+                ntsc.frame ^= 1;
+                }
+                crt_modulate(&crt, &ntsc);
+                crt_demodulate(&crt, noise);
+                ppu_ptr->image_mutex.unlock();
+                field ^= 1;
+                //render texture from nes (temporarily test_image.jpg)
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
+            } else {
+                ppu_ptr->image_mutex.lock();
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
+                ppu_ptr->image_mutex.unlock();
             }
-            crt_modulate(&crt, &ntsc);
-            crt_demodulate(&crt, noise);
-            field ^= 1;
-
-            //render texture from nes (temporarily test_image.jpg)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
-        } else {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
         }
 
         glUseProgram(shaderProgram);
