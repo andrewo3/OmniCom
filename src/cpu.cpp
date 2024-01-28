@@ -187,10 +187,10 @@ void CPU::write(int8_t* address, int8_t value) {
             input_strobe = value&1;
             if (input_strobe) {
                 //poll input
-                inputs = (state[SDL_SCANCODE_RIGHT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_RIGHT)|(joystickDir(controller)==0))| //right
-                ((state[SDL_SCANCODE_LEFT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_LEFT)|(joystickDir(controller)==2))<<1)| //left
-                ((state[SDL_SCANCODE_DOWN]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_DOWN)|(joystickDir(controller)==1))<<2)| //down
-                ((state[SDL_SCANCODE_UP]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_UP)|(joystickDir(controller)==3))<<3)| //up
+                inputs = (state[SDL_SCANCODE_RIGHT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_RIGHT)|(joystickDir(controller)==0)|SDL_JoystickGetButton(controller,14))| //right
+                ((state[SDL_SCANCODE_LEFT]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_LEFT)|(joystickDir(controller)==2)|SDL_JoystickGetButton(controller,13))<<1)| //left
+                ((state[SDL_SCANCODE_DOWN]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_DOWN)|(joystickDir(controller)==1)|SDL_JoystickGetButton(controller,12))<<2)| //down
+                ((state[SDL_SCANCODE_UP]|(SDL_JoystickGetHat(controller,0)==SDL_HAT_UP)|(joystickDir(controller)==3)|SDL_JoystickGetButton(controller,11))<<3)| //up
                 ((state[SDL_SCANCODE_RETURN]|SDL_JoystickGetButton(controller,7))<<4)| //start
                 ((state[SDL_SCANCODE_TAB]|SDL_JoystickGetButton(controller,6))<<5)| //select
                 ((state[SDL_SCANCODE_LSHIFT]|SDL_JoystickGetButton(controller,2)|SDL_JoystickGetButton(controller,3))<<6)| //B
@@ -236,6 +236,7 @@ int8_t CPU::read(int8_t* address) {
             break;
             }
         case 0x4016:
+            SDL_PumpEvents();
             if (!input_strobe) {
                 value = (inputs&0x80)>>7;
                 inputs<<=1;

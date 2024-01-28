@@ -64,7 +64,7 @@ int main(int argc, char ** argv) {
     command_stream << "g++ -DGLEW_STATIC -DROM_NAME=\"\\\"" << fixed(argv[1]);
     command_stream << "\\\"\" -DDATAROM="<<xxdstring(argv[1])<<" -DDATALENGTH="<<xxdstring(argv[1])<<"_len ";
     get_filename(&argv[1]);
-    command_stream << "src/util.cpp src/rom.cpp src/cpu.cpp src/cpu_helper.cpp src/ppu.cpp src/apu.cpp -g src/main.cpp -Iinclude/universal -lSDL2 -lGL -lGLEW -lGLU -o \"bin/" << argv[1] << "\"";
+    command_stream << "src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/util.cpp src/rom.cpp src/cpu.cpp src/cpu_helper.cpp src/mapper.cpp src/ppu.cpp src/apu.cpp -g src/main.cpp -Isrc/ntsc-filter -Iinclude/universal -lSDL2 -lGL -lGLEW -lGLU -o \"bin/" << argv[1] << "\"";
     std::string command = command_stream.str();
     printf("%s\n",command.c_str());
     int result = std::system(command.c_str());
