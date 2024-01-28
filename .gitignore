@@ -2,3 +2,4 @@ nes-test-roms
 main.dSYM
 .vscode/c_cpp_properties.json
 nes_output.txt
+bin/SDL2.framework

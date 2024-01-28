@@ -424,6 +424,7 @@ int main(int argc, char ** argv) {
         sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
         SDL_SetWindowTitle(window,new_title);
         // event loop
+        SDL_PumpEvents();
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
                 case SDL_QUIT:

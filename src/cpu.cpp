@@ -236,7 +236,6 @@ int8_t CPU::read(int8_t* address) {
             break;
             }
         case 0x4016:
-            SDL_PumpEvents();
             if (!input_strobe) {
                 value = (inputs&0x80)>>7;
                 inputs<<=1;
