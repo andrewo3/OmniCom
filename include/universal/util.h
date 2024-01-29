@@ -12,7 +12,7 @@ inline long long epoch() {
     return millisecondsSinceEpoch.count();
 }
 
-inline long long epoch_nano() {
+inline long long epoch_nano() {  //1*10^9
     auto currentTimePoint = std::chrono::system_clock::now();
     auto durationSinceEpoch = currentTimePoint.time_since_epoch();
     auto nanosecondsSinceEpoch = std::chrono::duration_cast<std::chrono::nanoseconds>(durationSinceEpoch);

@@ -12,32 +12,48 @@ class APU {
         void cycle(); 
         void send();// final output (modify current_out variable and send to audio callback)
         long long start = epoch();
-        int8_t pulse(bool index);
-        int8_t tri();
+        long long cycles = 0;
+        SDL_AudioDeviceID device;
+        int sample_adj = 0;
 
         CPU* cpu;
         long long audio_frame = 0;
         uint8_t step = 0;
+        int buffer_size = 0;
 
         //pulse channels
-        bool pulse_halt[2] = {0,0};
-        bool pulse_const[2] = {0,0};
-        uint8_t pulse_duty[2] = {0,0};
-        uint8_t pulse_start[2] = {0,0};
-        uint8_t pulse_step[2] = {0,0};
-        uint8_t pulse_vols[2] = {0,0};
-        uint8_t pulse_decay_level[2] = {0,0};
-        uint8_t pulse_lengths[2] = {0,0};
+        uint8_t pulse_out[2] = {0,0};
+        bool pulse_waveforms[4][8] = {
+            {0,1,0,0,0,0,0,0},
+            {0,1,1,0,0,0,0,0},
+            {0,1,1,1,1,0,0,0},
+            {1,0,0,1,1,1,1,1}
+        }; //choose different one based on duty
+        uint16_t pulse_timer[2] = {0,0};
 
-        //tri channel
-        bool tri_halt = 0;
-        bool tri_const = 0;
-        uint8_t tri_linear = 0;
-        uint8_t tri_start = 0;
-        uint8_t tri_step = 0;
-        uint8_t tri_vol = 0;
-        uint8_t tri_decay_level = 0;
-        uint8_t tri_length = 0;
+        //envelopes
+        uint8_t env[3][3] = {
+            {0,0,0},
+            {0,0,0},
+            {0,0,0}
+        }; // arranged: start flag, divider, decay level - one for pulse 1 & 2, and noise
+
+
+        //triangle channel info
+        uint8_t tri[6] = {
+            0,0,0,0,0,0
+        }; //arranged: timer, length counter, linear counter, linear reload flag, control flag, sequencer 
+
+        //length counters
+        uint8_t length_counter[4] = {
+            0,0,0,0
+        }; // one length counter for each channel - arranged: pulse 1, pulse 2, triangle, noise
+
+        //sweep unit info
+        uint8_t sweep_units[2][3] = {
+            {0,0,0},
+            {0,0,0}
+        }; //one for each pulse channel, arranged: divider, reload flag, mute channel
 
         int8_t* FRAME_COUNTER;
         bool frame_interrupt = false;
@@ -47,7 +63,15 @@ class APU {
         long long last_aud_frame = 0;
         void setSampleRate(int sr) {sample_rate = sr;}
         uint8_t length_lookup(uint8_t in);
-
+    private:
+        void clock_envs();
+        void clock_linear();
+        void clock_length();
+        void clock_sweep();
+        void func_frame_counter();
+        void pulse(bool ind);
+        uint16_t get_pulse_period(bool ind);
+        void set_pulse_period(uint16_t val, bool ind);
 
 };
 

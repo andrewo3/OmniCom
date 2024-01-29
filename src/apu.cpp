@@ -9,81 +9,185 @@ void APU::setCPU(CPU* c_ptr) {
     FRAME_COUNTER = &cpu->memory[0x4017];
 }
 
-int8_t APU::pulse(bool index) {
-    long long pulse_frame = audio_frame;
-    //pulse_frame %=sample_rate;
-    uint16_t t = (cpu->memory[0x4002+4*index]&0xff)|(((cpu->memory[0x4003+4*index])&0x7)<<8);
-    int frequency = cpu->CLOCK_SPEED/(16*(t+1));
-    float duty = pulse_duty[index] ? .25*pulse_duty[index] : .125;
-    if (frequency!=0 && t>=8 && pulse_lengths[index]>0) {
-        float period = sample_rate/(float)frequency;
-        float diff = pulse_frame/period - floorf(pulse_frame/period);
-        return pulse_vols[index]*((diff>=duty)*2-1);
-    } else {
-        return 0;
-    }
-
-}
-
-int8_t APU::tri() {
-    //if index == 0, its pulse 1
-    //if index == 1, its pulse 2
-    long long pulse_frame = audio_frame;
-    //pulse_frame %=sample_rate;
-    uint16_t t = (cpu->memory[0x400A]&0xff)|((cpu->memory[0x400B]&0x7)<<8);
-    int frequency = cpu->CLOCK_SPEED/(32*(t+1));
-    if (frequency!=0 && t>=2 && tri_length>0) {
-        int period = sample_rate/frequency;
-        //double x = (double)frame/sample_rate;
-        int tp = (pulse_frame%(period/2))-(period/4); //index along half of triangle using abs as shape
-        //printf("%i\n",tp);
-        float triangle_value = (abs(tp)*4.0/period-1)*(-1+2*((pulse_frame/(period/2))%2)); //scale and flip abs as nevessary
-        return 15*triangle_value;
-    } else {
-        //printf("Length Counter and Halt: %i %i\n",tri_length, tri_halt);
-        return 0;
-    }
-
-}
-
-int16_t mix(APU* a_ptr) {
-    int8_t pulse1 = a_ptr->pulse(false);
-    int8_t pulse2 = a_ptr->pulse(true);
-    int8_t tri = a_ptr->tri();
+int16_t mix(APU* a_ptr) { //TODO: REWRITE THIS WHOLE FUNCTION TO TAKE EXISTING OUTPUTS FROM CHANNELS
     //pulse1/60.0+pulse2/60.0+
     a_ptr->audio_frame++;
-    int16_t output = ((int16_t)(32767.0*(tri/60.0)));
+
+    uint8_t p_out = a_ptr->pulse_out[0]+a_ptr->pulse_out[1];
+    float final_vol = 0.00752*(p_out);
+    //TODO: add triangle noise and DMC
+    int16_t output = final_vol*32767;
     //printf("out: %f\n", (float)output/32767);
     return output;
 }
 
-void APU::cycle() { //frame counter quarter frame
+void APU::clock_envs() { //clock_envs
+    for (int i=0; i<3; i++) {
+        int env_addr = 0x4000|(((1<<i)-1)<<2);
+        uint8_t* start_flag = &env[i][0];
+        uint8_t* divider = &env[i][1];
+        uint8_t* decay = &env[i][2]; // ends up determining final volume (or use constant val if flag is set)
+        if (*start_flag) {
+            if (*divider) {
+                *divider--;
+            } else {
+                *divider = cpu->memory[env_addr]&0xf; //reset to V value from corresponding envelope register
+                //clock decay counter
+                if (*decay) {
+                    *decay--;
+                } else if (cpu->memory[env_addr]&0x20) { // if loop flag set for envelope
+                    *decay = 15;
+                }
+            }
+        }
+    }
+}
+
+void APU::clock_linear() {
+    uint8_t* linear_counter = &tri[2];
+    uint8_t* linear_counter_reload = &tri[3];
+    if (*linear_counter_reload) {
+        *linear_counter = cpu->memory[0x4008]&0x7F; // counter reload value
+    } else if (*linear_counter) {
+        *linear_counter--;
+    }
+    if (!(cpu->memory[0x4008]&0x80)) {
+        *linear_counter_reload = 0;
+    }
+}
+
+void APU::clock_length() {
+    for (int l=0; l<4; l++) {
+        if (cpu->memory[0x4015]&(1<<l)) { // check if channel is enabled using $4015
+            bool halt_flag = cpu->memory[0x4000+4*l]&(0x20<<(2*(l==2))); // get corresponding length counter halt flag
+            
+            if (!(length_counter[l]==0 || halt_flag)) { // if the length counter is not 0 and the halt flag is not set, decrement
+                length_counter[l]--;
+            } else if (length_counter[l]==0) {
+                //silence corresponding channel
+            }
+        } else {
+            length_counter[l]=0;
+        }
+    }
+}
+
+uint16_t APU::get_pulse_period(bool ind) {
+    return (cpu->memory[0x4002|(ind<<2)]&0xff)|((cpu->memory[0x4003|(ind<<2)]&0x7)<<8);
+}
+
+void APU::set_pulse_period(uint16_t val, bool ind) { // sets the pulse channel's period to the new value, stored in the appropriate cpu registers (only presumably used by the sweep units)
+    cpu->memory[0x4002|(ind<<2)] = val&0xff;
+    cpu->memory[0x4003|(ind<<2)] &= ~0x7;
+    cpu->memory[0x4003|(ind<<2)] |= (val&0x700)>>8;
+}
+
+void APU::clock_sweep() { //clock sweep units
+    for (int i=0; i<2; i++) {
+        uint8_t* divider = &sweep_units[i][0];
+        uint8_t* reload = &sweep_units[i][1];
+        uint8_t* muted = &sweep_units[i][2];
+
+        uint8_t sweep_setup = (uint8_t)cpu->memory[0x4001|(i<<2)];
+        bool enabled = sweep_setup&0x80;
+        uint16_t pulse_period = get_pulse_period(i);
+        
+        //calculate target period
+        int16_t change_amount = pulse_period>>(sweep_setup&0x7); // shift current period by shift count in register
+        if (sweep_setup&0x8) { //if negative flag
+            change_amount = -(change_amount)-i; // the -i is because pulse 2 uses twos complement whereas pulse 1 uses ones, a very minor difference but id like to include it
+        }
+        int16_t target_period = pulse_period+change_amount;
+        if (target_period<0) {
+            target_period = 0;
+        }
+
+        *muted = (pulse_period<8) || (target_period>0x7ff); // set muted
+        
+        if (!(*divider) && enabled && !(*muted)) { // if divider reached zero, sweep is enabled and its not muted
+            set_pulse_period(target_period,i); // set pulse period to target period
+        } 
+        if (!(*divider) || (*reload)) { // check if divider is zero, or reload flag is set
+            *divider = (cpu->memory[0x4001|(i<<2)]&0x70)>>4; //reload divider
+            *reload = 0; // clear reload
+        } else {
+            *divider--;
+        }
+    }
+}
+
+void APU::func_frame_counter() { //APU frame counter which clocks other update things
     FRAME_COUNTER = &cpu->memory[0x4017];
     bool step5 = ((*FRAME_COUNTER)&0x80);
     bool inhibit = ((*FRAME_COUNTER)&0x40);
+    int sequence_clocks = cycles%(14916+3724*step5); //14916 is (approximately) the number of apu clocks will occur in 1/60 of a second.
+    if (sequence_clocks == 3729) { //step 1 (first quarter frame)
+        clock_envs(); // clock envelopes
+        clock_linear(); //clock triangle linear counter
 
-    // update frame_counter variable
-    for (int i=0; i<2; i++) {
-        if (pulse_lengths[i]>0) {
-            if (!pulse_halt[i]) { //if length counter halt for pulse hasnt been set
-                pulse_lengths[i]--;
-            }
-            /*if (!pulse_const[i]) {
-                if (pulse_vols[i]>0) {
-                    pulse_vols[i]--;
-                }
-            }*/
+    } else if (sequence_clocks == 7458) {//step 2 (second quarter frame)
+        clock_envs(); // clock envelopes
+        clock_linear(); //clock triangle linear counter
+
+        clock_length(); //clock length counters
+        clock_sweep(); //clock sweep units
+        
+
+    } else if (sequence_clocks == 11187) { //step 3 (third quarter frame)
+        clock_envs(); // clock envelopes
+        clock_linear(); //clock triangle linear counter
+
+    } else if (sequence_clocks == 0) {//step 4 (fourth quarter frame)
+        clock_envs(); // clock envelopes
+        clock_linear(); //clock triangle linear counter
+
+        clock_length(); //clock length counters
+        clock_sweep(); //clock sweep units
+        //TODO: set frame interrupt if interrupt inhibit is clear and 4-step sequence
+        if (!step5 && !inhibit) {
+            frame_interrupt = true;
         }
     }
-    if (tri_length>0) {
-        if (!tri_halt) {
-            tri_length--;
-        }
+}
+
+void APU::cycle() { // apu clock (every other cpu cycle)
+    func_frame_counter();
+    //everything else
+    pulse(0);
+    pulse(1);
+    cycles++;
+
+    uint8_t p_out = pulse_out[0];
+    float final_vol = 0.00752*(p_out);
+    int16_t output = 32767*final_vol;
+    buffer_size = SDL_GetQueuedAudioSize(device);
+    int target_buffer_size = 2048;
+    if (buffer_size==0 && sample_adj<100) {
+        sample_adj++;
+    } else if (buffer_size>=2048 && sample_adj>-100) {
+        sample_adj--;
     }
-    last_aud_frame = audio_frame;
-    //printf("STEP %i\n",step);
-    //audio_buffer.push(0);
-    frames++;
+    if (audio_frame<cycles*2*(sample_rate+sample_adj)/cpu->CLOCK_SPEED) {
+        SDL_QueueAudio(device,&output,2);
+        audio_frame++;
+        //printf("Pulse out 0: %i\n",pulse_out[0]);
+    }
+}
+
+void APU::pulse(bool ind) {
+    /*uint16_t period = get_pulse_period(ind);
+    if (sweep_units[ind][2] || period<8) { //muted channel
+        pulse_out[ind] = 0;
+    } else {
+        uint8_t pulse_reg = cpu->memory[0x4000|(ind<<2)];
+        uint8_t duty = (pulse_reg&0xC0)>>6;
+        uint8_t volume = pulse_reg&0xf ? pulse_reg&0x10 : env[ind][3];
+        pulse_out[ind] = volume*pulse_waveforms[duty][pulse_timer[ind] % 8];
+
+    }
+    pulse_timer[ind]++;
+    pulse_timer[ind]%=period+1;*/
+    pulse_out[ind] = 30*((cycles*4*880/cpu->CLOCK_SPEED)%2);
 }
 
 uint8_t APU::length_lookup(uint8_t in) {

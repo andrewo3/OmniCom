@@ -128,40 +128,14 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
             }
-        case 0x4000:
-            apu->pulse_halt[0]=(value&0x20);
-            apu->pulse_duty[0] = (value&0xC0)>>6;
-            apu->pulse_const[0] = value&0x10;
-            apu->pulse_vols[0] = value&0xf;
-            apu->pulse_start[0] = apu->audio_frame;
-            apu->pulse_step[0] = 0;
-            break;
         case 0x4003:
-            apu->pulse_lengths[0]=apu->length_lookup((value&0xF8)>>3);
-            apu->pulse_start[0] = apu->audio_frame;
-            apu->pulse_step[0] = 0;
-            break;
-        case 0x4004:
-            apu->pulse_halt[1]=(value&0x20);
-            apu->pulse_duty[1] = (value&0xC0)>>6;
-            apu->pulse_const[1] = value&0x10;
-            apu->pulse_vols[1] = value&0xf;
-            apu->pulse_start[1] = apu->audio_frame;
-            apu->pulse_step[1] = 0;
+            apu->length_counter[0] = (value&0xF8)>>3;
             break;
         case 0x4007:
-            apu->pulse_lengths[1]=apu->length_lookup((value&0xF8)>>3);
-            apu->pulse_start[1] = apu->audio_frame;
-            apu->pulse_step[1] = 0;
-            break;
-        case 0x4008:
-            apu->tri_linear = value&0x7F;
-            apu->tri_halt = value&0x80;
-            apu->tri_start = apu->audio_frame;
-            apu->tri_step = 0;
+            apu->length_counter[1] = (value&0xF8)>>3;
             break;
         case 0x400B:
-            apu->tri_length = (value&0xF8)>>3;
+            apu->tri[3] = 1; // set triangle linear counter reload flag
             break;
         
         case 0x4014: //write to OAMDMA
@@ -235,6 +209,9 @@ int8_t CPU::read(int8_t* address) {
             //ppu->v %= 0x4000;
             break;
             }
+        case 0x4015:
+            apu->frame_interrupt = false;
+            break;
         case 0x4016:
             if (!input_strobe) {
                 value = (inputs&0x80)>>7;

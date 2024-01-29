@@ -114,8 +114,8 @@ void quit(int signal) {
     interrupted = 1;
     if (signal==SIGSEGV) {
         printf("Segfault!\n");
+        exit(EXIT_FAILURE);
     }
-    exit(EXIT_FAILURE);
 }
 
 void viewportBox(int** viewportBox,int width, int height) {
@@ -215,9 +215,9 @@ void NESLoop() {
                 // 3 dots per cpu cycle
                 total_ticks = cpu_ptr->cycles;
             }
-            while (apu_ptr->frames<cpu_ptr->cycles*240/(cpu_ptr->CLOCK_SPEED)) {
-                    apu_ptr->cycle();
-                }
+            while ((apu_ptr->cycles*2)<cpu_ptr->cycles) {
+                apu_ptr->cycle();
+            }
             while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
                 ppu_ptr->cycle();
 
@@ -240,7 +240,7 @@ void NESLoop() {
 void AudioLoop(void* userdata, uint8_t* stream, int len) {
     for (int i=0; i<len; i+=2) {
         int16_t audio_pt=mix(apu_ptr);
-        audio_pt = 0;
+        //audio_pt = 0;
         //int16_t v = (int16_t)(16384*sin(t));
         stream[i] = audio_pt&0xff;
         stream[i+1] = (audio_pt>>8)&0xff;
@@ -301,7 +301,7 @@ int main(int argc, char ** argv) {
     audio_spec.channels = 1;            // Mono
     audio_spec.samples = BUFFER_LEN;
     //audio_spec.size = audio_spec.samples * sizeof(int16_t) * audio_spec.channels;
-    audio_spec.callback = AudioLoop;
+    //audio_spec.callback = AudioLoop;
     audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
     //stream = SDL_NewAudioStream(AUDIO_U8,1,44100,);
     printf("SDL audio set up.\n");
@@ -393,6 +393,7 @@ int main(int argc, char ** argv) {
     printf("CPU Initialized.\n");
     static APU apu;
     apu.sample_rate = audio_spec.freq;
+    apu.device = audio_device;
     cpu.apu = &apu;
     apu_ptr = &apu;
     apu.cpu = &cpu;
@@ -418,11 +419,60 @@ int main(int argc, char ** argv) {
     SDL_PauseAudioDevice(audio_device,0);
     //main window loop
     while (!interrupted) {
+        apu_ptr->buffer_size = SDL_GetQueuedAudioSize(audio_device);
+        printf("Buffer size: %i %i\n",apu_ptr->buffer_size, apu_ptr->sample_adj);
         float diff = t_time-last_time;
         last_time = SDL_GetTicks()/1000.0;
         char * new_title = new char[255];
         sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
         SDL_SetWindowTitle(window,new_title);
+        //logic is executed in nes thread
+        //apply ntsc filter before drawing
+        if (!paused) {
+            if (shader_toggle) {
+                ppu_ptr->image_mutex.lock();
+                ntsc.data = out_img; /* buffer from your rendering */
+                ntsc.format = CRT_PIX_FORMAT_RGB;
+                ntsc.w = NES_DIM[0];
+                ntsc.h = NES_DIM[1];
+                ntsc.as_color = color;
+                ntsc.field = field & 1;
+                ntsc.raw = raw;
+                ntsc.hue = hue;
+                if (ntsc.field == 0) {
+                ntsc.frame ^= 1;
+                }
+                crt_modulate(&crt, &ntsc);
+                crt_demodulate(&crt, noise);
+                ppu_ptr->image_mutex.unlock();
+                field ^= 1;
+                //render texture from nes (temporarily test_image.jpg)
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
+            } else {
+                ppu_ptr->image_mutex.lock();
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
+                ppu_ptr->image_mutex.unlock();
+            }
+        }
+
+        glUseProgram(shaderProgram);
+        glUniform1f(glGetUniformLocation(shaderProgram, "iTime"), (float)(epoch()-start));
+        glUniform1f(glGetUniformLocation(shaderProgram, "enabled"), false);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLE_FAN,0,4);
+        glBindVertexArray(0);
+        glUseProgram(0);
+
+        //update screen
+        SDL_GL_SwapWindow(window);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+
         // event loop
         SDL_PumpEvents();
         while(SDL_PollEvent(&event)) {
@@ -497,51 +547,6 @@ int main(int argc, char ** argv) {
                     }
             }
         }
-        //logic is executed in nes thread
-        //apply ntsc filter before drawing
-        if (!paused) {
-            if (shader_toggle) {
-                ppu_ptr->image_mutex.lock();
-                ntsc.data = out_img; /* buffer from your rendering */
-                ntsc.format = CRT_PIX_FORMAT_RGB;
-                ntsc.w = NES_DIM[0];
-                ntsc.h = NES_DIM[1];
-                ntsc.as_color = color;
-                ntsc.field = field & 1;
-                ntsc.raw = raw;
-                ntsc.hue = hue;
-                if (ntsc.field == 0) {
-                ntsc.frame ^= 1;
-                }
-                crt_modulate(&crt, &ntsc);
-                crt_demodulate(&crt, noise);
-                ppu_ptr->image_mutex.unlock();
-                field ^= 1;
-                //render texture from nes (temporarily test_image.jpg)
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
-            } else {
-                ppu_ptr->image_mutex.lock();
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
-                ppu_ptr->image_mutex.unlock();
-            }
-        }
-
-        glUseProgram(shaderProgram);
-        glUniform1f(glGetUniformLocation(shaderProgram, "iTime"), (float)(epoch()-start));
-        glUniform1f(glGetUniformLocation(shaderProgram, "enabled"), false);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLE_FAN,0,4);
-        glBindVertexArray(0);
-        glUseProgram(0);
-
-        //update screen
-        SDL_GL_SwapWindow(window);
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
         t_time = SDL_GetTicks()/1000.0;
     }
     NESThread.join();
