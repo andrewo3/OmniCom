@@ -4,6 +4,9 @@
 #include <cmath>
 
 
+APU::~APU() {
+    delete[] audio_buffer;
+}
 void APU::setCPU(CPU* c_ptr) {
     cpu = c_ptr;
     FRAME_COUNTER = &cpu->memory[0x4017];
@@ -11,12 +14,15 @@ void APU::setCPU(CPU* c_ptr) {
 
 int16_t mix(APU* a_ptr) { //TODO: REWRITE THIS WHOLE FUNCTION TO TAKE EXISTING OUTPUTS FROM CHANNELS
     //pulse1/60.0+pulse2/60.0+
-    a_ptr->audio_frame++;
-
+    //a_ptr->audio_frame++;
+    double clock_speed = a_ptr->cpu->CLOCK_SPEED/2;
+    int sr = a_ptr->sample_rate;
     uint8_t p_out = a_ptr->pulse_out[0]+a_ptr->pulse_out[1];
+    //p_out = (15*state[SDL_SCANCODE_R])*((a_ptr->audio_frame*2*440/(a_ptr->sample_rate))%2);
     float final_vol = 0.00752*(p_out);
     //TODO: add triangle noise and DMC
     int16_t output = final_vol*32767;
+    //output = a_ptr->audio_buffer[(a_ptr->buffer_ind+ind)%BUFFER_LEN];
     //printf("out: %f\n", (float)output/32767);
     return output;
 }
@@ -156,22 +162,6 @@ void APU::cycle() { // apu clock (every other cpu cycle)
     pulse(0);
     pulse(1);
     cycles++;
-
-    uint8_t p_out = pulse_out[0];
-    float final_vol = 0.00752*(p_out);
-    int16_t output = 32767*final_vol;
-    buffer_size = SDL_GetQueuedAudioSize(device);
-    int target_buffer_size = 2048;
-    if (buffer_size==0 && sample_adj<100) {
-        sample_adj++;
-    } else if (buffer_size>=2048 && sample_adj>-100) {
-        sample_adj--;
-    }
-    if (audio_frame<cycles*2*(sample_rate+sample_adj)/cpu->CLOCK_SPEED) {
-        SDL_QueueAudio(device,&output,2);
-        audio_frame++;
-        //printf("Pulse out 0: %i\n",pulse_out[0]);
-    }
 }
 
 void APU::pulse(bool ind) {
@@ -187,7 +177,7 @@ void APU::pulse(bool ind) {
     }
     pulse_timer[ind]++;
     pulse_timer[ind]%=period+1;*/
-    pulse_out[ind] = 30*((cycles*4*880/cpu->CLOCK_SPEED)%2);
+    pulse_out[ind] = (15*state[SDL_SCANCODE_R])*(((cycles)*4*10/cpu->CLOCK_SPEED)%2);
 }
 
 uint8_t APU::length_lookup(uint8_t in) {

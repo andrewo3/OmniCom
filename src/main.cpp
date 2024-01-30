@@ -47,6 +47,10 @@ static int hue = 0;
 
 std::mutex interruptedMutex;
 
+std::mutex audioBufferMutex;
+int buffer_ind = 0;
+int16_t* audio_buffer = new int16_t[BUFFER_LEN];
+
 const int NES_DIM[2] = {256,240};
 int WINDOW_INIT[2];
 int filtered_res_scale = 2;
@@ -77,7 +81,7 @@ SDL_AudioDeviceID audio_device;
 char* device_name;
 SDL_AudioSpec audio_spec;
 
-const int BUFFER_LEN = 1024;
+
 
 int usage_error() {
     printf("Usage: main rom_filename\n");
@@ -115,6 +119,8 @@ void quit(int signal) {
     if (signal==SIGSEGV) {
         printf("Segfault!\n");
         exit(EXIT_FAILURE);
+    } else {
+        exit(0);
     }
 }
 
@@ -203,8 +209,27 @@ void PPUThread() {
     }
 }
 
+void sampleAPU() {
+    long long last_call = epoch_nano();
+    while (!interrupted) {
+        while ((apu_ptr->cycles*1000000000/(epoch_nano()-start_nano))<cpu_ptr->CLOCK_SPEED/2) {
+            if (epoch_nano()-last_call>22675.737) {
+                printf("Nanoseconds since last call = %lli\n",epoch_nano()-last_call);
+            }
+            last_call = epoch_nano();
+            apu_ptr->cycle();
+        }
+        int out = mix(apu_ptr);
+        //out = 0;
+        std::lock_guard<std::mutex> lock(audioBufferMutex);
+        audio_buffer[buffer_ind++] = out;
+        if (buffer_ind>=BUFFER_LEN) {
+            buffer_ind = 0;
+        }
+    }
+}
+
 void NESLoop() {
-    
     //emulator loop
     while (!interrupted) {
         if (!paused) {
@@ -214,9 +239,6 @@ void NESLoop() {
                 clock_speed = cpu_ptr->emulated_clock_speed();
                 // 3 dots per cpu cycle
                 total_ticks = cpu_ptr->cycles;
-            }
-            while ((apu_ptr->cycles*2)<cpu_ptr->cycles) {
-                apu_ptr->cycle();
             }
             while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
                 ppu_ptr->cycle();
@@ -238,17 +260,11 @@ void NESLoop() {
 }
 
 void AudioLoop(void* userdata, uint8_t* stream, int len) {
-    for (int i=0; i<len; i+=2) {
-        int16_t audio_pt=mix(apu_ptr);
-        //audio_pt = 0;
-        //int16_t v = (int16_t)(16384*sin(t));
-        stream[i] = audio_pt&0xff;
-        stream[i+1] = (audio_pt>>8)&0xff;
-        //stream[i] = 0;
-        //stream[i+1] = 0;
-        //t+=(2.0*M_PI*500.0)/audio_spec.freq;
-
-    }
+    //printf("Buffer size: %i\n",len);
+    std::lock_guard<std::mutex> lock(audioBufferMutex);
+    int samplesToEnd = BUFFER_LEN - buffer_ind;
+    memcpy(stream,&audio_buffer[buffer_ind],samplesToEnd*sizeof(int16_t));
+    memcpy(stream+samplesToEnd*sizeof(int16_t),audio_buffer,buffer_ind*sizeof(int16_t));
 }
 
 int main(int argc, char ** argv) {
@@ -300,8 +316,8 @@ int main(int argc, char ** argv) {
     audio_spec.format = AUDIO_S16SYS;  // 16-bit signed, little-endian
     audio_spec.channels = 1;            // Mono
     audio_spec.samples = BUFFER_LEN;
-    //audio_spec.size = audio_spec.samples * sizeof(int16_t) * audio_spec.channels;
-    //audio_spec.callback = AudioLoop;
+    audio_spec.size = audio_spec.samples * sizeof(int16_t) * audio_spec.channels;
+    audio_spec.callback = AudioLoop;
     audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
     //stream = SDL_NewAudioStream(AUDIO_U8,1,44100,);
     printf("SDL audio set up.\n");
@@ -408,6 +424,7 @@ int main(int argc, char ** argv) {
     ppu.debug = false;
     printf("PPU Initialized\n");
     std::thread NESThread(NESLoop);
+    std::thread sampleGet(sampleAPU);
     //std::thread tCPU(CPUThread);
     //std::thread tPPU(PPUThread);
     //std::thread AudioThread(AudioLoop);
@@ -419,8 +436,6 @@ int main(int argc, char ** argv) {
     SDL_PauseAudioDevice(audio_device,0);
     //main window loop
     while (!interrupted) {
-        apu_ptr->buffer_size = SDL_GetQueuedAudioSize(audio_device);
-        printf("Buffer size: %i %i\n",apu_ptr->buffer_size, apu_ptr->sample_adj);
         float diff = t_time-last_time;
         last_time = SDL_GetTicks()/1000.0;
         char * new_title = new char[255];
@@ -550,6 +565,7 @@ int main(int argc, char ** argv) {
         t_time = SDL_GetTicks()/1000.0;
     }
     NESThread.join();
+    sampleGet.join();
     glDetachShader(shaderProgram,vertexShader);
     glDetachShader(shaderProgram,fragmentShader);
     glDeleteProgram(shaderProgram);
@@ -559,6 +575,7 @@ int main(int argc, char ** argv) {
     SDL_Quit();
     free(filtered);
     delete[] original_start;
+    delete[] audio_buffer;
     //tCPU.join();
     //tPPU.join();
     //stbi_image_free(img);
