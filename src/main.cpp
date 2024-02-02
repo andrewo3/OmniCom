@@ -257,14 +257,12 @@ void NESLoop() {
     //emulator loop
     while (!interrupted) {
         if (!paused) {
-            while (cpu_ptr->emulated_clock_speed()>cpu_ptr->CLOCK_SPEED) { //limit clock speed
-                
-            }
+            if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
                 //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
                 cpu_ptr->clock();
-                clock_speed = cpu_ptr->emulated_clock_speed();
                 // 3 dots per cpu cycle
                 total_ticks = cpu_ptr->cycles;
+            }
 
             while (apu_ptr->cycles*2<cpu_ptr->cycles) {
                 apu_ptr->cycle();
@@ -475,7 +473,8 @@ int main(int argc, char ** argv) {
     //main window loop
     while (!interrupted) {
         if (!paused) {
-            ppu_ptr->image_mutex.lock();
+            clock_speed = cpu_ptr->emulated_clock_speed();
+            //ppu_ptr->image_mutex.lock();
             float diff = t_time-last_time;
             last_time = SDL_GetTicks()/1000.0;
             char * new_title = new char[255];

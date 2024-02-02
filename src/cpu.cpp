@@ -121,7 +121,7 @@ void CPU::write(int8_t* address, int8_t value) {
             if (debug) {
                 printf("ppu->%04x: %02x\n",bit14,(uint8_t)value);
             }
-            ppu->write(&(ppu->memory[bit14]),value); // write method takes mapper into account
+            ppu->write(bit14,value); // write method takes mapper into account
             ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
             //ppu->v&=~0x3fff;
             //ppu->v|=bit14;
@@ -249,9 +249,9 @@ int8_t CPU::read(int8_t* address) {
             uint16_t bit14 = (ppu->v)&0x3fff;
             if (bit14<=0x3eff) {
                 value = ppu->read_buffer;
-                ppu->read_buffer = ppu->read(&(ppu->memory[bit14]));
+                ppu->read_buffer = ppu->read(bit14);
             } else {
-                value = ppu->read(&(ppu->memory[bit14]));
+                value = ppu->read(bit14);
             }
             ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
             

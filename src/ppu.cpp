@@ -39,21 +39,15 @@ PPU::PPU(CPU* c) {
     }
 }
 
-void PPU::write(int8_t* address, int8_t value) { //write ppu memory, taking into account any mirrors or bankswitches
+void PPU::write(int16_t address, int8_t value) { //write ppu memory, taking into account any mirrors or bankswitches
     map_memory(&address);
-    *address = value;
-    if (rom->get_chrsize()==0 && get_addr(address)<0x2000) { //chr-ram
-        rom->chr_ram[rom->mmc1chrbank*0x1000] = value;
-    }
+    memory[address] = value;
 }
 
-int8_t PPU::read(int8_t* address) {
+int8_t PPU::read(int16_t address) {
     map_memory(&address);
     int8_t res;
-    res = *address;
-    if (rom->get_chrsize()==0 && get_addr(address)<0x2000) { //chr-ram
-        rom->chr_ram[rom->mmc1chrbank*0x1000] = *address;
-    }
+    res = memory[address];
     return res;
 }
 
@@ -91,9 +85,9 @@ void PPU::v_vert() {
 void PPU::cycle() {
     bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
     if (0<=scanline && scanline<=239) { // visible scanlines
-        if (!mutex_locked && image_mutex.try_lock()) {
+        /*if (!mutex_locked && image_mutex.try_lock()) {
             mutex_locked = true;
-        }
+        }*/
         int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
         if (1<=scycle && scycle<=256) {
             for (int i=0; i<scanlinespritenum; i++) {
@@ -111,12 +105,12 @@ void PPU::cycle() {
             if (intile==0 && rendering) { // beginning of a tile
                 tile_addr = 0x2000 | (v & 0x0fff);
                 attr_addr = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
-                uint8_t tile_val = read(&memory[tile_addr]);
+                uint8_t tile_val = read(tile_addr);
                 uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
                 internalx = x&0x7;
                 //internalx = 0;
-                ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
-                pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
+                ptlow=(uint8_t)read(pattern_table_loc); // add next low byte
+                pthigh = (uint8_t)read(pattern_table_loc+8); // add next high byte
             }
 
             if (scycle<=64 && ((*PPUMASK)&0x10)) { //secondary oam initialize
@@ -173,7 +167,7 @@ void PPU::cycle() {
             //RENDERING
 
             //get background pallete location and pixel color
-            uint8_t attr_read = read(&memory[attr_addr]);
+            uint8_t attr_read = read(attr_addr);
             bool right = (tile_addr>>1)&1;
             bool bottom = (tile_addr>>6)&1;
             uint8_t attribute = (attr_read>>((right<<1)|(bottom<<2)))&3;
@@ -214,7 +208,7 @@ void PPU::cycle() {
                         }
                         uint8_t sprite_x = scanlinesprites[4*i+3]&0xff;
                         
-                        uint8_t new_sprite_pattern = ((read(&memory[sprite_tile])>>sprite_bit)&1)|(((read(&memory[sprite_tile|8])>>sprite_bit)&1)<<1);
+                        uint8_t new_sprite_pattern = ((read(sprite_tile)>>sprite_bit)&1)|(((read(sprite_tile|8)>>sprite_bit)&1)<<1);
                         if (new_sprite_pattern!=0) {
                             sprite_pattern = new_sprite_pattern;
                             sprite_palette = new_sprite_palette;
@@ -253,7 +247,7 @@ void PPU::cycle() {
                     pattern = 0;
                 }
             }
-            uint8_t pixel = pattern ? read(&memory[(0x3f00|(0x10*sprite_pix))+4*attribute+pattern]) : read(&memory[(0x3f00|(0x10*sprite_pix))]);
+            uint8_t pixel = pattern ? read((0x3f00|(0x10*sprite_pix))+4*attribute+pattern) : read((0x3f00|(0x10*sprite_pix)));
             //printf("POS(%i,%i) - TILEIND $%04x: %02x, ATTRIBUTE: %04x, PATTERN - $%04x: %02x %02x,bit: %i, val: %i, finey: %i\n",scycle-1,scanline,tile_addr,read(&memory[tile_addr]),attr_addr,(((*PPUCTRL)&0x10)<<8)|((read(&memory[tile_addr]))<<4)|(((v&0x7000)>>12)&0x07),ptlow,pthigh, internalx, pattern,(((v&7000)>>12)&0x07));
             //write some pixel to image here
             int color_ind = pixel*3;
@@ -285,11 +279,11 @@ void PPU::cycle() {
                 }
                 tile_addr = 0x2000 | (fake_v & 0x0fff);
                 attr_addr = 0x23c0 | (fake_v & 0x0c00) | ((fake_v >> 4) & 0x38) | ((fake_v >> 2) & 0x07);
-                uint8_t tile_val = read(&memory[tile_addr]);
+                uint8_t tile_val = read(tile_addr);
                 uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
                 //internalx = 0;
-                ptlow=(uint8_t)read(&memory[pattern_table_loc]); // add next low byte
-                pthigh = (uint8_t)read(&memory[pattern_table_loc+8]); // add next high byte
+                ptlow=(uint8_t)read(pattern_table_loc); // add next low byte
+                pthigh = (uint8_t)read(pattern_table_loc+8); // add next high byte
             }
 
         } else if (scycle == 257 && rendering) {
@@ -367,26 +361,26 @@ void PPU::apply_and_update_registers() {
     }
 }
 
-void PPU::map_memory(int8_t** addr) {
-    long long location = get_addr(*addr);
-    if (0x2000<=location && location<0x3000) { //map according to rom, which could also include CHR bankswitching
+void PPU::map_memory(int16_t* addr) {
+    int16_t location = *addr;
+    if (location & 0xf000 == 0x2000) { //map according to rom, which could also include CHR bankswitching
         switch(rom->mirrormode) {
             case HORIZONTAL:
-                *addr -= ((location-0x2000)/0x400)%2 ? 0x400 : 0; //horizontal nametable mirroring
+                *addr -= ((location-0x2000)&0x400); //horizontal nametable mirroring
                 break;
             case VERTICAL:
-                *addr -= location>=0x2800 ? 0x800 : 0; //horizontal nametable mirroring
+                *addr -= location&0x800; //horizontal nametable mirroring
                 break;
 
             //fourtable has nothing because four table is no mirroring at all
         }
     }
-    else if (0x3000<=location && location<0x3F00) {
+    else if (location & 0xf000 == 0x3000) {
         *addr-=0x1000;
-    } else if (location==0x3f10 || location==0x3f14 || location==0x3f18 || location==0x3f1c) {
-        *addr-=0x10;
-    } else if (0x3F20<=location&&location<0x4000) {
-        *addr-=(location-0x3f00)/0x20*0x20;
+    } else if ((location&(~0xc))==0x3f10) {
+        *addr&=~0xf0;
+    } else if (location & (~0xff)==0x3f00) {
+        *addr&=~0xe0;
     }
 }
 

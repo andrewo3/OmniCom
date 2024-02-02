@@ -36,8 +36,8 @@ class PPU {
         int vbl_count = 0;
 
         //rw
-        int8_t read(int8_t* address);
-        void write(int8_t* address, int8_t value);
+        int8_t read(int16_t address);
+        void write(int16_t address, int8_t value);
         void v_horiz();
         void v_vert();
 
@@ -67,7 +67,7 @@ class PPU {
         int8_t* PPUDATA; //&memory[0x2007]
         int8_t* OAMDMA; //&memory[0x4014]
     private:
-        void map_memory(int8_t** addr);
+        void map_memory(int16_t* addr);
         long long get_addr(int8_t* ptr);
         void apply_and_update_registers();
         uint16_t upcoming_pattern;
