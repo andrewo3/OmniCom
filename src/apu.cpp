@@ -15,11 +15,12 @@ void APU::setCPU(CPU* c_ptr) {
 int16_t mix(APU* a_ptr) { //TODO: REWRITE THIS WHOLE FUNCTION TO TAKE EXISTING OUTPUTS FROM CHANNELS
     //pulse1/60.0+pulse2/60.0+
     //a_ptr->audio_frame++;
-    double clock_speed = a_ptr->cpu->CLOCK_SPEED/2;
+    long clock_speed = a_ptr->cpu->CLOCK_SPEED/2;
     int sr = a_ptr->sample_rate;
-    uint8_t p_out = a_ptr->pulse_out[0]+a_ptr->pulse_out[1];
-    //p_out = (15*state[SDL_SCANCODE_R])*((a_ptr->audio_frame*2*440/(a_ptr->sample_rate))%2);
-    float final_vol = 0.00752*(p_out);
+    int8_t p_out = a_ptr->pulse_out[0]+a_ptr->pulse_out[1];
+    float tnd_out = 0.00851*a_ptr->tri_out + 0.00494*a_ptr->noise_out;
+    //p_out = 15*((a_ptr->cycles*2*440/(clock_speed))%2);
+    float final_vol = 0.00752*(p_out)+tnd_out;
     //TODO: add triangle noise and DMC
     int16_t output = final_vol*32767;
     //output = a_ptr->audio_buffer[(a_ptr->buffer_ind+ind)%BUFFER_LEN];
@@ -33,40 +34,41 @@ void APU::clock_envs() { //clock_envs
         uint8_t* start_flag = &env[i][0];
         uint8_t* divider = &env[i][1];
         uint8_t* decay = &env[i][2]; // ends up determining final volume (or use constant val if flag is set)
-        if (*start_flag) {
+        if (!(*start_flag)) {
             if (*divider) {
-                *divider--;
+                (*divider)--;
             } else {
                 *divider = cpu->memory[env_addr]&0xf; //reset to V value from corresponding envelope register
                 //clock decay counter
                 if (*decay) {
-                    *decay--;
+                    (*decay)--;
                 } else if (cpu->memory[env_addr]&0x20) { // if loop flag set for envelope
                     *decay = 15;
                 }
             }
+        } else {
+            *start_flag = 0;
+            *decay = 15;
+            *divider = cpu->memory[env_addr]&0xf;
         }
     }
 }
 
 void APU::clock_linear() {
-    uint8_t* linear_counter = &tri[2];
-    uint8_t* linear_counter_reload = &tri[3];
-    if (*linear_counter_reload) {
-        *linear_counter = cpu->memory[0x4008]&0x7F; // counter reload value
-    } else if (*linear_counter) {
-        *linear_counter--;
+    if (linear_reload) {
+        linear_counter = cpu->memory[0x4008]&0x7F; // counter reload value
+    } else if (linear_counter) {
+        linear_counter--;
     }
     if (!(cpu->memory[0x4008]&0x80)) {
-        *linear_counter_reload = 0;
+        linear_reload = false;
     }
 }
 
 void APU::clock_length() {
     for (int l=0; l<4; l++) {
-        if (cpu->memory[0x4015]&(1<<l)) { // check if channel is enabled using $4015
+        if (enabled[l]) { // check if channel is enabled using $4015
             bool halt_flag = cpu->memory[0x4000+4*l]&(0x20<<(2*(l==2))); // get corresponding length counter halt flag
-            
             if (!(length_counter[l]==0 || halt_flag)) { // if the length counter is not 0 and the halt flag is not set, decrement
                 length_counter[l]--;
             } else if (length_counter[l]==0) {
@@ -96,7 +98,7 @@ void APU::clock_sweep() { //clock sweep units
 
         uint8_t sweep_setup = (uint8_t)cpu->memory[0x4001|(i<<2)];
         bool enabled = sweep_setup&0x80;
-        uint16_t pulse_period = get_pulse_period(i);
+        uint16_t pulse_period = pulse_periods[i];
         
         //calculate target period
         int16_t change_amount = pulse_period>>(sweep_setup&0x7); // shift current period by shift count in register
@@ -110,14 +112,14 @@ void APU::clock_sweep() { //clock sweep units
 
         *muted = (pulse_period<8) || (target_period>0x7ff); // set muted
         
-        if (!(*divider) && enabled && !(*muted)) { // if divider reached zero, sweep is enabled and its not muted
-            set_pulse_period(target_period,i); // set pulse period to target period
+        if ((!(*divider)) && enabled) { // if divider reached zero, sweep is enabled and its not muted
+            pulse_periods[i] = target_period; // set pulse period to target period    
         } 
-        if (!(*divider) || (*reload)) { // check if divider is zero, or reload flag is set
+        if ((!(*divider)) || (*reload)) { // check if divider is zero, or reload flag is set
             *divider = (cpu->memory[0x4001|(i<<2)]&0x70)>>4; //reload divider
             *reload = 0; // clear reload
         } else {
-            *divider--;
+            (*divider)--;
         }
     }
 }
@@ -126,7 +128,7 @@ void APU::func_frame_counter() { //APU frame counter which clocks other update t
     FRAME_COUNTER = &cpu->memory[0x4017];
     bool step5 = ((*FRAME_COUNTER)&0x80);
     bool inhibit = ((*FRAME_COUNTER)&0x40);
-    int sequence_clocks = cycles%(14916+3724*step5); //14916 is (approximately) the number of apu clocks will occur in 1/60 of a second.
+    int sequence_clocks = (cycles-timer_reset)%(14916+3724*step5); //14916 is (approximately) the number of apu clocks will occur in 1/60 of a second.
     if (sequence_clocks == 3729) { //step 1 (first quarter frame)
         clock_envs(); // clock envelopes
         clock_linear(); //clock triangle linear counter
@@ -161,23 +163,67 @@ void APU::cycle() { // apu clock (every other cpu cycle)
     //everything else
     pulse(0);
     pulse(1);
+    //clock triangle twice, because it's clocked per cpu cycle, not apu
+    triangle();
+    triangle();
+
+    noise();
     cycles++;
 }
 
 void APU::pulse(bool ind) {
-    /*uint16_t period = get_pulse_period(ind);
-    if (sweep_units[ind][2] || period<8) { //muted channel
+    uint16_t period = pulse_periods[ind];
+    bool sweep_enabled = (uint8_t)cpu->memory[0x4001|(ind<<2)]&0x80;
+    if ((sweep_units[ind][2] && sweep_enabled) || period<8 || length_counter[ind]==0) { //muted channel
         pulse_out[ind] = 0;
     } else {
         uint8_t pulse_reg = cpu->memory[0x4000|(ind<<2)];
         uint8_t duty = (pulse_reg&0xC0)>>6;
-        uint8_t volume = pulse_reg&0xf ? pulse_reg&0x10 : env[ind][3];
-        pulse_out[ind] = volume*pulse_waveforms[duty][pulse_timer[ind] % 8];
+        uint8_t volume = pulse_reg&0x10 ? pulse_reg&0xf : env[ind][2];
+        pulse_out[ind] = volume*(2*pulse_waveforms[duty][pulse_ind[ind]]-1);
 
     }
     pulse_timer[ind]++;
-    pulse_timer[ind]%=period+1;*/
-    pulse_out[ind] = (15*state[SDL_SCANCODE_R])*(((cycles)*4*10/cpu->CLOCK_SPEED)%2);
+    pulse_timer[ind]%=period+1;
+    if (!pulse_timer[ind]) {
+        pulse_ind[ind]++;
+        pulse_ind[ind]%=8;
+    }
+    //pulse_out[ind] = 15*state[SDL_SCANCODE_R]*(((cycles)*4*440/cpu->CLOCK_SPEED)%2);
+}
+
+void APU::triangle() {
+    if (linear_counter==0 || length_counter[2]==0) {
+        tri_out = 0;
+    } else {
+        tri_out = (tri_sequence[tri_ind]-7.5)*2;
+    }
+    tri_timer++;
+    tri_timer%=tri_period+1;
+    if (!tri_timer) {
+        tri_ind++;
+        tri_ind%=32;
+    }
+}
+
+void APU::noise() {
+    // clock shift register - generating pseudo-random sequence
+    if (noise_timer==0) {
+        bool mode = cpu->memory[0x400E]&0x80;
+        int other_bit = mode ? 6 : 1;
+        noise_shift&=~0x8000;
+        noise_shift|=((noise_shift&1)^((noise_shift&(1<<other_bit))>>other_bit))<<15;
+        noise_shift>>=1;
+    }
+    if (length_counter[3]==0) {
+        noise_out = 0;
+    } else {
+        uint8_t noise_reg = cpu->memory[0x400C];
+        uint8_t volume = noise_reg&0x10 ? noise_reg&0xf : env[2][2];
+        noise_out = volume*(1-2*(noise_shift&1));
+    }
+    noise_timer++;
+    noise_timer%=noise_periods[cpu->memory[0x400E]&0xf]/2;
 }
 
 uint8_t APU::length_lookup(uint8_t in) {

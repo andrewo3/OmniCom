@@ -16,7 +16,8 @@ class CPU {
         CPU(bool dbug);
         PPU* ppu;
         APU* apu;
-        int CLOCK_SPEED = 1789773;
+        int CLOCK_SPEED = 1800100;
+        //int CLOCK_SPEED = 1789773; //original
         //int CLOCK_SPEED = 2147483647; //for test purposes
         int emulated_clock_speed();
         long long start = epoch();

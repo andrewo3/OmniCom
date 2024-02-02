@@ -128,14 +128,44 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
             }
+        case 0x4000:
+            //apu->env[0][0] = 1; // set envelope start flag
+            break;
+        case 0x4001:
+            apu->sweep_units[0][1]=1; //set sweep unit reload flag
+            break;
+        case 0x4002: //Pulse 1 timer Low
+            apu->pulse_periods[0]=(value&0xff)|((memory[0x4003]&0x7)<<8);
+            break;
         case 0x4003:
-            apu->length_counter[0] = (value&0xF8)>>3;
+            apu->length_counter[0] = apu->length_lookup((value&0xF8)>>3);
+            apu->pulse_periods[0]=(memory[0x4002]&0xff)|((value&0x7)<<8);
+            apu->env[0][0] = 1; // set envelope start flag
+            break;
+        case 0x4004:
+            //apu->env[1][0] = 1; // set envelope start flag
+            break;
+        case 0x4005:
+            apu->sweep_units[1][1]=1; //set sweep unit reload flag
+            break;
+        case 0x4006: //Pulse 2 timer low
+             apu->pulse_periods[1]=(value&0xff)|((memory[0x4007]&0x7)<<8);
             break;
         case 0x4007:
-            apu->length_counter[1] = (value&0xF8)>>3;
+
+            apu->length_counter[1] = apu->length_lookup((value&0xF8)>>3);
+            apu->pulse_periods[1]=(memory[0x4006]&0xff)|((value&0x7)<<8);
+            apu->env[1][0] = 1; // set envelope start flag
             break;
+        case 0x400A:
+            apu->tri_period=(value&0xff)|((memory[0x400B]&0x7)<<8);
         case 0x400B:
-            apu->tri[3] = 1; // set triangle linear counter reload flag
+            apu->tri_period=(memory[0x400A]&0xff)|((value&0x7)<<8);
+            apu->length_counter[2] = apu->length_lookup((value&0xF8)>>3);
+            apu->linear_reload = true; // set triangle linear counter reload flag
+            break;
+        case 0x400F:
+            apu->length_counter[3] = apu->length_lookup((value&0xF8)>>3);
             break;
         
         case 0x4014: //write to OAMDMA
@@ -157,6 +187,16 @@ void CPU::write(int8_t* address, int8_t value) {
                 printf("]\n");
             }
             break;}
+        case 0x4015: //APU Status
+            for (int i=0; i<4; i++) {
+                if (!(value&(1<<i))) {
+                    apu->enabled[i] = 0;
+                    apu->length_counter[i] = 0;
+                } else {
+                    apu->enabled[i] = 1;
+                }
+            }
+            break;
         case 0x4016: //controller input 1
             input_strobe = value&1;
             if (input_strobe) {
@@ -169,6 +209,15 @@ void CPU::write(int8_t* address, int8_t value) {
                 ((state[SDL_SCANCODE_TAB]|SDL_JoystickGetButton(controller,6))<<5)| //select
                 ((state[SDL_SCANCODE_LSHIFT]|SDL_JoystickGetButton(controller,2)|SDL_JoystickGetButton(controller,3))<<6)| //B
                 ((state[SDL_SCANCODE_SPACE]|SDL_JoystickGetButton(controller,1)|SDL_JoystickGetButton(controller,0))<<7); //A
+            }
+            break;
+        case 0x4017:
+            apu->timer_reset = apu->cycles-1; //reset apu timer
+            if (value&0x80) {
+                apu->clock_envs();
+                apu->clock_length();
+                apu->clock_linear();
+                apu->clock_sweep();
             }
             break;
     }
@@ -210,6 +259,10 @@ int8_t CPU::read(int8_t* address) {
             break;
             }
         case 0x4015:
+            value = (apu->frame_interrupt&0x40);
+            for (int i=0; i<4; i++) {
+                value|=(apu->length_counter[i]>0)&(1<<i);
+            }
             apu->frame_interrupt = false;
             break;
         case 0x4016:
@@ -351,9 +404,9 @@ void CPU::clock() {
         start_irq();
     }
     long long change = epoch_nano() - last;
+    last = epoch_nano();
     //while ((epoch_nano() - last) < 1000000000LL/CLOCK_SPEED) {}
     elapsed_time += change;
-    last = epoch_nano();
 
     
 }
@@ -361,7 +414,7 @@ void CPU::clock() {
 int CPU::emulated_clock_speed() {
     if (elapsed_time!=0) {
         //printf("total time: %lli\n",elapsed_time);
-        return (cycles*1000000000)/(elapsed_time+(epoch_nano()-last));
+        return (cycles*1e9)/(elapsed_time+(epoch_nano()-last));
     } else {
         return 0;
     }

@@ -69,6 +69,7 @@ static int16_t audio_pt = 0;
 bool paused = false;
 long clock_speed = 0;
 int diffs[10] = {0};
+int frames = 0;
 
 GLuint shaderProgram;
 GLuint vertexShader;
@@ -119,7 +120,7 @@ void quit(int signal) {
     if (signal==SIGSEGV) {
         printf("Segfault!\n");
         exit(EXIT_FAILURE);
-    } else {
+    } else if (signal==SIGINT) {
         exit(0);
     }
 }
@@ -210,22 +211,45 @@ void PPUThread() {
 }
 
 void sampleAPU() {
-    long long last_call = epoch_nano();
+    int sr = apu_ptr->sample_rate;
+    const double ns_wait = (1e9/(sr*1.024));
+    long long loops = 0;
+    int16_t buffer[BUFFER_LEN] = {0};
+    int16_t buffer_copy[BUFFER_LEN] = {0};
+    long long last_q = 0;
     while (!interrupted) {
-        while ((apu_ptr->cycles*1000000000/(epoch_nano()-start_nano))<cpu_ptr->CLOCK_SPEED/2) {
-            if (epoch_nano()-last_call>22675.737) {
-                printf("Nanoseconds since last call = %lli\n",epoch_nano()-last_call);
-            }
-            last_call = epoch_nano();
-            apu_ptr->cycle();
-        }
-        int out = mix(apu_ptr);
+        int16_t out = mix(apu_ptr);
+        long long internal_nano = apu_ptr->cycles*2*1e9/cpu_ptr->CLOCK_SPEED;
         //out = 0;
-        std::lock_guard<std::mutex> lock(audioBufferMutex);
-        audio_buffer[buffer_ind++] = out;
-        if (buffer_ind>=BUFFER_LEN) {
-            buffer_ind = 0;
+        //std::lock_guard<std::mutex> lock(audioBufferMutex);
+        //printf("queue: %i\n",out);
+        while (loops<internal_nano/ns_wait) {
+            //buffer[loops%BUFFER_LEN] = loops%BUFFER_LEN ? mix(apu_ptr) : 32767;
+            buffer[loops%BUFFER_LEN] = mix(apu_ptr);
+            //printf("%lf,%i\n",(double)loops/sr,buffer[loops%BUFFER_LEN]);
+            loops++;
+            if (loops%BUFFER_LEN==0) {
+                int buffer_size = SDL_GetQueuedAudioSize(audio_device);
+                
+                memcpy(&buffer_copy,&buffer,BUFFER_LEN*sizeof(int16_t));
+                if (buffer_size>BUFFER_LEN*sizeof(int16_t)*2) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
+                    //printf("overflow\n");
+                    //printf("%i\n",buffer_size);
+                    SDL_DequeueAudio(audio_device,&buffer_copy,sizeof(int16_t)*BUFFER_LEN);
+                } else {
+                    SDL_QueueAudio(audio_device,&buffer_copy,sizeof(int16_t)*BUFFER_LEN);
+                }
+            }
+            if (internal_nano/ns_wait>last_q+1) {
+                //printf("skipped smth: %lli %lli\n",internal_nano/ns_wait,last_q);
+            }
+            last_q = internal_nano/ns_wait;
         }
+        //audio_buffer[buffer_ind++] = out;
+        //if (buffer_ind>=BUFFER_LEN) {
+            //buffer_ind = 0;
+        //}
+
     }
 }
 
@@ -233,12 +257,18 @@ void NESLoop() {
     //emulator loop
     while (!interrupted) {
         if (!paused) {
-            if (cpu_ptr->emulated_clock_speed()<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
+            while (cpu_ptr->emulated_clock_speed()>cpu_ptr->CLOCK_SPEED) { //limit clock speed
+                
+            }
                 //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
                 cpu_ptr->clock();
                 clock_speed = cpu_ptr->emulated_clock_speed();
                 // 3 dots per cpu cycle
                 total_ticks = cpu_ptr->cycles;
+
+            while (apu_ptr->cycles*2<cpu_ptr->cycles) {
+                apu_ptr->cycle();
+                //apu_ptr->cycles++;
             }
             while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
                 ppu_ptr->cycle();
@@ -259,9 +289,17 @@ void NESLoop() {
     
 }
 
+void placeholder() {
+
+}
+
 void AudioLoop(void* userdata, uint8_t* stream, int len) {
     //printf("Buffer size: %i\n",len);
     std::lock_guard<std::mutex> lock(audioBufferMutex);
+    for (int i=0; i<BUFFER_LEN; i++) {
+        printf("%i,%f,%i\n",7000*(i==0),(double)frames/apu_ptr->sample_rate,audio_buffer[(buffer_ind+i)%BUFFER_LEN]);
+        frames++;
+    }
     int samplesToEnd = BUFFER_LEN - buffer_ind;
     memcpy(stream,&audio_buffer[buffer_ind],samplesToEnd*sizeof(int16_t));
     memcpy(stream+samplesToEnd*sizeof(int16_t),audio_buffer,buffer_ind*sizeof(int16_t));
@@ -311,13 +349,12 @@ int main(int argc, char ** argv) {
     WINDOW_INIT[1] = DM.h*init_window_scale;
 
     //audio
-    audio_spec.samples = BUFFER_LEN;
     audio_spec.freq = 44100;
     audio_spec.format = AUDIO_S16SYS;  // 16-bit signed, little-endian
     audio_spec.channels = 1;            // Mono
     audio_spec.samples = BUFFER_LEN;
-    audio_spec.size = audio_spec.samples * sizeof(int16_t) * audio_spec.channels;
-    audio_spec.callback = AudioLoop;
+    audio_spec.size = BUFFER_LEN * sizeof(int16_t) * audio_spec.channels;
+    //audio_spec.callback = AudioLoop;
     audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
     //stream = SDL_NewAudioStream(AUDIO_U8,1,44100,);
     printf("SDL audio set up.\n");
@@ -430,44 +467,43 @@ int main(int argc, char ** argv) {
     //std::thread AudioThread(AudioLoop);
 
     printf("NES thread started. Starting main window loop...\n");
+    printf("x,y\n");
     float t_time = SDL_GetTicks()/1000.0;
     float last_time = SDL_GetTicks()/1000.0;
     int16_t buffer[BUFFER_LEN*2];
     SDL_PauseAudioDevice(audio_device,0);
     //main window loop
     while (!interrupted) {
-        float diff = t_time-last_time;
-        last_time = SDL_GetTicks()/1000.0;
-        char * new_title = new char[255];
-        sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
-        SDL_SetWindowTitle(window,new_title);
+        if (!paused) {
+            ppu_ptr->image_mutex.lock();
+            float diff = t_time-last_time;
+            last_time = SDL_GetTicks()/1000.0;
+            char * new_title = new char[255];
+            sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
+            SDL_SetWindowTitle(window,new_title);
+        }
         //logic is executed in nes thread
         //apply ntsc filter before drawing
-        if (!paused) {
-            if (shader_toggle) {
-                ppu_ptr->image_mutex.lock();
-                ntsc.data = out_img; /* buffer from your rendering */
-                ntsc.format = CRT_PIX_FORMAT_RGB;
-                ntsc.w = NES_DIM[0];
-                ntsc.h = NES_DIM[1];
-                ntsc.as_color = color;
-                ntsc.field = field & 1;
-                ntsc.raw = raw;
-                ntsc.hue = hue;
-                if (ntsc.field == 0) {
-                ntsc.frame ^= 1;
-                }
-                crt_modulate(&crt, &ntsc);
-                crt_demodulate(&crt, noise);
-                ppu_ptr->image_mutex.unlock();
-                field ^= 1;
-                //render texture from nes (temporarily test_image.jpg)
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
-            } else {
-                ppu_ptr->image_mutex.lock();
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
-                ppu_ptr->image_mutex.unlock();
+        if (shader_toggle) {
+            ntsc.data = out_img; /* buffer from your rendering */
+            ntsc.format = CRT_PIX_FORMAT_RGB;
+            ntsc.w = NES_DIM[0];
+            ntsc.h = NES_DIM[1];
+            ntsc.as_color = color;
+            ntsc.field = field & 1;
+            ntsc.raw = raw;
+            ntsc.hue = hue;
+            if (ntsc.field == 0) {
+            ntsc.frame ^= 1;
             }
+            crt_modulate(&crt, &ntsc);
+            crt_demodulate(&crt, noise);
+            field ^= 1;
+            //render texture from nes (temporarily test_image.jpg)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
+        } else {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
+            
         }
 
         glUseProgram(shaderProgram);
@@ -487,7 +523,7 @@ int main(int argc, char ** argv) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-
+        ppu_ptr->image_mutex.unlock();
         // event loop
         SDL_PumpEvents();
         while(SDL_PollEvent(&event)) {
@@ -524,7 +560,7 @@ int main(int argc, char ** argv) {
                             }
                         case SDLK_d:
                             cpu.debug = cpu.debug ? false : true;
-                            cpu.elapsed_time = cpu.cycles/cpu.CLOCK_SPEED*1000000000; // reset timing
+                            cpu.elapsed_time = cpu.cycles/cpu.CLOCK_SPEED*(long)1e9; // reset timing
                             break;
                         case SDLK_s:
                             {
@@ -548,11 +584,13 @@ int main(int argc, char ** argv) {
                             if (state[SDL_SCANCODE_LCTRL]) {
                                 interrupted = true;
                                 NESThread.join();
+                                sampleGet.join();
                                 cpu.init_vals();
                                 cpu.loadRom(&rom);
                                 cpu.reset();
                                 interrupted = false;
                                 NESThread = std::thread(NESLoop);
+                                sampleGet = std::thread(sampleAPU);
                             }
                             break;
                         case SDLK_p:
