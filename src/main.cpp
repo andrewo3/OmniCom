@@ -34,6 +34,8 @@
 #include <cmath>
 #include <thread>
 #include <mutex>
+#include <unistd.h>
+#include <iostream>
 
 //ntsc filter options
 static struct CRT crt;
@@ -212,7 +214,7 @@ void PPUThread() {
 
 void sampleAPU() {
     int sr = apu_ptr->sample_rate;
-    const double ns_wait = (1e9/(sr*1.024));
+    const int ns_wait = (1e9/(sr*1.024));
     long long loops = 0;
     int16_t buffer[BUFFER_LEN] = {0};
     int16_t buffer_copy[BUFFER_LEN] = {0};
@@ -245,6 +247,7 @@ void sampleAPU() {
             }
             last_q = internal_nano/ns_wait;
         }
+        std::this_thread::sleep_for(std::chrono::nanoseconds(ns_wait));
         //audio_buffer[buffer_ind++] = out;
         //if (buffer_ind>=BUFFER_LEN) {
             //buffer_ind = 0;
@@ -254,15 +257,17 @@ void sampleAPU() {
 }
 
 void NESLoop() {
+    
+    const double ns_wait = 1e9/cpu_ptr->CLOCK_SPEED;
+    printf("Elapsed: %li\n",ns_wait);
     //emulator loop
     while (!interrupted) {
         if (!paused) {
-            if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
-                //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
-                cpu_ptr->clock();
-                // 3 dots per cpu cycle
-                total_ticks = cpu_ptr->cycles;
-            }
+            //if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
+            //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
+            cpu_ptr->clock();
+            // 3 dots per cpu cycle
+            total_ticks = cpu_ptr->cycles;
             clock_speed = cpu_ptr->emulated_clock_speed();
 
             while (apu_ptr->cycles*2<cpu_ptr->cycles) {
@@ -281,6 +286,12 @@ void NESLoop() {
                     printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
                 }
                 //printf("%i\n",ppu.v);
+            }
+            long long real_time = epoch_nano()-start_nano;
+            long long cpu_time = ns_wait*cpu_ptr->cycles;
+            int diff = cpu_time-real_time;
+            if (diff>0) {
+                std::this_thread::sleep_for(std::chrono::nanoseconds(diff));
             }
         }
         
