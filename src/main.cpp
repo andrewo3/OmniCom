@@ -72,6 +72,7 @@ bool paused = false;
 long clock_speed = 0;
 int diffs[10] = {0};
 int frames = 0;
+int desired_fps = 60;
 
 GLuint shaderProgram;
 GLuint vertexShader;
@@ -377,6 +378,7 @@ int main(int argc, char ** argv) {
     int* viewport = new int[4];
     viewportBox(&viewport,WINDOW_INIT[0],WINDOW_INIT[1]);
     SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WINDOW_INIT[0],WINDOW_INIT[1],FLAGS);
+    SDL_SetWindowTitle(window,filename);
     printf("Window Created\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
     glewExperimental = GL_TRUE;
@@ -487,10 +489,10 @@ int main(int argc, char ** argv) {
         if (!paused) {
             //ppu_ptr->image_mutex.lock();
             float diff = t_time-last_time;
+            //char * new_title = new char[255];
+            //sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
+            //SDL_SetWindowTitle(window,new_title);
             last_time = SDL_GetTicks()/1000.0;
-            char * new_title = new char[255];
-            sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
-            SDL_SetWindowTitle(window,new_title);
         }
         //logic is executed in nes thread
         //apply ntsc filter before drawing
@@ -610,6 +612,7 @@ int main(int argc, char ** argv) {
                     }
             }
         }
+        SDL_Delay(1000/desired_fps);
         t_time = SDL_GetTicks()/1000.0;
     }
     NESThread.join();

@@ -84,12 +84,13 @@ void PPU::v_vert() {
 
 void PPU::cycle() {
     bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
-    if (0<=scanline && scanline<=239) { // visible scanlines
+    if (scanline<240) { // visible scanlines
         /*if (!mutex_locked && image_mutex.try_lock()) {
             mutex_locked = true;
         }*/
-        int intile = (scycle-1)%8; //get index into a tile (8 pixels in a tile)
-        if (1<=scycle && scycle<=256) {
+        int scan_cyc = scycle-1;
+        int intile = scan_cyc%8; //get index into a tile (8 pixels in a tile)
+        if (scan_cyc<256) {
             for (int i=0; i<scanlinespritenum; i++) {
                 if (active_sprites&(1<<i)) { //if sprite already active
                     sprite_patterns[i]--; //subtract one from bit for pattern
@@ -113,10 +114,10 @@ void PPU::cycle() {
                 pthigh = (uint8_t)read(pattern_table_loc+8); // add next high byte
             }
 
-            if (scycle<=64 && ((*PPUMASK)&0x10)) { //secondary oam initialize
+            if (scycle==0 && ((*PPUMASK)&0x10)) { //secondary oam initialize
                 for (int i=0; i<32; i++) {
-                    secondary_oam[scycle/2]=0xff;
-                    secondary_oam[scycle/2+1]=0xff;
+                    secondary_oam[i]=0xff;
+                    //secondary_oam[scycle/2+1]=0xff;
                 }
                 sprites = 0;
                 sprite_eval_n = 0;
@@ -124,7 +125,7 @@ void PPU::cycle() {
                 sprite_eval = true;
                 sprite_eval_end = false;
                 spritezeropresent = false;
-            } else if (scycle<=256 && rendering) { //sprite evaluation
+            } else if (scycle>128 && scycle<=256 && rendering) { //sprite evaluation
                 if (!(scycle%2) && sprites<8) {
                     uint8_t sprite_y = oam[sprite_eval_n]+1;
                     if (!sprite_eval_end && sprite_y!=0) { // if you havent already reached the end of oam once
@@ -132,7 +133,7 @@ void PPU::cycle() {
                         bool h16 = (*PPUCTRL)&0x20;
                         if ((scanline+1-sprite_y)<(8<<h16) && (scanline+1-sprite_y)>=0 && sprite_y<240) {
                             memcpy(&secondary_oam[sprites*4+1],&oam[sprite_eval_n+1],3);
-                            next_sprite_x_counters[sprites] = (uint8_t)secondary_oam[sprites*4+3];
+                            next_sprite_x_counters[sprites] = (uint8_t)secondary_oam[sprites*4+3]+1;
                             if (sprite_eval_n==0) {
                                 spritezeropresent = true;
                             }
@@ -252,17 +253,17 @@ void PPU::cycle() {
             //write some pixel to image here
             int color_ind = pixel*3;
 
-            for (int i=0; i<3; i++) {
-                out_img[3*((scycle-1)+256*scanline)+i] = NTSC_TO_RGB[color_ind+i];
-            }
+            out_img[3*(scan_cyc+(scanline<<8))] = NTSC_TO_RGB[color_ind];
+            out_img[3*(scan_cyc+(scanline<<8))+1] = NTSC_TO_RGB[color_ind+1];
+            out_img[3*(scan_cyc+(scanline<<8))+2] = NTSC_TO_RGB[color_ind+2];
             if ((*PPUMASK)&0x80) {
-                out_img[3*((scycle-1)+256*scanline)+2] = 255;
+                out_img[3*(scan_cyc+(scanline<<8))+2] = 255;
             }
             if ((*PPUMASK)&0x40) {
-                out_img[3*((scycle-1)+256*scanline)+1] = 255;
+                out_img[3*(scan_cyc+(scanline<<8))+1] = 255;
             }
             if ((*PPUMASK)&0x20) {
-                out_img[3*((scycle-1)+256*scanline)] = 255;
+                out_img[3*(scan_cyc+(scanline<<8))] = 255;
             }
             
             internalx++;
@@ -352,7 +353,7 @@ void PPU::cycle() {
         }
         frames++;
     }
-    apply_and_update_registers();
+    //apply_and_update_registers();
 }
 
 void PPU::apply_and_update_registers() {
