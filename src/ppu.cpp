@@ -84,18 +84,18 @@ void PPU::v_vert() {
 
 void PPU::cycle() {
     bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
-    if (scanline<240) { // visible scanlines
+    if (scanline>=0 && scanline<=239) { // visible scanlines
         /*if (!mutex_locked && image_mutex.try_lock()) {
             mutex_locked = true;
         }*/
         int scan_cyc = scycle-1;
         int intile = scan_cyc%8; //get index into a tile (8 pixels in a tile)
-        if (scan_cyc<256) {
+        if (0<=scan_cyc && scan_cyc<256) {
             for (int i=0; i<scanlinespritenum; i++) {
                 if (active_sprites&(1<<i)) { //if sprite already active
                     sprite_patterns[i]--; //subtract one from bit for pattern
                 }
-                if (!sprite_x_counters[i]) { //if x counter is 0, sprite becomes active
+                if (!sprite_x_counters[i] && scan_cyc>0) { //if x counter is 0, sprite becomes active
                     active_sprites|=(1<<i);
                 } else if ((int8_t)sprite_x_counters[i]<-7) {
                     active_sprites&=~(1<<i);
@@ -114,7 +114,7 @@ void PPU::cycle() {
                 pthigh = (uint8_t)read(pattern_table_loc+8); // add next high byte
             }
 
-            if (scycle==0 && ((*PPUMASK)&0x10)) { //secondary oam initialize
+            if (scycle==1 && ((*PPUMASK)&0x10)) { //secondary oam initialize
                 for (int i=0; i<32; i++) {
                     secondary_oam[i]=0xff;
                     //secondary_oam[scycle/2+1]=0xff;
@@ -131,9 +131,9 @@ void PPU::cycle() {
                     if (!sprite_eval_end && sprite_y!=0) { // if you havent already reached the end of oam once
                         secondary_oam[sprites*4] = sprite_y; // copy y pos
                         bool h16 = (*PPUCTRL)&0x20;
-                        if ((scanline+1-sprite_y)<(8<<h16) && (scanline+1-sprite_y)>=0 && sprite_y<240) {
+                        if (((scanline+1)%240-sprite_y)<(8<<h16) && ((scanline+1)%240-sprite_y)>=0 && sprite_y<240) {
                             memcpy(&secondary_oam[sprites*4+1],&oam[sprite_eval_n+1],3);
-                            next_sprite_x_counters[sprites] = (uint8_t)secondary_oam[sprites*4+3]+1;
+                            next_sprite_x_counters[sprites] = (uint8_t)secondary_oam[sprites*4+3];
                             if (sprite_eval_n==0) {
                                 spritezeropresent = true;
                             }
