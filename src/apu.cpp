@@ -17,10 +17,11 @@ int16_t mix(APU* a_ptr) { //TODO: REWRITE THIS WHOLE FUNCTION TO TAKE EXISTING O
     //a_ptr->audio_frame++;
     long clock_speed = a_ptr->cpu->CLOCK_SPEED/2;
     int sr = a_ptr->sample_rate;
-    int8_t p_out = a_ptr->pulse_out[0]+a_ptr->pulse_out[1];
-    float tnd_out = 0.00851*a_ptr->tri_out + 0.00494*a_ptr->noise_out;
+    bool* en = a_ptr->enabled;
+    int8_t p_out = (en[0] ? a_ptr->pulse_out[0] : 0)+(en[1] ? a_ptr->pulse_out[1] : 0);
+    float tnd_out = 0.00851*(en[2] ? a_ptr->tri_out : 0) + 0.00494*(en[3] ? a_ptr->noise_out : 0);
     //p_out = 15*((a_ptr->cycles*2*440/(clock_speed))%2);
-    float final_vol = 0.00752*(p_out)+tnd_out;
+    float final_vol = 0.00752*p_out+tnd_out;
     //TODO: add triangle noise and DMC
     int16_t output = final_vol*32767;
     //output = a_ptr->audio_buffer[(a_ptr->buffer_ind+ind)%BUFFER_LEN];
@@ -215,7 +216,7 @@ void APU::noise() {
         noise_shift|=((noise_shift&1)^((noise_shift&(1<<other_bit))>>other_bit))<<15;
         noise_shift>>=1;
     }
-    if (length_counter[3]==0) {
+    if (length_counter[3]==0 || (noise_shift&1)) {
         noise_out = 0;
     } else {
         uint8_t noise_reg = cpu->memory[0x400C];

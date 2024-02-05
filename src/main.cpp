@@ -361,7 +361,7 @@ int main(int argc, char ** argv) {
 
     //audio
     audio_spec.freq = 44100;
-    audio_spec.format = AUDIO_S16SYS;  // 16-bit signed, little-endian
+    audio_spec.format = AUDIO_S16;  // 16-bit signed, little-endian
     audio_spec.channels = 1;            // Mono
     audio_spec.samples = BUFFER_LEN;
     audio_spec.size = BUFFER_LEN * sizeof(int16_t) * audio_spec.channels;

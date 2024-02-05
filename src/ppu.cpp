@@ -367,7 +367,7 @@ void PPU::map_memory(int16_t* addr) {
     if (location & 0xf000 == 0x2000) { //map according to rom, which could also include CHR bankswitching
         switch(rom->mirrormode) {
             case HORIZONTAL:
-                *addr -= ((location-0x2000)&0x400); //horizontal nametable mirroring
+                *addr -= location&0x400; //horizontal nametable mirroring
                 break;
             case VERTICAL:
                 *addr -= location&0x800; //horizontal nametable mirroring
@@ -376,7 +376,7 @@ void PPU::map_memory(int16_t* addr) {
             //fourtable has nothing because four table is no mirroring at all
         }
     }
-    else if (location & 0xf000 == 0x3000) {
+    else if (0x3000 <= location && location < 0x3f00) {
         *addr-=0x1000;
     } else if ((location&(~0xc))==0x3f10) {
         *addr&=~0xf0;
