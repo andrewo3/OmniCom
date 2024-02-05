@@ -364,7 +364,7 @@ void PPU::apply_and_update_registers() {
 
 void PPU::map_memory(int16_t* addr) {
     int16_t location = *addr;
-    if (location & 0xf000 == 0x2000) { //map according to rom, which could also include CHR bankswitching
+    if ((location & 0xf000) == 0x2000) { //map according to rom, which could also include CHR bankswitching
         switch(rom->mirrormode) {
             case HORIZONTAL:
                 *addr -= location&0x400; //horizontal nametable mirroring
@@ -380,7 +380,7 @@ void PPU::map_memory(int16_t* addr) {
         *addr-=0x1000;
     } else if ((location&(~0xc))==0x3f10) {
         *addr&=~0xf0;
-    } else if (location & (~0xff)==0x3f00) {
+    } else if ((location & 0xff00)==0x3f00) {
         *addr&=~0xe0;
     }
 }
