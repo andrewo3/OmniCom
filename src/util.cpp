@@ -1,11 +1,24 @@
 #include "util.h"
 #include "SDL2/SDL.h"
 #include "math.h"
+#include "imgui.h"
+#include <string>
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_opengl3.h"
 
-const int BUFFER_LEN = 512;
+const int BUFFER_LEN = 1024;
 unsigned char out_img[184320]; //output image
 const uint8_t* state = SDL_GetKeyboardState(nullptr);
 SDL_Joystick* controller = NULL;
+
+//parameters
+float global_volume = 50;
+bool use_shaders = false;
+
+
+bool paused_window = false;
+int current_tab = 0;
+static ImGuiWindowFlags paused_flags = ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar;
 
 int joystickDir(SDL_Joystick* joy) {
     float x = SDL_JoystickGetAxis(joy,0)/32768.0;
@@ -20,4 +33,91 @@ int joystickDir(SDL_Joystick* joy) {
         return 1; //down
     }
     return -1;
+}
+
+static std::string labelPrefix(const char* const label)
+{
+	float width = ImGui::CalcItemWidth();
+
+	float x = ImGui::GetCursorPosX();
+	ImGui::Text(label); 
+	ImGui::SameLine(); 
+	//ImGui::SetCursorPosX(x + width * 0.5f + ImGui::GetStyle().ItemInnerSpacing.x);
+	//ImGui::SetNextItemWidth(-1);
+
+	std::string labelID = "##";
+	labelID += label;
+
+	return labelID;
+}
+
+int tab_offset = 10;
+int menu_buttons = 4;
+
+void MenuButton(ImVec2 win_size, int number,char* name) {
+    bool active = false;
+    if (current_tab==number) {
+        ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+        active = true;
+    }
+    if (ImGui::Button(name,ImVec2((win_size.x-tab_offset*2)/menu_buttons,20))) {
+        current_tab = number;
+    }
+    if (active) {
+        ImGui::PopStyleColor();
+    }
+}
+
+void pause_menu() {
+    ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+    ImVec2 size = main_viewport->WorkSize;
+    ImGui::SetNextWindowPos(main_viewport->WorkPos);
+    ImGui::SetNextWindowSize(size);
+    ImGui::SetNextWindowBgAlpha(0.5f);
+
+    ImGui::Begin("Pause Menu",&paused_window,paused_flags);
+    ImGui::SetCursorPosX(10);
+
+    MenuButton(size,0,"Debug");
+    ImGui::SameLine(0,0);
+    MenuButton(size,1,"Controls");
+    ImGui::SameLine(0,0);
+    MenuButton(size,2,"Video");
+    ImGui::SameLine(0,0);
+    MenuButton(size,3,"Audio");
+    ImGui::SetCursorPosY(size.y/4);
+    char * button_names[8] = {
+        "A",
+        "B",
+        "Select",
+        "Start",
+        "Up",
+        "Down",
+        "Left",
+        "Right"
+
+    };
+    switch (current_tab) {
+        case 1:
+            for (int i=0; i<8; i++) {
+                ImGui::Text(button_names[i]);
+                ImGui::SameLine(0);
+                ImGui::SetCursorPosX(size.x*((i%2)*3+1)/6);
+                ImGui::Button(SDL_GetScancodeName(mapped_keys[i]),ImVec2(100,50));
+                if (!(i&1)) {
+                    ImGui::SameLine(0);
+                    ImGui::SetCursorPosX(size.x/2);
+                }
+            }
+            break;
+        case 2:
+            {
+            ImGui::Checkbox(labelPrefix("Use NTSC Filter").c_str(), &use_shaders);
+            break;
+            }
+        case 3:
+            ImGui::SliderFloat(labelPrefix("Volume").c_str(),&global_volume,0.0,100.0,"%.0f%",0);
+            break;
+    }
+    ImGui::End();
 }

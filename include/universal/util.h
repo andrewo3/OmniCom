@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <SDL2/SDL.h>
+#include <GL/glew.h>
 
 // get time in milliseconds since epoch
 inline long long epoch() {
@@ -20,9 +21,38 @@ inline long long epoch_nano() {  //1*10^9
 }
 extern unsigned char out_img[184320]; //output image
 
+//keys
 extern const uint8_t* state;
 
+//parameters
+extern float global_volume;
+extern bool use_shaders;
+static SDL_Scancode mapped_keys[8] = {
+    SDL_SCANCODE_SPACE,
+    SDL_SCANCODE_LSHIFT,
+    SDL_SCANCODE_TAB,
+    SDL_SCANCODE_RETURN,
+    SDL_SCANCODE_UP,
+    SDL_SCANCODE_DOWN,
+    SDL_SCANCODE_LEFT,
+    SDL_SCANCODE_RIGHT};
+//currently mapped keys - set to A,B,Select,Start,Up,Down,Left,Right.
+//in the (reverse) order that the CPU reads at $4016
+
+// vertices of quad covering entire screen with tex coords
+static GLfloat vertices[] = {
+        -1.0f, 1.0f,0.0f,0.0f,
+        -1.0f, -1.0f,0.0f,1-0.04f*use_shaders,
+        1.0f, -1.0f,1.0f,1-0.04f*use_shaders,
+        1.0f, 1.0f, 1.0f,0.0f
+    };
+
+//audio buffer length
 extern const int BUFFER_LEN;
+
+//settings/pause menu
+extern void pause_menu();
+extern bool paused_window;
 
 extern SDL_Joystick* controller;
 

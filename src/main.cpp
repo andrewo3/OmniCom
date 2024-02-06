@@ -25,6 +25,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_opengl3.h"
+
 #include "crt_core.h"
 
 #include <cstdio>
@@ -37,9 +41,6 @@
 #include <unistd.h>
 #include <iostream>
 
-#include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_opengl3.h"
 
 //ntsc filter options
 static struct CRT crt;
@@ -70,7 +71,6 @@ long long start;
 long long start_nano;
 double t = 0;
 bool fullscreen_toggle = 0;
-bool shader_toggle = true;
 static int16_t audio_pt = 0;
 bool paused = false;
 long clock_speed = 0;
@@ -79,8 +79,6 @@ int frames = 0;
 int desired_fps = 60;
 long long paused_time = 0;
 long long real_time = 0;
-
-static ImGuiWindowFlags paused_flags = ImGuiWindowFlags_NoSavedSettings;
 
 GLuint shaderProgram;
 GLuint vertexShader;
@@ -407,7 +405,7 @@ int main(int argc, char ** argv) {
     // Shader init
     init_shaders();
     printf("Shaders compiled and linked.\n");
-
+    bool changed_use_shaders = false;
     //ntsc filter init
 
     /* pass it the buffer to be drawn on screen */
@@ -424,15 +422,6 @@ int main(int argc, char ** argv) {
     glGenBuffers(1, &VBO);
 
     glBindVertexArray(VAO);
-
-    // vertices of quad covering entire screen with tex coords
-    GLfloat vertices[] = {
-        -1.0f, 1.0f,0.0f,0.0f,
-        -1.0f, -1.0f,0.0f,1-0.04f*shader_toggle,
-        1.0f, -1.0f,1.0f,1-0.04f*shader_toggle,
-        1.0f, 1.0f, 1.0f,0.0f
-    };
-
 
     glBindBuffer(GL_ARRAY_BUFFER,VBO);
     glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -500,9 +489,26 @@ int main(int argc, char ** argv) {
     float last_time = SDL_GetTicks()/1000.0;
     int16_t buffer[BUFFER_LEN*2];
     SDL_PauseAudioDevice(audio_device,0);
-    bool paused_window = false;
     //main window loop
     while (!interrupted) {
+        //check if checkbox was clicked
+        if (changed_use_shaders!=use_shaders) {
+            GLfloat new_vertices[] = {
+                -1.0f, 1.0f,0.0f,0.0f,
+                -1.0f, -1.0f,0.0f,1-0.04f*use_shaders,
+                1.0f, -1.0f,1.0f,1-0.04f*use_shaders,
+                1.0f, 1.0f, 1.0f,0.0f
+            };
+            memcpy(vertices,new_vertices,16*sizeof(GLfloat));
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, use_shaders ? GL_LINEAR : GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, use_shaders ? GL_LINEAR : GL_NEAREST);
+            glBindBuffer(GL_ARRAY_BUFFER,VBO);
+            glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), vertices, GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER,0);
+        }
+        changed_use_shaders = use_shaders;
+
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
@@ -516,7 +522,7 @@ int main(int argc, char ** argv) {
         }
         //logic is executed in nes thread
         //apply ntsc filter before drawing
-        if (shader_toggle) {
+        if (use_shaders) {
             ntsc.data = out_img; /* buffer from your rendering */
             ntsc.format = CRT_PIX_FORMAT_RGB;
             ntsc.w = NES_DIM[0];
@@ -550,15 +556,10 @@ int main(int argc, char ** argv) {
         glBindVertexArray(0);
         glUseProgram(0);
 
+        //ImGui::ShowDemoWindow(NULL);
         //render gui
-        //ImGui::Begin("BALL.",NULL);
-        //ImGui::End();
         if (paused) {
-            const ImGuiViewport* viewport = ImGui::GetMainViewport();
-            ImGui::SetNextWindowPos(viewport->WorkPos);
-            ImGui::SetNextWindowSize(viewport->WorkSize);
-            ImGui::Begin("Pause Menu",&paused_window,paused_flags);
-            ImGui::End();
+            pause_menu();
         }
         if (paused && !paused_window) {
             paused_time += (epoch_nano()-start_nano)-real_time;
@@ -570,11 +571,10 @@ int main(int argc, char ** argv) {
         {
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
+            SDL_GL_MakeCurrent(window,context);
         }
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         //update screen
-        //reset gl context
-        SDL_GL_MakeCurrent(window,context);
         //reset viewport
         int* new_viewport = new int[4];
         SDL_GetWindowSize(window,&new_viewport[2],&new_viewport[3]);
@@ -630,24 +630,11 @@ int main(int argc, char ** argv) {
                             break;
                         case SDLK_s:
                             {
-                            shader_toggle = shader_toggle ? false : true;
-                            glBindTexture(GL_TEXTURE_2D, texture);
-                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, shader_toggle ? GL_LINEAR : GL_NEAREST);
-                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, shader_toggle ? GL_LINEAR : GL_NEAREST);
-                            GLfloat new_vertices[] = {
-                                -1.0f, 1.0f,0.0f,0.0f,
-                                -1.0f, -1.0f,0.0f,1-0.04f*shader_toggle,
-                                1.0f, -1.0f,1.0f,1-0.04f*shader_toggle,
-                                1.0f, 1.0f, 1.0f,0.0f
-                            };
-                            memcpy(vertices,new_vertices,16*sizeof(GLfloat));
-                            glBindBuffer(GL_ARRAY_BUFFER,VBO);
-                            glBufferData(GL_ARRAY_BUFFER,sizeof(vertices), vertices, GL_STATIC_DRAW);
-                            glBindBuffer(GL_ARRAY_BUFFER,0);
+                            use_shaders = use_shaders ? false : true;
                             break;
                             }
                         case SDLK_r:
-                            if (state[SDL_SCANCODE_LCTRL]) {
+                            if (state[SDL_SCANCODE_LCTRL]) { //ctrl+r - reset shortcut
                                 interrupted = true;
                                 NESThread.join();
                                 sampleGet.join();
@@ -691,6 +678,7 @@ int main(int argc, char ** argv) {
     free(filtered);
     delete[] original_start;
     delete[] audio_buffer;
+    printf("Quit successfully.\n");
     //tCPU.join();
     //tPPU.join();
     //stbi_image_free(img);

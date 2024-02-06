@@ -23,7 +23,7 @@ int16_t mix(APU* a_ptr) { //TODO: REWRITE THIS WHOLE FUNCTION TO TAKE EXISTING O
     //p_out = 15*((a_ptr->cycles*2*440/(clock_speed))%2);
     float final_vol = 0.00752*p_out+tnd_out;
     //TODO: add triangle noise and DMC
-    int16_t output = final_vol*32767;
+    int16_t output = final_vol*32767*(global_volume/100);
     //output = a_ptr->audio_buffer[(a_ptr->buffer_ind+ind)%BUFFER_LEN];
     //printf("out: %f\n", (float)output/32767);
     return output;
