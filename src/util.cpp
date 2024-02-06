@@ -2,7 +2,7 @@
 #include "SDL2/SDL.h"
 #include "math.h"
 
-const int BUFFER_LEN = 1024;
+const int BUFFER_LEN = 512;
 unsigned char out_img[184320]; //output image
 const uint8_t* state = SDL_GetKeyboardState(nullptr);
 SDL_Joystick* controller = NULL;

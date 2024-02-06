@@ -37,6 +37,10 @@
 #include <unistd.h>
 #include <iostream>
 
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_opengl3.h"
+
 //ntsc filter options
 static struct CRT crt;
 static struct NTSC_SETTINGS ntsc;
@@ -73,6 +77,10 @@ long clock_speed = 0;
 int diffs[10] = {0};
 int frames = 0;
 int desired_fps = 60;
+long long paused_time = 0;
+long long real_time = 0;
+
+static ImGuiWindowFlags paused_flags = ImGuiWindowFlags_NoSavedSettings;
 
 GLuint shaderProgram;
 GLuint vertexShader;
@@ -260,7 +268,7 @@ void sampleAPU() {
 void NESLoop() {
     
     const double ns_wait = 1e9/cpu_ptr->CLOCK_SPEED;
-    printf("Elapsed: %li\n",ns_wait);
+    printf("Elapsed: %lf\n",ns_wait);
     //emulator loop
     while (!interrupted) {
         if (!paused) {
@@ -288,10 +296,10 @@ void NESLoop() {
                 }
                 //printf("%i\n",ppu.v);
             }
-            long long real_time = epoch_nano()-start_nano;
+            real_time = epoch_nano()-start_nano;
             long long cpu_time = ns_wait*cpu_ptr->cycles;
-            int diff = cpu_time-real_time;
-            if (diff>0) {
+            int diff = cpu_time-(real_time-paused_time);
+            if (diff > 0) {
                 std::this_thread::sleep_for(std::chrono::nanoseconds(diff));
             }
         }
@@ -370,6 +378,7 @@ int main(int argc, char ** argv) {
     //stream = SDL_NewAudioStream(AUDIO_U8,1,44100,);
     printf("SDL audio set up.\n");
 
+    //GL Context and Window Init
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // for linux
     
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
@@ -388,6 +397,13 @@ int main(int argc, char ** argv) {
     GLenum error = glGetError();
     SDL_Event event;
     
+
+    //Dear Imgui init
+    ImGui::CreateContext();
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    ImGuiIO io = ImGui::GetIO();
+    ImGui_ImplSDL2_InitForOpenGL(window,context);
+    ImGui_ImplOpenGL3_Init("#version 330 core");
     // Shader init
     init_shaders();
     printf("Shaders compiled and linked.\n");
@@ -484,8 +500,12 @@ int main(int argc, char ** argv) {
     float last_time = SDL_GetTicks()/1000.0;
     int16_t buffer[BUFFER_LEN*2];
     SDL_PauseAudioDevice(audio_device,0);
+    bool paused_window = false;
     //main window loop
     while (!interrupted) {
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL2_NewFrame(window);
+        ImGui::NewFrame();
         if (!paused) {
             //ppu_ptr->image_mutex.lock();
             float diff = t_time-last_time;
@@ -530,7 +550,38 @@ int main(int argc, char ** argv) {
         glBindVertexArray(0);
         glUseProgram(0);
 
+        //render gui
+        //ImGui::Begin("BALL.",NULL);
+        //ImGui::End();
+        if (paused) {
+            const ImGuiViewport* viewport = ImGui::GetMainViewport();
+            ImGui::SetNextWindowPos(viewport->WorkPos);
+            ImGui::SetNextWindowSize(viewport->WorkSize);
+            ImGui::Begin("Pause Menu",&paused_window,paused_flags);
+            ImGui::End();
+        }
+        if (paused && !paused_window) {
+            paused_time += (epoch_nano()-start_nano)-real_time;
+            paused = false;              
+        }
+        ImGui::Render();
+        
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+        }
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         //update screen
+        //reset gl context
+        SDL_GL_MakeCurrent(window,context);
+        //reset viewport
+        int* new_viewport = new int[4];
+        SDL_GetWindowSize(window,&new_viewport[2],&new_viewport[3]);
+        viewportBox(&new_viewport,new_viewport[2],new_viewport[3]);
+        glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+        delete[] new_viewport;
+
         SDL_GL_SwapWindow(window);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -553,6 +604,9 @@ int main(int argc, char ** argv) {
                         glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
                         //glViewport(0,0,new_width,new_height);
                         delete[] new_viewport;
+                    } else if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+                        quit(0);
+                        break;
                     }
                     break;
                 case SDL_KEYDOWN:
@@ -605,12 +659,17 @@ int main(int argc, char ** argv) {
                                 sampleGet = std::thread(sampleAPU);
                             }
                             break;
-                        case SDLK_p:
+                        case SDLK_ESCAPE:
                             paused = paused ? false : true;
+                            paused_window = true;
+                            if (!paused) {
+                                paused_time += (epoch_nano()-start_nano)-real_time;
+                            }
                             cpu.last = epoch_nano(); // reset timing
                             break;
                     }
             }
+            ImGui_ImplSDL2_ProcessEvent(&event);
         }
         SDL_Delay(1000/desired_fps);
         t_time = SDL_GetTicks()/1000.0;
@@ -620,6 +679,11 @@ int main(int argc, char ** argv) {
     glDetachShader(shaderProgram,vertexShader);
     glDetachShader(shaderProgram,fragmentShader);
     glDeleteProgram(shaderProgram);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_CloseAudioDevice(audio_device);

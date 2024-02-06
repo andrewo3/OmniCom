@@ -7,7 +7,9 @@
                 "${workspaceRoot}/include/**",
                 "/opt/homebrew/include",
                 "${workspaceFolder}/include/universal",
-                "${workspaceFolder}/src/ntsc-filter"
+                "${workspaceFolder}/src/ntsc-filter",
+                "${workspaceFolder}/src/imgui",
+                "${workspaceFolder}/src/imgui/backends"
             ],
             "defines": [],
             "compilerPath": "C:\\mingw64\\bin\\g++",
