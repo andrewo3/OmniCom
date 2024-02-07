@@ -12,7 +12,7 @@ void APU::setCPU(CPU* c_ptr) {
     FRAME_COUNTER = &cpu->memory[0x4017];
 }
 
-int16_t mix(APU* a_ptr) { //TODO: REWRITE THIS WHOLE FUNCTION TO TAKE EXISTING OUTPUTS FROM CHANNELS
+int16_t mix(APU* a_ptr) {
     //pulse1/60.0+pulse2/60.0+
     //a_ptr->audio_frame++;
     long clock_speed = a_ptr->cpu->CLOCK_SPEED/2;
@@ -152,7 +152,6 @@ void APU::func_frame_counter() { //APU frame counter which clocks other update t
 
         clock_length(); //clock length counters
         clock_sweep(); //clock sweep units
-        //TODO: set frame interrupt if interrupt inhibit is clear and 4-step sequence
         if (!step5 && !inhibit) {
             frame_interrupt = true;
         }
