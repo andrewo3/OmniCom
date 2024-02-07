@@ -8,12 +8,33 @@
 
 const int BUFFER_LEN = 1024;
 unsigned char out_img[184320]; //output image
+
+GLfloat vertices[16] = {
+        -1.0f, 1.0f,0.0f,0.0f,
+        -1.0f, -1.0f,0.0f,1-0.04f*use_shaders,
+        1.0f, -1.0f,1.0f,1-0.04f*use_shaders,
+        1.0f, 1.0f, 1.0f,0.0f
+    };
+
+//currently mapped keys - set to A,B,Select,Start,Up,Down,Left,Right.
+//in the (reverse) order that the CPU reads at $4016
+SDL_Scancode mapped_keys[8] = {
+    SDL_SCANCODE_SPACE,
+    SDL_SCANCODE_LSHIFT,
+    SDL_SCANCODE_TAB,
+    SDL_SCANCODE_RETURN,
+    SDL_SCANCODE_UP,
+    SDL_SCANCODE_DOWN,
+    SDL_SCANCODE_LEFT,
+    SDL_SCANCODE_RIGHT};
+
 const uint8_t* state = SDL_GetKeyboardState(nullptr);
 SDL_Joystick* controller = NULL;
 
 //parameters
 float global_volume = 50;
 bool use_shaders = false;
+int changing_keybind = -1;
 
 
 bool paused_window = false;
@@ -102,8 +123,19 @@ void pause_menu() {
             for (int i=0; i<8; i++) {
                 ImGui::Text(button_names[i]);
                 ImGui::SameLine(0);
-                ImGui::SetCursorPosX(size.x*((i%2)*3+1)/6);
-                ImGui::Button(SDL_GetScancodeName(mapped_keys[i]),ImVec2(100,50));
+                ImGui::SetCursorPosX(size.x*(i%2)/2+50);
+                bool active = false;
+                if (changing_keybind>-1 && i==changing_keybind) {
+                    ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
+                    active = true;
+                }
+                if (ImGui::Button(SDL_GetScancodeName(mapped_keys[i]),ImVec2(100,50)) && changing_keybind==-1) {
+                    changing_keybind = i;
+                }
+                if (active) {
+                    ImGui::PopStyleColor(2);
+                }
                 if (!(i&1)) {
                     ImGui::SameLine(0);
                     ImGui::SetCursorPosX(size.x/2);

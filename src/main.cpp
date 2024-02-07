@@ -560,6 +560,8 @@ int main(int argc, char ** argv) {
         //render gui
         if (paused) {
             pause_menu();
+        } else {
+            changing_keybind = -1;
         }
         if (paused && !paused_window) {
             paused_time += (epoch_nano()-start_nano)-real_time;
@@ -610,6 +612,10 @@ int main(int argc, char ** argv) {
                     }
                     break;
                 case SDL_KEYDOWN:
+                    if (changing_keybind>-1) {
+                        mapped_keys[changing_keybind] = event.key.keysym.scancode;
+                        changing_keybind = -1;
+                    }
                     switch (event.key.keysym.sym) {
                         case SDLK_F11:
                             {
