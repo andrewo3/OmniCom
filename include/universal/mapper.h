@@ -79,7 +79,7 @@ class MMC3: public Mapper {
         bool wp = false;
         bool prgram = true;
         bool irq_enabled = true;
-        bool ppu_a12 = 0;
+        uint16_t last_v = 0;
         int irq_counter = 255;
         uint8_t irq_reload = 255;
         bool scanline_counted = false;

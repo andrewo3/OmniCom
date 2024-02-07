@@ -32,6 +32,7 @@ class PPU {
         bool mutex_locked = false;
         int chr_bank_num = 0;
 
+
         //test
         int vbl_count = 0;
 
@@ -40,6 +41,8 @@ class PPU {
         void write(int16_t address, int8_t value);
         void v_horiz();
         void v_vert();
+
+        uint16_t address_bus = 0;
 
         // registers
         uint16_t v = 0;

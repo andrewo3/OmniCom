@@ -267,6 +267,7 @@ void NESLoop() {
     
     const double ns_wait = 1e9/cpu_ptr->CLOCK_SPEED;
     printf("Elapsed: %lf\n",ns_wait);
+    void* system[3] = {cpu_ptr,ppu_ptr,apu_ptr};
     //emulator loop
     while (!interrupted) {
         if (!paused) {
@@ -284,7 +285,6 @@ void NESLoop() {
             while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
                 ppu_ptr->cycle();
 
-                void* system[3] = {cpu_ptr,ppu_ptr,apu_ptr};
                 ppu_ptr->rom->get_mapper()->clock(&system[0]);
                 
                 if (ppu_ptr->debug) {
@@ -630,17 +630,14 @@ int main(int argc, char ** argv) {
                             delete[] new_viewport;
                             break;
                             }
-                        case SDLK_d:
-                            cpu.debug = cpu.debug ? false : true;
-                            cpu.elapsed_time = cpu.cycles/cpu.CLOCK_SPEED*(long)1e9; // reset timing
-                            break;
-                        case SDLK_s:
-                            {
-                            use_shaders = use_shaders ? false : true;
-                            break;
-                            }
                         case SDLK_r:
-                            if (state[SDL_SCANCODE_LCTRL]) { //ctrl+r - reset shortcut
+                            {
+                            SDL_Scancode modifier = SDL_SCANCODE_LCTRL;
+                            #ifdef __APPLE__
+                                modifier = SDL_SCANCODE_LGUI;
+                            #endif
+                            
+                            if (state[modifier] && !paused) { //ctrl+r (or cmd+r) - reset shortcut
                                 interrupted = true;
                                 NESThread.join();
                                 sampleGet.join();
@@ -652,6 +649,7 @@ int main(int argc, char ** argv) {
                                 sampleGet = std::thread(sampleAPU);
                             }
                             break;
+                            }
                         case SDLK_ESCAPE:
                             paused = paused ? false : true;
                             paused_window = true;

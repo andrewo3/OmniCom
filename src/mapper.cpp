@@ -48,21 +48,22 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
         irq_enabled = false;
     } else if (0xE000<=location && location <=0xFFFF && (location&0x1)) { // IRQ enable
         irq_enabled = true;
-    } else if ((0x2006==location) && (ppu->v&0x1000) && ppu_a12 == 0) { // PPU A12 rising edge via PPUADDR
-        scanline_clock(cpu);
-        printf("PPUADDR (v=%04x) Scanline Counter: %i on scanline %i - reload value: %i\n",ppu->v,irq_counter,ppu->scanline,irq_reload);
-        scanline_counted = true;
+    }
+    if (location==0x2006 && ppu->w==0 && ppu->v&0x1000 && !(last_v&0x1000)) { //PPUADDR write A12 on after previously being off
+        //printf("PPUADDR: %04x prev: %04x\n",ppu->v,last_v);
+        //scanline_clock(cpu);
     }
 
     //write protect
     if (wp && 0x6000<=location && location<=0x7FFF) {
         *value = *address; //set the value to the number already at the address, so when its written - nothing changes
     }
+    last_v = ppu->v;
 
 }
 
 void MMC3::scanline_clock(CPU* cpu) {
-    printf("SCANLINE CLOCK\n");
+    //printf("SCANLINE CLOCK\n");
     irq_counter--;
     //printf("PPU ADDRESS ON CLOCK: %04x\n",ppu->v);
     if (irq_counter == 0 && irq_enabled) { 
@@ -78,15 +79,14 @@ void MMC3::clock(void** system) {
     ROM* rom = cpu->rom;
     PPU* ppu = (PPU*)system[1];
     bool rendering = ((*(ppu->PPUMASK))&0x18);
-    if (ppu->scycle==260 && rendering && ppu->scanline <= 240) { //rising edge of a12
+    if (ppu->scycle>=256 && rendering && ppu->vblank==false) { //rising edge of a12
         scanline_counted == true;
         scanline_clock(cpu);
-        printf("Scanline Counter: %i on scanline %i - reload value: %i\n",irq_counter,ppu->scanline,irq_reload);
+        //printf("Scanline Counter: %i on scanline %i - reload value: %i\n",irq_counter,ppu->scanline,irq_reload);
     }
     if (ppu->scycle == 0) {
         scanline_counted = false;
     }
-    ppu_a12 = (bool)(ppu->v&0x1000);
 }
 
 void CNROM::map_write(void** ptrs, int8_t* address, int8_t *value) {
