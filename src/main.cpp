@@ -458,7 +458,7 @@ int main(int argc, char ** argv) {
     start = epoch();
     start_nano = epoch_nano();
 
-    CPU cpu(false);
+    CPU cpu(true);
     cpu_ptr = &cpu;
     printf("CPU Initialized.\n");
     static APU apu;

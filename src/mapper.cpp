@@ -9,31 +9,30 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
     ROM* rom = cpu->rom;
     PPU* ppu = (PPU*)ptrs[1];
     long long location = address-(cpu->memory);
-    if (location == 0x8000) {
-        
-        //if new $8000.D6 is different from last value, swap $8000 and $C000
-        if ((val&0x40)!=(xbase&0x40)) {
-            int8_t temp[0x2000];
-            memcpy(temp,&cpu->memory[0x8000]+((xbase&0x40)<<8),0x2000); //copy R6 to temp
-            memcpy(&cpu->memory[0x8000]+((xbase&0x40)<<8),&cpu->memory[0x8000]+((!(xbase&0x40))<<8),0x2000); //copy (-2) to R6
-            memcpy(&cpu->memory[0x8000]+((!(xbase&0x40))<<8),temp,0x2000); //copy temp to (old) (-2) 
-        }
-        xbase = val;
-        
-    }
     if (0x8000<=location && location<=0x9fff && !(location&0x1)) { //bank select
         reg = val;
+        //if new $8000.D6 is different from last value, swap $8000 and $C000
+        printf("CHANGE: R%i\n",reg&0x7);
+        if ((val&0x40)!=(xbase&0x40)) {
+            int8_t temp[0x2000];
+            printf("R6 at 0: %s\n",val&0x40 ? "false": "true");
+            memcpy(temp,&cpu->memory[0x8000],0x2000); //copy $8000 to temp
+            memcpy(&cpu->memory[0x8000],&cpu->memory[0xC000],0x2000); //copy (-2) to R6
+            memcpy(&cpu->memory[0xC000],temp,0x2000); //copy temp to (old) (-2) 
+        }
+        xbase = val;
     } else if (0x8000<=location && location<=0x9fff && (location&0x1)) { //bank data
         uint8_t r = reg&0x7;
         int chrsize = (rom->get_chrsize())/0x2000;
         int prgsize = (rom->get_prgsize())/0x4000;
+        printf("R%i IS BANK NUM: %i\n",r,val);
         if (r<6) {
             uint16_t start_loc = ((r>1)<<12)+(0x800>>(r>1))*(r-2*(r>1));
             int bank_size = (0x800>>(r>1));
-            memcpy(ppu->memory+(start_loc^((xbase&0x80)<<5)),rom->get_chr_bank((val%chrsize)<<(r<2)),bank_size);
+            memcpy(ppu->memory+(start_loc^((xbase&0x80)<<5)),rom->get_chr_bank((val&(~(r<2)))),bank_size);
         } else {
-            uint16_t start_loc = 0x8000+0x2000*(r==7)+0x4000*(r!=7 && (xbase&0x40));
-            memcpy(&cpu->memory[0x8000]+start_loc,rom->get_prg_bank((val%prgsize)<<1),0x2000);
+            uint16_t start_loc = 0x2000*(r==7)+0x4000*(r!=7 && (xbase&0x40));
+            memcpy(&cpu->memory[0x8000]+start_loc,rom->get_prg_bank((val&0x3F)<<3),0x2000);
         }
     } else if (0xA000<=location && location<=0xBFFF && !(location&0x1) && rom->mirrormode!=FOURSCREEN) { //mirroring
         rom->mirrormode = (NT_MIRROR)!(val&0x1); //0 is vertical, 1 is horizontal - opposite of the enum defined in rom.h
@@ -81,7 +80,7 @@ void MMC3::clock(void** system) {
     bool rendering = ((*(ppu->PPUMASK))&0x18);
     if (ppu->scycle>=256 && rendering && ppu->vblank==false) { //rising edge of a12
         scanline_counted == true;
-        scanline_clock(cpu);
+        //scanline_clock(cpu);
         //printf("Scanline Counter: %i on scanline %i - reload value: %i\n",irq_counter,ppu->scanline,irq_reload);
     }
     if (ppu->scycle == 0) {

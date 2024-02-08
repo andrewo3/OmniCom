@@ -29,7 +29,7 @@ CPU::CPU(bool dbug) {
 }
 
 void CPU::start_nmi() {
-    //printf("NMI\n");
+    printf("NMI\n");
     recv_nmi = false;
     uint16_t push = get_addr(pc);
     stack_push((uint8_t)(push>>8));
@@ -451,7 +451,7 @@ void CPU::loadRom(ROM *r) {
             memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
             break;
         case 4:
-            memcpy(&memory[0xc000],rom->get_prg_bank((rom->get_prgsize()/0x400)-16),0x4000);
+            memcpy(&memory[0xC000],rom->get_prg_bank((rom->get_prgsize()/0x400)-16),0x4000);
             break;
     }
 
