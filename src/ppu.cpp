@@ -83,7 +83,6 @@ void PPU::v_vert() {
 }
 
 void PPU::cycle() {
-    printf("Cycle %i (%i) Scanline %i: %04x %04x\n",scycle-1, ((scycle-2)%8)/2,scanline, address_bus,*PPUCTRL);
     bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
     if (scanline>=0 && scanline<=239) { // visible scanlines
         /*if (!mutex_locked && image_mutex.try_lock()) {
@@ -96,7 +95,7 @@ void PPU::cycle() {
         }
 
         //address bus variable set (used by mappers)
-        if ((0<=scan_cyc && scan_cyc<256)||(320<=scan_cyc && scan_cyc<340)) { //cycles 1-320 address bus fetches
+        if (((0<=scan_cyc && scan_cyc<256)||(320<=scan_cyc && scan_cyc<340)) && ((*PPUMASK)&0x8)) { //cycles 1-320 address bus fetches
             switch(intile/2) {
                 case 0:
                     address_bus = 0x2000 | (v & 0x0fff); //nt
@@ -111,7 +110,7 @@ void PPU::cycle() {
                     address_bus += 8; //add 8 for upper pattern table
                     break;
             }
-        } else if (256<=scan_cyc && scan_cyc<320) { //fetch sprite on address bus
+        } else if (256<=scan_cyc && scan_cyc<320 && ((*PPUMASK)&0x10)) { //fetch sprite on address bus
             bool sprite16 = (*PPUCTRL)&0x20;
             switch(intile) {
                 case 1:
@@ -371,6 +370,8 @@ void PPU::cycle() {
         //printf("VBL PPU Clocks: %i\n",vbl_count);
         vbl_count = 0;
     }
+
+    printf("Cycle %i (%i) Scanline %i: %04x %04x\n",scycle, ((scycle-1)%8)/2,scanline, address_bus,*PPUCTRL);
 
     // increment
     scycle++;

@@ -71,7 +71,7 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
     }
     if (location==0x2006 && ppu->w==0 && ppu->address_bus&0x1000 && !(last_v&0x1000)) { //PPUADDR write A12 on after previously being off
         //printf("PPUADDR: %04x prev: %04x\n",ppu->v,last_v);
-        scanline_clock(cpu);
+        //scanline_clock(cpu);
     }
 
     //write protect
