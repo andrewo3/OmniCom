@@ -83,6 +83,7 @@ void PPU::v_vert() {
 }
 
 void PPU::cycle() {
+    printf("Cycle %i (%i) Scanline %i: %04x %04x\n",scycle-1, ((scycle-2)%8)/2,scanline, address_bus,*PPUCTRL);
     bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
     if (scanline>=0 && scanline<=239) { // visible scanlines
         /*if (!mutex_locked && image_mutex.try_lock()) {
@@ -90,6 +91,37 @@ void PPU::cycle() {
         }*/
         int scan_cyc = scycle-1;
         int intile = scan_cyc%8; //get index into a tile (8 pixels in a tile)
+        if (scycle==0) {
+            address_bus = (((*PPUCTRL)&0x10)<<8)|((read(0x2000 | (v & 0x0fff)))<<4)|(((v&0x7000)>>12)&0x07);
+        }
+
+        //address bus variable set (used by mappers)
+        if ((0<=scan_cyc && scan_cyc<256)||(320<=scan_cyc && scan_cyc<340)) { //cycles 1-320 address bus fetches
+            switch(intile/2) {
+                case 0:
+                    address_bus = 0x2000 | (v & 0x0fff); //nt
+                    break;
+                case 1:
+                    address_bus = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07); //attr_table
+                    break;
+                case 2:
+                    address_bus = (((*PPUCTRL)&0x10)<<8)|((read(0x2000 | (v & 0x0fff)))<<4)|(((v&0x7000)>>12)&0x07); //pt low
+                    break;
+                case 3:
+                    address_bus += 8; //add 8 for upper pattern table
+                    break;
+            }
+        } else if (256<=scan_cyc && scan_cyc<320) { //fetch sprite on address bus
+            bool sprite16 = (*PPUCTRL)&0x20;
+            switch(intile) {
+                case 1:
+                    int s = (scan_cyc-256)/2+1;
+                    address_bus = sprite16 ? 
+                    ((*PPUCTRL&0x8)<<9)|(secondary_oam[s]<<4) : 
+                    ((secondary_oam[s]&0x1)<<12)|((secondary_oam[s]&0xfe)<<4);
+                    break;
+            }
+        }
         if (0<=scan_cyc && scan_cyc<256) {
             for (int i=0; i<scanlinespritenum; i++) {
                 if (active_sprites&(1<<i)) { //if sprite already active
@@ -194,7 +226,7 @@ void PPU::cycle() {
                         bool h16 = (*PPUCTRL)&0x20;
                         if (h16) {
                             sprite_tile_ind = sprite_tile_ind&0xfe;
-                            sprite_bank = sprite_tile_ind&0x1;
+                            sprite_bank = (sprite_tile_ind&0x1);
                         }
                         uint8_t sprite_attr = scanlinesprites[4*i+2];
                         uint8_t new_sprite_palette = sprite_attr&0x3;

@@ -100,7 +100,7 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
         case 0x2006: //write to PPUADDR
-            //printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
+            printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             if (!ppu->w) {
                 ppu->t &= ~0x3F00;
                 ppu->t |= (value&0x3f)<<8;
@@ -110,9 +110,10 @@ void CPU::write(int8_t* address, int8_t value) {
                 ppu->t &= ~0xff;
                 ppu->t |= value&0xff;
                 ppu->v = ppu->t;
+                ppu->address_bus = ppu->v;
                 ppu->w = 0;
             }
-            //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
+            printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
         case 0x2007: // write to PPUDATA
             {
@@ -123,6 +124,7 @@ void CPU::write(int8_t* address, int8_t value) {
             }
             ppu->write(bit14,value); // write method takes mapper into account
             ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            //ppu->address_bus=ppu->v;
             //ppu->v&=~0x3fff;
             //ppu->v|=bit14;
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);

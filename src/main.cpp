@@ -513,6 +513,7 @@ int main(int argc, char ** argv) {
         ImGui_ImplSDL2_NewFrame(window);
         ImGui::NewFrame();
         if (!paused) {
+            //printf("size 16 sprites: %i\n",*(ppu_ptr->PPUCTRL)&0x20);
             //ppu_ptr->image_mutex.lock();
             float diff = t_time-last_time;
             //char * new_title = new char[255];

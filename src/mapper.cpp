@@ -12,24 +12,44 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
     if (0x8000<=location && location<=0x9fff && !(location&0x1)) { //bank select
         reg = val;
         //if new $8000.D6 is different from last value, swap $8000 and $C000
-        printf("CHANGE: R%i\n",reg&0x7);
+        //printf("CHANGE: R%i\n",reg&0x7);
         if ((val&0x40)!=(xbase&0x40)) {
             int8_t temp[0x2000];
-            printf("R6 at 0: %s\n",val&0x40 ? "false": "true");
+            //printf("R6 at 0: %s\n",val&0x40 ? "false": "true");
             memcpy(temp,&cpu->memory[0x8000],0x2000); //copy $8000 to temp
             memcpy(&cpu->memory[0x8000],&cpu->memory[0xC000],0x2000); //copy (-2) to R6
             memcpy(&cpu->memory[0xC000],temp,0x2000); //copy temp to (old) (-2) 
+        }
+        //do same for ppu memory and $8000.D7
+        if ((val&0x80)!=(xbase&0x80)) {
+            int8_t temp[0x1000];
+            memcpy(temp,ppu->memory,0x1000); //copy $0000 to temp
+            memcpy(ppu->memory,&ppu->memory[0x1000],0x1000); //copy 0x1000 to 0x0000
+            memcpy(&ppu->memory[0x1000],temp,0x1000); //copy temp to 0x1000 
         }
         xbase = val;
     } else if (0x8000<=location && location<=0x9fff && (location&0x1)) { //bank data
         uint8_t r = reg&0x7;
         int chrsize = (rom->get_chrsize())/0x2000;
         int prgsize = (rom->get_prgsize())/0x4000;
-        printf("R%i IS BANK NUM: %i\n",r,val);
+        //printf("R%i IS BANK NUM: %i\n",r,val);
         if (r<6) {
-            uint16_t start_loc = ((r>1)<<12)+(0x800>>(r>1))*(r-2*(r>1));
-            int bank_size = (0x800>>(r>1));
-            memcpy(ppu->memory+(start_loc^((xbase&0x80)<<5)),rom->get_chr_bank((val&(~(r<2)))),bank_size);
+            uint16_t start_loc;
+            if (!(xbase&0x80)) {
+                    if (r<2) {
+                        start_loc = 0x800*r;
+                    } else {
+                        start_loc = 0x1000+0x400*(r-2);
+                    }
+            } else {
+                if (r<2) {
+                    start_loc = 0x1000+0x800*r;
+                } else {
+                    start_loc = 0x400*(r-2);
+                }
+            }
+            int bank_size = (0x400<<(r<2));
+            memcpy(ppu->memory+start_loc,rom->get_chr_bank((val&(~(r<2)))),bank_size);
         } else {
             uint16_t start_loc = 0x2000*(r==7)+0x4000*(r!=7 && (xbase&0x40));
             memcpy(&cpu->memory[0x8000]+start_loc,rom->get_prg_bank((val&0x3F)<<3),0x2000);
@@ -41,6 +61,7 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
         prgram = val&0x80; //honestly dont know what to do with this flag
     } else if (0xC000<=location && location <=0xDFFF && !(location&0x1)) { // IRQ latch
         irq_reload = (uint8_t)val;
+        printf("New Reload Value: %i\n",irq_reload);
     } else if (0xC000<=location && location <=0xDFFF && (location&0x1)) { // IRQ reload
         irq_counter = -1; // on next clock this will immediately trigger reload (without triggering irq)
     } else if (0xE000<=location && location <=0xFFFF && !(location&0x1)) { // IRQ disable
@@ -48,16 +69,15 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
     } else if (0xE000<=location && location <=0xFFFF && (location&0x1)) { // IRQ enable
         irq_enabled = true;
     }
-    if (location==0x2006 && ppu->w==0 && ppu->v&0x1000 && !(last_v&0x1000)) { //PPUADDR write A12 on after previously being off
+    if (location==0x2006 && ppu->w==0 && ppu->address_bus&0x1000 && !(last_v&0x1000)) { //PPUADDR write A12 on after previously being off
         //printf("PPUADDR: %04x prev: %04x\n",ppu->v,last_v);
-        //scanline_clock(cpu);
+        scanline_clock(cpu);
     }
 
     //write protect
     if (wp && 0x6000<=location && location<=0x7FFF) {
         *value = *address; //set the value to the number already at the address, so when its written - nothing changes
     }
-    last_v = ppu->v;
 
 }
 
@@ -78,14 +98,11 @@ void MMC3::clock(void** system) {
     ROM* rom = cpu->rom;
     PPU* ppu = (PPU*)system[1];
     bool rendering = ((*(ppu->PPUMASK))&0x18);
-    if (ppu->scycle==256 && rendering && ppu->vblank==false) { //rising edge of a12
-        scanline_counted == true;
+    if ((ppu->address_bus&0x1000) && !(last_v&0x1000)) { //rising edge of a12
         scanline_clock(cpu);
-        //printf("Scanline Counter: %i on scanline %i - reload value: %i\n",irq_counter,ppu->scanline,irq_reload);
+        printf("Scanline Counter: %i on scanline %i - reload value: %i\n",irq_counter,ppu->scanline,irq_reload);
     }
-    if (ppu->scycle == 0) {
-        scanline_counted = false;
-    }
+    last_v = ppu->address_bus;
 }
 
 void CNROM::map_write(void** ptrs, int8_t* address, int8_t *value) {
