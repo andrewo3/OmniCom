@@ -83,8 +83,8 @@ class PPU {
         uint8_t sprites;
         int8_t scanlinesprites[32] = {0};
         int8_t scanlinespritenum = 0;
-        uint8_t sprite_x_counters[8] = {0};
-        uint8_t next_sprite_x_counters[8] = {0};
+        int sprite_x_counters[8] = {0};
+        int next_sprite_x_counters[8] = {0};
         uint8_t active_sprites = {0}; //8 bits - each bit will represent one sprite.
         uint8_t sprite_patterns[8] = {0};
         bool spritezeropresent = false;
