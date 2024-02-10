@@ -177,6 +177,21 @@ void CPU::write(int8_t* address, int8_t value) {
         case 0x400F:
             apu->length_counter[3] = apu->length_lookup((value&0xF8)>>3);
             break;
+        case 0x4010:
+            apu->dmc_flags = value;
+            break;
+
+        case 0x4011:
+            apu->set_dmc = value&0xff;
+            break;
+
+        case 0x4012:
+            apu->sample_address = 0xC000|((value&0xff)<<6);
+            break;
+        
+        case 0x4013:
+            apu->sample_length = ((value&0xff)<<4)|1;
+            break;
         
         case 0x4014: //write to OAMDMA
             //memcpy(ppu->oam,&memory[(uint16_t)((value&0xff)<<8)],256);
@@ -198,12 +213,19 @@ void CPU::write(int8_t* address, int8_t value) {
             }
             break;}
         case 0x4015: //APU Status
-            for (int i=0; i<4; i++) {
+            for (int i=0; i<=4; i++) {
                 if (!(value&(1<<i))) {
                     apu->enabled[i] = 0;
-                    apu->length_counter[i] = 0;
+                    if (i<4) {
+                        apu->length_counter[i] = 0;
+                    } else {
+                        apu->sample_bytes_remaining = 0;
+                    }
                 } else {
                     apu->enabled[i] = 1;
+                    if (i==4 && apu->sample_bytes_remaining==0) {
+                        apu->start_sample();
+                    }
                 }
             }
             break;

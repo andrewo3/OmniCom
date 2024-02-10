@@ -19,7 +19,7 @@ int16_t mix(APU* a_ptr) {
     int sr = a_ptr->sample_rate;
     bool* en = a_ptr->enabled;
     int8_t p_out = (en[0] ? a_ptr->pulse_out[0] : 0)+(en[1] ? a_ptr->pulse_out[1] : 0);
-    float tnd_out = 0.00851*(en[2] ? a_ptr->tri_out : 0) + 0.00494*(en[3] ? a_ptr->noise_out : 0);
+    float tnd_out = 0.00851*(en[2] ? a_ptr->tri_out : 0) + 0.00494*(en[3] ? a_ptr->noise_out : 0) + 0.00335*(en[4] ? a_ptr->dmc_out : 0);
     //p_out = 15*((a_ptr->cycles*2*440/(clock_speed))%2);
     float final_vol = 0.00752*p_out+tnd_out;
     //TODO: add triangle noise and DMC
@@ -168,6 +168,8 @@ void APU::cycle() { // apu clock (every other cpu cycle)
     triangle();
 
     noise();
+    dmc();
+
     cycles++;
 }
 
@@ -224,6 +226,72 @@ void APU::noise() {
     }
     noise_timer++;
     noise_timer%=noise_periods[cpu->memory[0x400E]&0xf]/2;
+}
+
+void APU::start_sample() {
+    current_address = sample_address;
+    sample_bytes_remaining = sample_length;
+}
+
+void APU::dmc() {
+    uint8_t r = dmc_flags&0xf;
+    uint16_t current_period = dmc_period_table[r];
+
+    //memory reader
+    if (enabled[4] && sample_empty && sample_bytes_remaining!=0) {
+        sample_buffer = cpu->memory[current_address];
+        uint16_t bef = current_address;
+        current_address++;
+        if (current_address==0 && bef==0xffff) {
+            current_address = 0x8000;
+        }
+        sample_bytes_remaining--;
+        if (sample_bytes_remaining==0 && dmc_flags&0x40) {
+            start_sample();
+        }
+        if (sample_bytes_remaining==0 && dmc_flags&0x80) {
+            cpu->recv_irq = true;
+        }
+        if (sample_bytes_remaining>=0) {
+            dmc_shift = sample_buffer;
+            dmc_bits_remaining=8;
+            dmc_silence = false;
+            sample_empty = false;
+        }
+    }
+
+    //dmc clock
+    if (dmc_timer==0) {
+
+
+        if (set_dmc==-1) {
+            if (!dmc_silence) {
+                if ((dmc_shift&1) && (dmc_out+2)<=127) {
+                    dmc_out+=2;
+                } else if (!(dmc_shift&1) && (dmc_out-2)>=0) {
+                    dmc_out-=2;
+                }
+                dmc_shift>>=1;
+                dmc_bits_remaining--;
+                if (dmc_bits_remaining==0) {
+                    dmc_bits_remaining=8;
+                    if (sample_empty) {
+                        dmc_silence = true;
+                    } else {
+                        dmc_silence = false;
+                        sample_empty = true;
+                    }
+                }
+            }
+        } else {
+            dmc_out = set_dmc;
+            set_dmc = -1;
+        }
+    }
+
+
+    dmc_timer++;
+    dmc_timer%=current_period/2;
 }
 
 uint8_t APU::length_lookup(uint8_t in) {

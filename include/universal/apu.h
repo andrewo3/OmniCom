@@ -25,7 +25,7 @@ class APU {
         uint8_t step = 0;
         int buffer_size = 0;
 
-        bool enabled[5] = {1,1,1,1,1}; //if channels are enabled
+        bool enabled[5] = {0}; //if channels are enabled
         //pulse channels
         void pulse(bool ind);
         int8_t pulse_out[2] = {0,0};
@@ -69,6 +69,27 @@ class APU {
             4,8,16,32,64,96,128,160,202,254,380,508,762,1016,2034,4068
         };
         int noise_timer = 0;
+
+        //dmc
+        void dmc();
+        int dmc_out = 0;
+        uint8_t sample_buffer = 0;
+        uint8_t dmc_flags = 0;
+        uint16_t dmc_period_table[0x10] = {
+            0x1AC,0x17C,0x154,0x140,0x11E,0x0FE,0x0E2,0x0D6,
+            0x0BE,0x0A0,0x08E,0x080,0x06A,0x054,0x048,0x036
+        };
+        int dmc_timer = 0;
+        bool dmc_silence = true;
+        uint8_t dmc_shift = 0;
+        int dmc_bits_remaining = 0;
+        bool sample_empty = true;
+        uint16_t sample_address = 0;
+        uint16_t sample_length = 0;
+        int set_dmc = -1;
+        uint16_t current_address = 0;
+        int sample_bytes_remaining = 0;
+        void start_sample();
 
         //length counters
         uint8_t length_counter[4] = {
