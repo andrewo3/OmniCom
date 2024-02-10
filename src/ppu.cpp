@@ -291,6 +291,13 @@ void PPU::cycle() {
                     pattern = 0;
                 }
             }
+            //if not drawing on leftmost 8 pixels
+            if (scycle<=8 && !((*PPUMASK)&0x2) && !sprite_pix) {
+                pattern = 0;
+            } else if (scycle<=8 && !((*PPUMASK)&0x4) && sprite_pix) {
+                pattern = 0;
+                sprite_pix = 0;
+            }
             uint8_t pixel = pattern ? read((0x3f00|(0x10*sprite_pix))+4*attribute+pattern) : read((0x3f00|(0x10*sprite_pix)));
             //printf("POS(%i,%i) - TILEIND $%04x: %02x, ATTRIBUTE: %04x, PATTERN - $%04x: %02x %02x,bit: %i, val: %i, finey: %i\n",scycle-1,scanline,tile_addr,read(&memory[tile_addr]),attr_addr,(((*PPUCTRL)&0x10)<<8)|((read(&memory[tile_addr]))<<4)|(((v&0x7000)>>12)&0x07),ptlow,pthigh, internalx, pattern,(((v&7000)>>12)&0x07));
             //write some pixel to image here
@@ -381,9 +388,6 @@ void PPU::cycle() {
     } else if (vbl_count!=0) {
         //printf("VBL PPU Clocks: %i\n",vbl_count);
         vbl_count = 0;
-    }
-    if (cpu->debug) {
-        printf("Cycle %i (%i) Scanline %i: %04x %04x\n",scycle, ((scycle-1)%8)/2,scanline, address_bus,(*PPUCTRL)&0xff);
     }
 
     // increment
