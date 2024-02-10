@@ -379,14 +379,19 @@ int main(int argc, char ** argv) {
     //GL Context and Window Init
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // for linux
     
+    printf("GL attributes\n");
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
     SDL_GL_SetAttribute (SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute (SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    printf("GL Major version: 3\n");
+    SDL_GL_SetAttribute (SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    printf("GL Minor version: 2\n");
     int* viewport = new int[4];
     viewportBox(&viewport,WINDOW_INIT[0],WINDOW_INIT[1]);
+    printf("Viewport set\n");
     SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WINDOW_INIT[0],WINDOW_INIT[1],FLAGS);
+    printf("Made window\n");
     SDL_SetWindowTitle(window,filename);
-    printf("Window Created\n");
+    printf("Window Title Set\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
     glewExperimental = GL_TRUE;
     glewInit();
