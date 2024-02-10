@@ -29,7 +29,7 @@ CPU::CPU(bool dbug) {
 }
 
 void CPU::start_nmi() {
-    printf("NMI\n");
+    //printf("NMI\n");
     recv_nmi = false;
     uint16_t push = get_addr(pc);
     stack_push((uint8_t)(push>>8));
@@ -46,7 +46,7 @@ void CPU::start_irq() {
     
     if (!get_flag('I')) {
         recv_irq = false;
-        printf("IRQ Started!\n");
+        //printf("IRQ Started: CPU %i!\n",cycles);
         uint16_t push = get_addr(pc);
         stack_push((uint8_t)(push>>8));
         stack_push((uint8_t)(push&0xff));
@@ -100,7 +100,9 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
         case 0x2006: //write to PPUADDR
-            //printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
+            if (debug) {
+                printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
+            }
             if (!ppu->w) {
                 ppu->t &= ~0x3F00;
                 ppu->t |= (value&0x3f)<<8;
@@ -113,7 +115,9 @@ void CPU::write(int8_t* address, int8_t value) {
                 ppu->address_bus = ppu->v;
                 ppu->w = 0;
             }
-            //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
+            if (debug) {
+                printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
+            }
             break;
         case 0x2007: // write to PPUDATA
             {
@@ -124,6 +128,10 @@ void CPU::write(int8_t* address, int8_t value) {
             }
             ppu->write(bit14,value); // write method takes mapper into account
             ppu->v+=(memory[0x2000]&0x04) ? 0x20 : 0x01;
+            if (debug) {
+                printf("v changed to %i\n",ppu->v);
+            }
+            ppu->address_bus = ppu->v;
             //ppu->address_bus=ppu->v;
             //ppu->v&=~0x3fff;
             //ppu->v|=bit14;
@@ -313,7 +321,8 @@ void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
         a = mem[1];
     }
     if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
-        sprintf(write,"0x%02x: %s, %s $%04x->%04x=%02x, PC=$%04x - A=%02x - X=%02x - Y=%02x - P=%02x",
+        sprintf(write,"Cycles: %li, 0x%02x: %s, %s $%04x->%04x=%02x, PC=$%04x - A=%02x - X=%02x - Y=%02x - P=%02x",
+        cycles,
         opcode,
         this->debug_opcodes[opcode],
         this->debug_addr[opcode],

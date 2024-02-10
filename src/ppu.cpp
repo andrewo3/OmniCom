@@ -90,7 +90,7 @@ void PPU::cycle() {
         }*/
         int scan_cyc = scycle-1;
         int intile = scan_cyc%8; //get index into a tile (8 pixels in a tile)
-        if (scycle==0) {
+        if (scycle==0 && rendering) {
             address_bus = (((*PPUCTRL)&0x10)<<8)|((read(0x2000 | (v & 0x0fff)))<<4)|(((v&0x7000)>>12)&0x07);
         }
 
@@ -104,7 +104,7 @@ void PPU::cycle() {
                     address_bus = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07); //attr_table
                     break;
                 case 2:
-                    address_bus = (((*PPUCTRL)&0x10)<<8)|((read(0x2000 | (v & 0x0fff)))<<4)|(((v&0x7000)>>12)&0x07); //pt low
+                    address_bus = (((*PPUCTRL)&0x10)<<8)|((read(0x2000 | (v & 0x0fff))&0xff)<<4)|(((v&0x7000)>>12)&0x07); //pt low
                     break;
                 case 3:
                     address_bus += 8; //add 8 for upper pattern table
@@ -112,12 +112,23 @@ void PPU::cycle() {
             }
         } else if (256<=scan_cyc && scan_cyc<320 && ((*PPUMASK)&0x10)) { //fetch sprite on address bus
             bool sprite16 = (*PPUCTRL)&0x20;
-            switch(intile) {
+            switch(((scan_cyc-256)%8)/2) {
+                case 0:
+                    address_bus = 0x2000 | (v & 0x0fff); //nt
+                    break;
                 case 1:
-                    int s = (scan_cyc-256)/2+1;
+                    address_bus = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07); //attr_table
+                    break;
+                case 2:
+                    {
+                    int s = ((scan_cyc-256)/8)*4+1;
                     address_bus = sprite16 ? 
-                    ((*PPUCTRL&0x8)<<9)|(secondary_oam[s]<<4) : 
+                    (((*PPUCTRL)&0x8)<<9)|((secondary_oam[s]&0xff)<<4) : 
                     ((secondary_oam[s]&0x1)<<12)|((secondary_oam[s]&0xfe)<<4);
+                    break;
+                    }
+                case 3:
+                    address_bus += 8; //add 8 for upper pattern table
                     break;
             }
         }
@@ -224,8 +235,9 @@ void PPU::cycle() {
                         bool sprite_bank = (*PPUCTRL)&0x8;
                         bool h16 = (*PPUCTRL)&0x20;
                         if (h16) {
-                            sprite_tile_ind = sprite_tile_ind&0xfe;
                             sprite_bank = (sprite_tile_ind&0x1);
+                            sprite_tile_ind = sprite_tile_ind&0xfe;
+                            
                         }
                         uint8_t sprite_attr = scanlinesprites[4*i+2];
                         uint8_t new_sprite_palette = sprite_attr&0x3;
@@ -234,7 +246,7 @@ void PPU::cycle() {
                         uint8_t local_y = flip_y ? 7+8*h16-(scanline-sprite_y) : (scanline-sprite_y);
                         sprite_tile_ind+=local_y/8;
                         uint16_t sprite_tile;
-                        sprite_tile = (sprite_bank<<12)|((sprite_tile_ind<<4)+(local_y>7))|(local_y&0x7);
+                        sprite_tile = (sprite_bank<<12)|((sprite_tile_ind<<4))|(local_y&0x7);
                         if (flip_x) {
                             sprite_bit = 7-sprite_bit;
                         }
@@ -370,8 +382,9 @@ void PPU::cycle() {
         //printf("VBL PPU Clocks: %i\n",vbl_count);
         vbl_count = 0;
     }
-
-    printf("Cycle %i (%i) Scanline %i: %04x %04x\n",scycle, ((scycle-1)%8)/2,scanline, address_bus,*PPUCTRL);
+    if (cpu->debug) {
+        printf("Cycle %i (%i) Scanline %i: %04x %04x\n",scycle, ((scycle-1)%8)/2,scanline, address_bus,(*PPUCTRL)&0xff);
+    }
 
     // increment
     scycle++;

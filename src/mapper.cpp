@@ -61,12 +61,14 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
         prgram = val&0x80; //honestly dont know what to do with this flag
     } else if (0xC000<=location && location <=0xDFFF && !(location&0x1)) { // IRQ latch
         irq_reload = (uint8_t)val;
-        printf("New Reload Value: %i\n",irq_reload);
+        //printf("New Reload Value: %i\n",irq_reload);
     } else if (0xC000<=location && location <=0xDFFF && (location&0x1)) { // IRQ reload
         irq_counter = -1; // on next clock this will immediately trigger reload (without triggering irq)
     } else if (0xE000<=location && location <=0xFFFF && !(location&0x1)) { // IRQ disable
+        //printf("Disable IRQ MMC3\n");
         irq_enabled = false;
     } else if (0xE000<=location && location <=0xFFFF && (location&0x1)) { // IRQ enable
+        //printf("Enable IRQ MMC3\n");
         irq_enabled = true;
     }
     if (location==0x2006 && ppu->w==0 && ppu->address_bus&0x1000 && !(last_v&0x1000)) { //PPUADDR write A12 on after previously being off
@@ -99,10 +101,16 @@ void MMC3::clock(void** system) {
     PPU* ppu = (PPU*)system[1];
     bool rendering = ((*(ppu->PPUMASK))&0x18);
     if ((ppu->address_bus&0x1000) && !(last_v&0x1000)) { //rising edge of a12
-        scanline_clock(cpu);
-        printf("Scanline Counter: %i on scanline %i - reload value: %i\n",irq_counter,ppu->scanline,irq_reload);
+        if (off_clocks>=9) {
+            scanline_clock(cpu);
+            //printf("Scanline Counter: %i on scanline %i - reload value: %i\n",irq_counter,ppu->scanline,irq_reload);
+        }
+        off_clocks = 0;
     }
     last_v = ppu->address_bus;
+    if ((last_v&0x1000)==0) {
+        off_clocks++;
+    }
 }
 
 void CNROM::map_write(void** ptrs, int8_t* address, int8_t *value) {

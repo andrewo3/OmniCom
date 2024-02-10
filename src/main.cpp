@@ -284,8 +284,8 @@ void NESLoop() {
             }
             while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
                 ppu_ptr->cycle();
-
-                ppu_ptr->rom->get_mapper()->clock(&system[0]);
+                cpu_ptr->rom->get_mapper()->clock(&system[0]);
+                
                 
                 if (ppu_ptr->debug) {
                     printf("PPU REGISTERS: ");

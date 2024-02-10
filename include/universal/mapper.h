@@ -82,6 +82,7 @@ class MMC3: public Mapper {
         uint16_t last_v = 0;
         int irq_counter = 255;
         uint8_t irq_reload = 255;
+        uint8_t off_clocks = 0;
         bool scanline_counted = false;
 };
 
