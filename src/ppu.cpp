@@ -137,9 +137,9 @@ void PPU::cycle() {
                 if (active_sprites&(1<<i)) { //if sprite already active
                     sprite_patterns[i]--; //subtract one from bit for pattern
                 }
-                if (!sprite_x_counters[i] && scan_cyc>0) { //if x counter is 0, sprite becomes active
+                if (!sprite_x_counters[i] && scan_cyc>=0) { //if x counter is 0, sprite becomes active
                     active_sprites|=(1<<i);
-                } else if ((int8_t)sprite_x_counters[i]<-7) {
+                } else if (sprite_x_counters[i]<-7) {
                     active_sprites&=~(1<<i);
                 }
                 sprite_x_counters[i]--;
@@ -342,7 +342,7 @@ void PPU::cycle() {
             v|=(t&0x41F);
             oam_addr = 0;
             memcpy(scanlinesprites,secondary_oam,sprites*4); //copy sprites
-            memcpy(sprite_x_counters,next_sprite_x_counters,8);
+            memcpy(sprite_x_counters,next_sprite_x_counters,8*sizeof(int));
             nextspritezeropresent = spritezeropresent;
             scanlinespritenum = sprites;
             active_sprites = 0;
