@@ -35,6 +35,7 @@ SDL_Joystick* controller = NULL;
 float global_volume = 50;
 bool use_shaders = false;
 int changing_keybind = -1;
+int render_engine = 0;
 
 
 bool paused_window = false;
@@ -145,6 +146,10 @@ void pause_menu() {
         case 2:
             {
             ImGui::Checkbox(labelPrefix("Use NTSC Filter").c_str(), &use_shaders);
+            ImGui::Text("Rendering Engine");
+            ImGui::RadioButton("OpenGL",&render_engine,0);
+            ImGui::SameLine();
+            ImGui::RadioButton("Vulkan",&render_engine,1);
             break;
             }
         case 3:
