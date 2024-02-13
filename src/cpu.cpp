@@ -486,6 +486,12 @@ void CPU::loadRom(ROM *r) {
         case 4:
             memcpy(&memory[0xC000],rom->get_prg_bank((rom->get_prgsize()/0x400)-16),0x4000);
             break;
+        case 40:
+            memcpy(&memory[0x6000],rom->get_prg_bank(6<<3),0x2000);
+            memcpy(&memory[0x8000],rom->get_prg_bank(4<<3),0x2000);
+            memcpy(&memory[0xa000],rom->get_prg_bank(5<<3),0x2000);
+            memcpy(&memory[0xe000],rom->get_prg_bank(7<<3),0x2000);
+            break;
     }
 
 }

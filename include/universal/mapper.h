@@ -86,4 +86,18 @@ class MMC3: public Mapper {
         bool scanline_counted = false;
 };
 
+class NTDEC2722: public Mapper {
+    public:
+        virtual void map_write(void** ptrs,int8_t* address, int8_t *val);
+        virtual void map_read(void** ptrs, int8_t* address){}
+        virtual void clock(void** system);
+        NTDEC2722() {
+            type = 40;
+        }
+    private:
+        uint8_t select = 0;
+        uint16_t counter = 4096*3;
+        bool enabled = true;
+};
+
 #endif

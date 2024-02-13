@@ -90,6 +90,7 @@ class PPU {
         bool spritezeropresent = false;
         bool nextspritezeropresent = false;
         bool sprite_eval = false;
+        unsigned char internal_img[184320]; //output image running copy
 };
 
 #endif

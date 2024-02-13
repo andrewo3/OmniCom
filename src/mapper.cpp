@@ -137,3 +137,29 @@ void UxROM::map_write(void** ptrs, int8_t* address, int8_t* value) {
         cpu->loadRom(cpu->rom);
     }   
 }
+
+void NTDEC2722::map_write(void** ptrs, int8_t* address, int8_t* value) {
+    CPU* cpu = (CPU*)ptrs[0];
+    ROM* rom = cpu->rom;
+    PPU* ppu = (PPU*)ptrs[1];
+    long long location = address-(cpu->memory);
+    if (0x8000<=location && location <=0x9fff) {
+        enabled = false;
+        counter = 4096*3;
+    } else if (0xa000<=location && location<=0xbfff) {
+        enabled = true;
+    } else if (0xe000<=location && location <=0xffff) {
+        memcpy(&cpu->memory[0xc000],cpu->rom->get_prg_bank((uint8_t)(*value)<<3),0x2000);
+    }
+}
+
+void NTDEC2722::clock(void** ptrs) {
+    CPU* cpu = (CPU*)ptrs[0];
+    if (enabled) { 
+        counter--;
+    }
+    if (counter==0) {
+        cpu->recv_irq = true;
+        counter = 4096*3;
+    }
+}

@@ -454,8 +454,6 @@ int main(int argc, char ** argv) {
     glGenerateMipmap(GL_TEXTURE_2D);
 
     glUniform1i(glGetUniformLocation(shaderProgram, "textureSampler"), 0);
-    glUniform1f(glGetUniformLocation(shaderProgram, "iTime"), (float)(epoch()-start));
-    glUniform1f(glGetUniformLocation(shaderProgram, "enabled"), false);
     
     printf("Window texture bound and mapped.\n");
 
@@ -551,8 +549,6 @@ int main(int argc, char ** argv) {
         }
 
         glUseProgram(shaderProgram);
-        glUniform1f(glGetUniformLocation(shaderProgram, "iTime"), (float)(epoch()-start));
-        glUniform1f(glGetUniformLocation(shaderProgram, "enabled"), false);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);

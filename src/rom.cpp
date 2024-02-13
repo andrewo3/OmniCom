@@ -52,6 +52,9 @@ void ROM::load_arr(int length, unsigned char* data) {
         case 4:
             mapper = new MMC3();
             break;
+        case 40:
+            mapper = new NTDEC2722();
+            break;
         default:
             mapper = new DEFAULT_MAPPER(mapper_num);
             printf("UNRECOGNIZED MAPPER!\n");
@@ -132,6 +135,9 @@ void ROM::load_file(const char* src) {
             break;
         case 4:
             mapper = new MMC3();
+            break;
+        case 40:
+            mapper = new NTDEC2722();
             break;
         default:
             mapper = new DEFAULT_MAPPER(mapper_num);

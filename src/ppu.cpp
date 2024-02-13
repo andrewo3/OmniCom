@@ -303,17 +303,17 @@ void PPU::cycle() {
             //write some pixel to image here
             int color_ind = pixel*3;
 
-            out_img[3*(scan_cyc+(scanline<<8))] = NTSC_TO_RGB[color_ind];
-            out_img[3*(scan_cyc+(scanline<<8))+1] = NTSC_TO_RGB[color_ind+1];
-            out_img[3*(scan_cyc+(scanline<<8))+2] = NTSC_TO_RGB[color_ind+2];
+            internal_img[3*(scan_cyc+(scanline<<8))] = NTSC_TO_RGB[color_ind];
+            internal_img[3*(scan_cyc+(scanline<<8))+1] = NTSC_TO_RGB[color_ind+1];
+            internal_img[3*(scan_cyc+(scanline<<8))+2] = NTSC_TO_RGB[color_ind+2];
             if ((*PPUMASK)&0x80) {
-                out_img[3*(scan_cyc+(scanline<<8))+2] = 255;
+                internal_img[3*(scan_cyc+(scanline<<8))+2] = 255;
             }
             if ((*PPUMASK)&0x40) {
-                out_img[3*(scan_cyc+(scanline<<8))+1] = 255;
+                internal_img[3*(scan_cyc+(scanline<<8))+1] = 255;
             }
             if ((*PPUMASK)&0x20) {
-                out_img[3*(scan_cyc+(scanline<<8))] = 255;
+                internal_img[3*(scan_cyc+(scanline<<8))] = 255;
             }
             
             internalx++;
@@ -357,7 +357,7 @@ void PPU::cycle() {
         //printf("vblank!\n");
         if (vblank==false && scycle>=1) { //start vblank as soon as you reach this
             vblank = true;
-            image_mutex.unlock();
+            memcpy(out_img,internal_img,sizeof(uint8_t)*184320); //copy internal img to out image every frame update
             mutex_locked = false;
             *PPUSTATUS|=0x80;
             if ((*PPUCTRL)&0x80) { // if ppu is configured to generate nmi, do so.
