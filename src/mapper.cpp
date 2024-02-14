@@ -157,9 +157,9 @@ void NTDEC2722::clock(void** ptrs) {
     CPU* cpu = (CPU*)ptrs[0];
     if (enabled) { 
         counter--;
-    }
-    if (counter==0) {
-        cpu->recv_irq = true;
-        counter = 4096*3;
+        if (counter==0) {
+            cpu->recv_irq = true;
+            counter = 4096*3;
+        }
     }
 }

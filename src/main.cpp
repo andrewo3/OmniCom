@@ -15,6 +15,9 @@
 #include "SDL2/SDL.h"
 #include "GL/glew.h"
 
+#include "SDL2/SDL_vulkan.h"
+#include "vulkan/vulkan.hpp"
+
 #include "rom_data.h"
 #include "rom.h"
 #include "cpu.h"
@@ -352,6 +355,7 @@ int main(int argc, char ** argv) {
 
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
+    SDL_Vulkan_LoadLibrary(nullptr);
     SDL_ShowCursor(0);
     int controller_index = 0;
     controller = SDL_JoystickOpen(controller_index);
@@ -390,6 +394,12 @@ int main(int argc, char ** argv) {
     printf("Viewport set\n");
     SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WINDOW_INIT[0],WINDOW_INIT[1],FLAGS);
     printf("Made window\n");
+    
+    uint32_t extensionCount;
+    const char** extensionNames = 0;
+    
+    SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, nullptr);
+    
     SDL_SetWindowTitle(window,filename);
     printf("Window Title Set\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
