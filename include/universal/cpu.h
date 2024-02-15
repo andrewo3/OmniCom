@@ -67,6 +67,8 @@ class CPU {
         int prg_bank_num = 0;
         long long last = epoch_nano();
         long long elapsed_time = 0;
+        void save();
+        void load(char* data);
     private:
 
         //---- instructions ----

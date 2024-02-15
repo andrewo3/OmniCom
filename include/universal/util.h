@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <chrono>
+#include <string>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 
@@ -43,6 +44,9 @@ extern void pause_menu();
 extern bool paused_window;
 
 extern SDL_Joystick* controller;
+
+extern std::string config_dir;
+extern char sep;
 
 static uint8_t NTSC_TO_RGB[192] = {
             0x60,0x60,0x60, //0x00

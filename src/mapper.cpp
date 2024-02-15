@@ -122,6 +122,7 @@ void CNROM::map_write(void** ptrs, int8_t* address, int8_t *value) {
     if (0x8000<=location && location<=0xffff) {
         int chrsize = (ppu->rom->get_chrsize())/0x2000;
         ppu->chr_bank_num = ((uint8_t)val%chrsize)<<3;
+        bank_num = ppu->chr_bank_num;
         //printf("CHANGE! %i\n",ppu->chr_bank_num);
         ppu->loadRom(ppu->rom);
     }   
@@ -133,6 +134,7 @@ void UxROM::map_write(void** ptrs, int8_t* address, int8_t* value) {
     long long location = address-(cpu->memory);
     if (0x8000<=location && location<=0xffff) {
         cpu->prg_bank_num = (val&0xf)<<4;
+        bank_num = cpu->prg_bank_num;
         //printf("CHANGE! %i\n",ppu->chr_bank_num);
         cpu->loadRom(cpu->rom);
     }   

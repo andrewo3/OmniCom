@@ -8,6 +8,8 @@
 
 const int BUFFER_LEN = 1024;
 unsigned char out_img[184320]; //output image
+std::string config_dir;
+char sep;
 
 GLfloat vertices[16] = {
         -1.0f, 1.0f,0.0f,0.0f,

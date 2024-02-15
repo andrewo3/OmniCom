@@ -104,6 +104,35 @@ void ROM::load_arr(int length, unsigned char* data) {
     }
 }
 
+void ROM::reset_mapper() {
+    int mapper_num = mapper->type;
+    delete mapper;
+    switch (mapper_num) {
+        case 0:
+            mapper = new NROM();
+            break;
+        case 1:
+            mapper = new MMC1();
+            break;
+        case 2:
+            mapper = new UxROM();
+            break;
+        case 3:
+            mapper = new CNROM();
+            break;
+        case 4:
+            mapper = new MMC3();
+            break;
+        case 40:
+            mapper = new NTDEC2722();
+            break;
+        default:
+            mapper = new DEFAULT_MAPPER(mapper_num);
+            printf("UNRECOGNIZED MAPPER!\n");
+            break;
+    }
+}
+
 void ROM::load_file(const char* src) {
     this->src_filename = src;
     filename_length = strlen(src);

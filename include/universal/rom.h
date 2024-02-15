@@ -27,6 +27,7 @@ class ROM {
         uint8_t *get_prg_bank(int bank_num);
         uint8_t *get_chr_bank(int bank_num);
         Mapper* get_mapper() {return mapper;}
+        void reset_mapper();
         int get_prgsize() {return prgsize;}
         int get_chrsize() {return chrsize;}
         uint8_t chr_ram[0x2000];

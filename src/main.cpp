@@ -12,6 +12,10 @@
 #endif
 
 #define SDL_MAIN_HANDLED
+#ifdef __WIN32__
+#include "shlobj_core.h"
+#include "Windows.h"
+#endif
 #include "SDL2/SDL.h"
 #include "GL/glew.h"
 
@@ -43,6 +47,9 @@
 #include <mutex>
 #include <unistd.h>
 #include <iostream>
+#include <vector>
+#include <filesystem>
+#include <cstdlib>
 
 
 //ntsc filter options
@@ -53,7 +60,6 @@ static int noise = 6;
 static int field = 0;
 static int raw = 0;
 static int hue = 0;
-
 
 std::mutex interruptedMutex;
 
@@ -328,6 +334,18 @@ void AudioLoop(void* userdata, uint8_t* stream, int len) {
 int main(int argc, char ** argv) {
     std::signal(SIGINT,quit);
     std::signal(SIGSEGV,quit);
+
+    #ifdef __APPLE__
+        config_dir = std::string(std::getenv("HOME"))+"/Library/Containers";
+        sep = '/';
+    #endif
+    #ifdef __WIN32__
+        TCHAR appdata[MAX_PATH] = {0};
+        SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appdata);
+        config_dir = std::string(appdata);
+        sep = '\\';
+    #endif
+
     if (argc!=ARGS) {
         return usage_error();
     }
@@ -353,9 +371,26 @@ int main(int argc, char ** argv) {
     memcpy(filename,ROM_NAME,strlen(ROM_NAME)+1);
     get_filename(&filename);
 
+    char removed_spaces[strlen(filename)];
+
+    for (int i=0; i<strlen(filename); i++) {
+        removed_spaces[i] = filename[i];
+        if (removed_spaces[i]==' ') {
+            removed_spaces[i] = '_';
+        }
+    }
+
+    //make config dir (if it doesnt already exist)
+    config_dir+=sep;
+    config_dir+=std::string(removed_spaces);
+    printf("%s\n",(config_dir).c_str());
+    /*if (!std::filesystem::exists(config_dir)) {
+        std::filesystem::create_directory(config_dir);
+    }*/
+
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
-    SDL_Vulkan_LoadLibrary(nullptr);
+    //SDL_Vulkan_LoadLibrary(nullptr);
     SDL_ShowCursor(0);
     int controller_index = 0;
     controller = SDL_JoystickOpen(controller_index);
@@ -394,12 +429,7 @@ int main(int argc, char ** argv) {
     printf("Viewport set\n");
     SDL_Window* window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WINDOW_INIT[0],WINDOW_INIT[1],FLAGS);
     printf("Made window\n");
-    
-    uint32_t extensionCount;
-    const char** extensionNames = 0;
-    
-    SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, nullptr);
-    
+
     SDL_SetWindowTitle(window,filename);
     printf("Window Title Set\n");
     SDL_GLContext context = SDL_GL_CreateContext(window);
@@ -654,6 +684,7 @@ int main(int argc, char ** argv) {
                                 NESThread.join();
                                 sampleGet.join();
                                 cpu.init_vals();
+                                rom.reset_mapper();
                                 cpu.loadRom(&rom);
                                 cpu.reset();
                                 interrupted = false;
