@@ -384,9 +384,11 @@ int main(int argc, char ** argv) {
     config_dir+=sep;
     config_dir+=std::string(removed_spaces);
     printf("%s\n",(config_dir).c_str());
-    /*if (!std::filesystem::exists(config_dir)) {
+    if (!std::filesystem::exists(config_dir)) {
         std::filesystem::create_directory(config_dir);
-    }*/
+    } else {
+        printf("Folder already exists. Checking for save...\n");
+    }
 
     // SDL initialize
     SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);

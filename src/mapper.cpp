@@ -128,6 +128,20 @@ void CNROM::map_write(void** ptrs, int8_t* address, int8_t *value) {
     }   
 }
 
+void CNROM::deserialize(void** system, char* in) {
+    PPU* ppu = (PPU*)system[1];
+    memcpy(&bank_num,in,sizeof(int));
+    ppu->chr_bank_num = bank_num;
+    ppu->loadRom(ppu->rom);
+}
+
+void UxROM::deserialize(void** system, char* in) {
+    CPU* cpu = (CPU*)system[0];
+    memcpy(&bank_num,in,sizeof(int));
+    cpu->prg_bank_num = bank_num;
+    cpu->loadRom(cpu->rom);
+}
+
 void UxROM::map_write(void** ptrs, int8_t* address, int8_t* value) {
     int8_t val = *value;
     CPU* cpu = (CPU*)ptrs[0];
