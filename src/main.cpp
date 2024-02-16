@@ -13,7 +13,7 @@
 
 #define SDL_MAIN_HANDLED
 #ifdef __WIN32__
-#include "shlobj_core.h"
+#include "Shlobj.h"
 #include "Windows.h"
 #endif
 #include "SDL2/SDL.h"
