@@ -3,8 +3,10 @@
 #include "math.h"
 #include "imgui.h"
 #include <string>
+#include <filesystem>
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
+#include "cpu.h"
 
 const int BUFFER_LEN = 1024;
 unsigned char out_img[184320]; //output image
@@ -76,7 +78,7 @@ static std::string labelPrefix(const char* const label)
 }
 
 int tab_offset = 10;
-int menu_buttons = 4;
+int menu_buttons = 5;
 
 void MenuButton(ImVec2 win_size, int number,char* name) {
     bool active = false;
@@ -92,7 +94,8 @@ void MenuButton(ImVec2 win_size, int number,char* name) {
     }
 }
 
-void pause_menu() {
+void pause_menu(void** system) {
+    CPU* cpu = (CPU*)system[0];
     ImGuiViewport* main_viewport = ImGui::GetMainViewport();
     ImVec2 size = main_viewport->WorkSize;
     ImGui::SetNextWindowPos(main_viewport->WorkPos);
@@ -102,13 +105,15 @@ void pause_menu() {
     ImGui::Begin("Pause Menu",&paused_window,paused_flags);
     ImGui::SetCursorPosX(10);
 
-    MenuButton(size,0,"Debug");
+    MenuButton(size,0,"General");
     ImGui::SameLine(0,0);
-    MenuButton(size,1,"Controls");
+    MenuButton(size,1,"Debug");
     ImGui::SameLine(0,0);
-    MenuButton(size,2,"Video");
+    MenuButton(size,2,"Controls");
     ImGui::SameLine(0,0);
-    MenuButton(size,3,"Audio");
+    MenuButton(size,3,"Video");
+    ImGui::SameLine(0,0);
+    MenuButton(size,4,"Audio");
     ImGui::SetCursorPosY(size.y/4);
     char * button_names[8] = {
         "A",
@@ -122,7 +127,27 @@ void pause_menu() {
 
     };
     switch (current_tab) {
-        case 1:
+        case 0:
+            if (ImGui::Button("Load")) {
+                printf("load game\n");
+                std::string load_dir = config_dir+sep+std::string("state");
+                if (std::filesystem::exists(load_dir)) {
+                    FILE* save_file = fopen(load_dir.c_str(),"rb");
+                    cpu->load(save_file);
+                    fclose(save_file);
+                } else {
+                    printf("Nothing to load at: %s\n",load_dir.c_str());
+                }
+                
+            }
+            ImGui::SameLine(0);
+            if (ImGui::Button("Save")) {
+                std::string load_dir = config_dir+sep+std::string("state");
+                printf("save game at: %s\n",load_dir.c_str());
+                cpu->save();
+            }
+            break;
+        case 2:
             for (int i=0; i<8; i++) {
                 ImGui::Text(button_names[i]);
                 ImGui::SameLine(0);
@@ -145,7 +170,7 @@ void pause_menu() {
                 }
             }
             break;
-        case 2:
+        case 3:
             {
             ImGui::Checkbox(labelPrefix("Use NTSC Filter").c_str(), &use_shaders);
             ImGui::Text("Rendering Engine");
@@ -154,7 +179,7 @@ void pause_menu() {
             ImGui::RadioButton("Vulkan",&render_engine,1);
             break;
             }
-        case 3:
+        case 4:
             ImGui::SliderFloat(labelPrefix("Volume").c_str(),&global_volume,0.0,100.0,"%.0f%",0);
             break;
     }

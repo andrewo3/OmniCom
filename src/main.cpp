@@ -334,16 +334,27 @@ void AudioLoop(void* userdata, uint8_t* stream, int len) {
 int main(int argc, char ** argv) {
     std::signal(SIGINT,quit);
     std::signal(SIGSEGV,quit);
+    int os = -1;
 
     #ifdef __APPLE__
         config_dir = std::string(std::getenv("HOME"))+"/Library/Containers";
         sep = '/';
+        printf("MACOS, %s\n", config_dir.c_str());
+        os = 0;
     #endif
     #ifdef __WIN32__
         TCHAR appdata[MAX_PATH] = {0};
         SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appdata);
         config_dir = std::string(appdata);
         sep = '\\';
+        printf("WINDOWS, %s\n", config_dir.c_str());
+        os = 1;
+    #endif
+    #ifdef __unix__
+        config_dir = std::string(std::getenv("HOME"))+"/.config";
+        sep = '/';
+        printf("LINUX, %s\n", config_dir.c_str());
+        os = 2;
     #endif
 
     if (argc!=ARGS) {
@@ -371,7 +382,7 @@ int main(int argc, char ** argv) {
     memcpy(filename,ROM_NAME,strlen(ROM_NAME)+1);
     get_filename(&filename);
 
-    char removed_spaces[strlen(filename)];
+    char removed_spaces[strlen(filename)+1];
 
     for (int i=0; i<strlen(filename); i++) {
         removed_spaces[i] = filename[i];
@@ -379,15 +390,25 @@ int main(int argc, char ** argv) {
             removed_spaces[i] = '_';
         }
     }
+    removed_spaces[strlen(filename)] = '\0';
 
     //make config dir (if it doesnt already exist)
-    config_dir+=sep;
-    config_dir+=std::string(removed_spaces);
-    printf("%s\n",(config_dir).c_str());
-    if (!std::filesystem::exists(config_dir)) {
-        std::filesystem::create_directory(config_dir);
+    if (os != -1) {
+        config_dir+=sep;
+        config_dir+=std::string("Nes2Exec");
+        if (!std::filesystem::exists(config_dir)) { //make Nes2Exec appdata folder
+            std::filesystem::create_directory(config_dir);
+        }
+        config_dir+=sep;
+        config_dir+=std::string(removed_spaces);
+        printf("%s\n",(config_dir).c_str());
+        if (!std::filesystem::exists(config_dir)) { //make specific game save folder
+            std::filesystem::create_directory(config_dir);
+        } else {
+            printf("Folder already exists. Checking for save...\n");
+        }
     } else {
-        printf("Folder already exists. Checking for save...\n");
+        printf("OS not detected. No save folder created.\n");
     }
 
     // SDL initialize
@@ -603,7 +624,8 @@ int main(int argc, char ** argv) {
         //ImGui::ShowDemoWindow(NULL);
         //render gui
         if (paused) {
-            pause_menu();
+            void * system[3] = {cpu_ptr,ppu_ptr,apu_ptr};
+            pause_menu(&system[0]);
         } else {
             changing_keybind = -1;
         }

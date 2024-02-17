@@ -96,8 +96,8 @@ class MMC3: public Mapper {
         MMC3() {
             type = 4;
         }
-        virtual void serialize(void** system, char* out) {}
-        virtual void deserialize(void** system, char* in) {}
+        virtual void serialize(void** system, char* out);
+        virtual void deserialize(void** system, char* in);
     private:
         uint8_t reg = 0;
         uint8_t xbase = 0;

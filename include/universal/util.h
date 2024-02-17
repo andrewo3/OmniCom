@@ -6,6 +6,8 @@
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 
+class CPU;
+
 // get time in milliseconds since epoch
 inline long long epoch() {
     auto currentTimePoint = std::chrono::steady_clock::now();
@@ -40,7 +42,7 @@ extern GLfloat vertices[16];
 extern const int BUFFER_LEN;
 
 //settings/pause menu
-extern void pause_menu();
+extern void pause_menu(void** system);
 extern bool paused_window;
 
 extern SDL_Joystick* controller;

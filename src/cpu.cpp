@@ -574,7 +574,7 @@ void CPU::set_flag(char flag,bool val) {
 }
 
 void CPU::save() {
-    FILE* save_file = fopen((config_dir+sep+"cpu_state").c_str(),"wb");
+    FILE* save_file = fopen((config_dir+sep+std::string("state")).c_str(),"wb");
     fwrite(&flags,sizeof(flags),1,save_file);
     fwrite(&accumulator,sizeof(accumulator),1,save_file);
     fwrite(&x,sizeof(x),1,save_file);
@@ -583,6 +583,29 @@ void CPU::save() {
     long long pc_loc = get_addr(pc);
     fwrite(&pc_loc,sizeof(long long),1,save_file);
     fwrite(memory,sizeof(int8_t),0x10000,save_file);
+    fwrite(ppu->memory,sizeof(int8_t),0x4000,save_file);
+    char mapper[256];
+    void* system[3] = {this,ppu,apu};
+    rom->get_mapper()->serialize(&system[0],&mapper[0]);
+    fwrite(mapper,sizeof(char),256,save_file);
+    fclose(save_file);
+}
+
+void CPU::load(FILE* save_file) {
+    fread(&flags,sizeof(flags),1,save_file);
+    fread(&accumulator,sizeof(accumulator),1,save_file);
+    fread(&x,sizeof(x),1,save_file);
+    fread(&y,sizeof(y),1,save_file);
+    fread(&sp,sizeof(sp),1,save_file);
+    long long pc_loc;
+    fread(&pc_loc,sizeof(long long),1,save_file);
+    pc = memory+pc_loc;
+    fread(memory,sizeof(int8_t),0x10000,save_file);
+    fread(ppu->memory,sizeof(int8_t),0x4000,save_file);
+    char mapper[256];
+    fread(mapper,sizeof(char),256,save_file);
+    void* system[3] = {this,ppu,apu};
+    rom->get_mapper()->deserialize(&system[0],&mapper[0]);  
 }
 
 void CPU::stack_push(int8_t val) {

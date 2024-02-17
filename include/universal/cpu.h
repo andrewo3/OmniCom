@@ -68,7 +68,7 @@ class CPU {
         long long last = epoch_nano();
         long long elapsed_time = 0;
         void save();
-        void load(char* data);
+        void load(FILE* data);
     private:
 
         //---- instructions ----

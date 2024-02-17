@@ -38,7 +38,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main",
             "args": [
-                "${workspaceRoot}\\res\\roms\\Donkey Kong (U) (PRG1) [!p].nes"
+                "${workspaceRoot}/res/roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"
 
             ],
             "stopAtEntry": false,

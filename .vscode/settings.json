@@ -92,7 +92,8 @@
         "locale": "cpp",
         "queue": "cpp",
         "stack": "cpp",
-        "expected": "cpp"
+        "expected": "cpp",
+        "hash_set": "cpp"
     },
     "terminal.integrated.env.windows": {
         "PATH": "C:\\mingw64\\bin;${env:PATH}"

@@ -114,6 +114,52 @@ void MMC3::clock(void** system) {
     }
 }
 
+void MMC3::serialize(void** system, char* out) {
+    int ind = 0;
+    memcpy(out+ind,&reg,sizeof(uint8_t));
+    ind+=sizeof(uint8_t);
+    memcpy(out+ind,&xbase,sizeof(uint8_t));
+    ind+=sizeof(uint8_t);
+    memcpy(out+ind,&wp,sizeof(bool));
+    ind+=sizeof(bool);
+    memcpy(out+ind,&prgram,sizeof(bool));
+    ind+=sizeof(bool);
+    memcpy(out+ind,&irq_enabled,sizeof(bool));
+    ind+=sizeof(bool);
+    memcpy(out+ind,&last_v,sizeof(uint16_t));
+    ind+=sizeof(uint16_t);
+    memcpy(out+ind,&irq_counter,sizeof(int));
+    ind+=sizeof(int);
+    memcpy(out+ind,&irq_reload,sizeof(uint8_t));
+    ind+=sizeof(uint8_t);
+    memcpy(out+ind,&off_clocks,sizeof(uint8_t));
+    ind+=sizeof(uint8_t);
+    memcpy(out+ind,&scanline_counted,sizeof(bool));
+}
+
+void MMC3::deserialize(void** system, char* in) {
+    int ind = 0;
+    memcpy(&reg,in+ind,sizeof(uint8_t));
+    ind+=sizeof(uint8_t);
+    memcpy(&xbase,in+ind,sizeof(uint8_t));
+    ind+=sizeof(uint8_t);
+    memcpy(&wp,in+ind,sizeof(bool));
+    ind+=sizeof(bool);
+    memcpy(&prgram,in+ind,sizeof(bool));
+    ind+=sizeof(bool);
+    memcpy(&irq_enabled,in+ind,sizeof(bool));
+    ind+=sizeof(bool);
+    memcpy(&last_v,in+ind,sizeof(uint16_t));
+    ind+=sizeof(uint16_t);
+    memcpy(&irq_counter,in+ind,sizeof(int));
+    ind+=sizeof(ind);
+    memcpy(&irq_reload,in+ind,sizeof(uint8_t));
+    ind+=sizeof(uint8_t);
+    memcpy(&off_clocks,in+ind,sizeof(uint8_t));
+    ind+=sizeof(uint8_t);
+    memcpy(&scanline_counted,in+ind,sizeof(bool));
+}
+
 void CNROM::map_write(void** ptrs, int8_t* address, int8_t *value) {
     int8_t val = *value;
     CPU* cpu = (CPU*)ptrs[0];
