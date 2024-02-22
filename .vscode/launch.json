@@ -22,14 +22,14 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main.exe",
             "args": [
-                "D:\\C++ Projects\\NES\\Nes2Execv2\\res\\roms\\Peek-A-Boo Poker (Unl) [!].nes"
+                "D:\\Projects\\Visual Studio Code\\Nes2Execv2\\res\\working_roms\\Pac-Man (U) (Namco) [!p].nes"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "C:\\mingw64\\bin\\gdb.exe",
+            "miDebuggerPath": "D:\\mingw64\\bin\\gdb.exe",
             "preLaunchTask": "C/C++: g++ build active file (Windows)"
         },
         {

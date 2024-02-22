@@ -128,7 +128,7 @@ void pause_menu(void** system) {
     };
     switch (current_tab) {
         case 0:
-            if (ImGui::Button("Load")) {
+            /*if (ImGui::Button("Load")) {
                 printf("load game\n");
                 std::string load_dir = config_dir+sep+std::string("state");
                 if (std::filesystem::exists(load_dir)) {
@@ -139,13 +139,14 @@ void pause_menu(void** system) {
                     printf("Nothing to load at: %s\n",load_dir.c_str());
                 }
                 
-            }
-            ImGui::SameLine(0);
+            }*/
+            /*ImGui::SameLine(0);
             if (ImGui::Button("Save")) {
                 std::string load_dir = config_dir+sep+std::string("state");
                 printf("save game at: %s\n",load_dir.c_str());
                 cpu->save();
-            }
+            }*/
+            
             break;
         case 2:
             for (int i=0; i<8; i++) {

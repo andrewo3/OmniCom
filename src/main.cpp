@@ -133,6 +133,7 @@ void quit(int signal) {
     /*std::FILE* memory_dump = fopen("dump","w");
     fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
     fclose(memory_dump);*/
+    cpu_ptr->save();
 
     interrupted = 1;
     if (signal==SIGSEGV) {
@@ -393,6 +394,7 @@ int main(int argc, char ** argv) {
     removed_spaces[strlen(filename)] = '\0';
 
     //make config dir (if it doesnt already exist)
+    bool load = false;
     if (os != -1) {
         config_dir+=sep;
         config_dir+=std::string("Nes2Exec");
@@ -406,6 +408,9 @@ int main(int argc, char ** argv) {
             std::filesystem::create_directory(config_dir);
         } else {
             printf("Folder already exists. Checking for save...\n");
+            if (std::filesystem::exists(config_dir+sep+std::string("state"))) {
+                load = true;
+            }
         }
     } else {
         printf("OS not detected. No save folder created.\n");
@@ -543,6 +548,14 @@ int main(int argc, char ** argv) {
     ppu_ptr = &ppu;
     ppu.debug = false;
     printf("PPU Initialized\n");
+
+    if (load) {
+        FILE* save_file = fopen((config_dir+sep+std::string("state")).c_str(),"rb");
+        cpu.load(save_file);
+        fclose(save_file);
+        printf("Loaded save\n");
+    }
+
     std::thread NESThread(NESLoop);
     std::thread sampleGet(sampleAPU);
     //std::thread tCPU(CPUThread);
