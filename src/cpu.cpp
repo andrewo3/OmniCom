@@ -233,14 +233,8 @@ void CPU::write(int8_t* address, int8_t value) {
             input_strobe = value&1;
             if (input_strobe) {
                 //poll input
-                inputs = (state[mapped_keys[7]])| //right
-                (state[mapped_keys[6]]<<1)| //left
-                (state[mapped_keys[5]]<<2)| //down
-                (state[mapped_keys[4]]<<3)| //up
-                (state[mapped_keys[3]]<<4)| //start
-                (state[mapped_keys[2]]<<5)| //select
-                (state[mapped_keys[1]]<<6)| //B
-                (state[mapped_keys[0]]<<7); //A
+                inputs[0] = conts[0] == nullptr ? 0 : conts[0]->get_input_byte();
+                inputs[1] = conts[1] == nullptr ? 0 : conts[1]->get_input_byte();
             }
             break;
         case 0x4017:
@@ -262,6 +256,10 @@ void CPU::write(int8_t* address, int8_t value) {
             *address = value;
         }
     }
+}
+
+void CPU::set_controller(Controller* cont, uint8_t port) {
+    conts[port] = cont;
 }
 
 int8_t CPU::read(int8_t* address) {
@@ -299,17 +297,26 @@ int8_t CPU::read(int8_t* address) {
             break;
         case 0x4016:
             if (!input_strobe) {
-                value = (inputs&0x80)>>7;
-                inputs<<=1;
-                inputs|=1;
+                value = (inputs[0]&0x80)>>7;
+                inputs[0]<<=1;
+                inputs[0]|=1;
             } else {
-                value = (inputs&0x80)>>7;
+                value = (inputs[0]&0x80)>>7;
             }
             value &= ~0xF8;
             value |= 0x40;
             break;
         case 0x4017:
-            value = 0x40;
+            if (!input_strobe) {
+                value = (inputs[1]&0x80)>>7;
+                inputs[1]<<=1;
+                inputs[1]|=1;
+            } else {
+                value = (inputs[1]&0x80)>>7;
+            }
+            value &= ~0xF8;
+            value |= 0x40;
+            break;
 
     }
     void* system[3] = {this,ppu,apu};

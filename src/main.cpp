@@ -28,6 +28,7 @@
 #include "ppu.h"
 #include "apu.h"
 #include "util.h"
+#include "controller.h"
 #include "shader_data.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -231,7 +232,7 @@ void PPUThread() {
 
 void sampleAPU() {
     int sr = apu_ptr->sample_rate;
-    const int ns_wait = (1e9/(sr*1.024));
+    const int ns_wait = (1e9/(sr*1));
     long long loops = 0;
     int16_t buffer[BUFFER_LEN] = {0};
     int16_t buffer_copy[BUFFER_LEN] = {0};
@@ -434,7 +435,7 @@ int main(int argc, char ** argv) {
 
     //audio
     audio_spec.freq = 44100;
-    audio_spec.format = AUDIO_S16;  // 16-bit signed, little-endian
+    audio_spec.format = AUDIO_S16SYS;  // 16-bit signed, little-endian
     audio_spec.channels = 1;            // Mono
     audio_spec.samples = BUFFER_LEN;
     audio_spec.size = BUFFER_LEN * sizeof(int16_t) * audio_spec.channels;
@@ -525,7 +526,13 @@ int main(int argc, char ** argv) {
     
     printf("Window texture bound and mapped.\n");
 
-    //Enter NES logic loop alongside window loop
+    //set up controller
+    bool controller1_inputs[8];
+    for (int i=0; i<8; i++) {
+        controller1_inputs[i] = state[mapped_keys[i]];
+    }
+    cont1 = new Controller(controller1_inputs);
+
     start = epoch();
     start_nano = epoch_nano();
 
@@ -541,6 +548,7 @@ int main(int argc, char ** argv) {
     printf("APU set\n");
 
     cpu.loadRom(&rom);
+    cpu.set_controller(cont1,0);
     cpu.reset();
     printf("ROM loaded into CPU.\n");
 
@@ -556,6 +564,7 @@ int main(int argc, char ** argv) {
         printf("Loaded save\n");
     }
 
+    //Enter NES logic loop alongside window loop
     std::thread NESThread(NESLoop);
     std::thread sampleGet(sampleAPU);
     //std::thread tCPU(CPUThread);
@@ -598,6 +607,7 @@ int main(int argc, char ** argv) {
             //char * new_title = new char[255];
             //sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
             //SDL_SetWindowTitle(window,new_title);
+
             last_time = SDL_GetTicks()/1000.0;
         }
         //logic is executed in nes thread
@@ -670,6 +680,12 @@ int main(int argc, char ** argv) {
         ppu_ptr->image_mutex.unlock();
         // event loop
         SDL_PumpEvents();
+        
+        //update controller inputs
+        for (int i=0; i<8; i++) {
+            controller1_inputs[i] = state[mapped_keys[i]];
+        }
+
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
                 case SDL_QUIT:
@@ -760,6 +776,7 @@ int main(int argc, char ** argv) {
     SDL_CloseAudioDevice(audio_device);
     SDL_Quit();
     free(filtered);
+    delete cont1;
     delete[] original_start;
     delete[] audio_buffer;
     printf("Quit successfully.\n");

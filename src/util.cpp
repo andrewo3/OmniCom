@@ -7,6 +7,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 #include "cpu.h"
+#include "controller.h"
 
 const int BUFFER_LEN = 1024;
 unsigned char out_img[184320]; //output image
@@ -31,6 +32,8 @@ SDL_Scancode mapped_keys[8] = {
     SDL_SCANCODE_DOWN,
     SDL_SCANCODE_LEFT,
     SDL_SCANCODE_RIGHT};
+
+Controller* cont1 = new Controller(nullptr);
 
 const uint8_t* state = SDL_GetKeyboardState(nullptr);
 SDL_Joystick* controller = NULL;

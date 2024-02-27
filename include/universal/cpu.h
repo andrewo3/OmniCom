@@ -4,6 +4,7 @@
 #include "rom.h"
 #include "apu.h"
 #include "util.h"
+#include "controller.h"
 #include <cstdint>
 
 class PPU;
@@ -25,7 +26,7 @@ class CPU {
         int8_t accumulator;
         int8_t x;
         int8_t y;
-        int8_t inputs = 0;
+        int8_t inputs[2] = {0}; //inputs for each joystick
         int8_t* pc;
         uint8_t ins_size;
         bool get_flag(char flag);
@@ -69,6 +70,8 @@ class CPU {
         long long elapsed_time = 0;
         void save();
         void load(FILE* data);
+        void set_controller(Controller* cont,uint8_t port);
+        Controller* conts[2] = {nullptr,nullptr};
     private:
 
         //---- instructions ----

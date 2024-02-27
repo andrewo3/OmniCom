@@ -5,8 +5,10 @@
 #include <string>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
+#include "controller.h"
 
 class CPU;
+class Controller;
 
 // get time in milliseconds since epoch
 inline long long epoch() {
@@ -26,6 +28,8 @@ extern unsigned char out_img[184320]; //output image
 
 //keys
 extern const uint8_t* state;
+
+extern Controller* cont1;
 
 //parameters
 extern float global_volume;
