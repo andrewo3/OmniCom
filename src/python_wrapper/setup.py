@@ -20,16 +20,18 @@ ext_modules = [
     ),
 ]
 sep = ":"
+folder = "unix"
 if platform == "win32":
     sep = ";"
+    folder = "win32"
 
-include_path = f"{realpath("../../include/unix")}{sep}{realpath("../../include/win32")}{sep}{realpath("../ntsc-filter")}{sep}{realpath("../../include/universal")}{sep}{realpath("../imgui")}{sep}{realpath("../imgui/backends")}"
+include_path = f"{realpath(f"../../include/{folder}")}{sep}{realpath("../ntsc-filter")}{sep}{realpath("../../include/universal")}{sep}{realpath("../imgui")}{sep}{realpath("../imgui/backends")}"
 
 if platform == "win32":
     environ["INCLUDE"] = include_path
     environ["LIB"] = realpath("../../lib")
 else:
-    environ["CFLAGS"]="-std=c++11"
+    environ["CFLAGS"]=f"-std=c++11 -F{realpath("../../bin")} -framework SDL2 -rpath {realpath("../../bin")}"
     environ["CPLUS_INCLUDE_PATH"] += include_path
     environ["LD_LIBRARY_PATH"] = realpath("../../lib")
 
