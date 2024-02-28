@@ -1,5 +1,5 @@
 #include "test.h"
-#include "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/pybind11/include/pybind11/pybind11.h"
+#include "pybind11/pybind11.h"
 #include <cstdio>
 
 namespace py = pybind11;
@@ -7,8 +7,6 @@ namespace py = pybind11;
 Test::Test() {
     testing_var = 5;
 }
-
-
 
 void Test::hello() {
     printf("Hello test!\n");
