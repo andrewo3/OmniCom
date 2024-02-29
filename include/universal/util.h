@@ -29,8 +29,6 @@ extern unsigned char out_img[184320]; //output image
 //keys
 extern const uint8_t* state;
 
-extern Controller* cont1;
-
 //parameters
 extern float global_volume;
 extern bool use_shaders;

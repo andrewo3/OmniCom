@@ -11,6 +11,8 @@ class PPU;
 
 class APU;
 
+class Controller;
+
 class CPU {
     public:
         CPU();
@@ -71,7 +73,7 @@ class CPU {
         void save();
         void load(FILE* data);
         void set_controller(Controller* cont,uint8_t port);
-        Controller* conts[2] = {nullptr,nullptr};
+        Controller* conts[2];
     private:
 
         //---- instructions ----

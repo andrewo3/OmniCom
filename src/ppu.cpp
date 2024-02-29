@@ -377,9 +377,6 @@ void PPU::cycle() {
         if (scycle==1 && vblank==true) {
             *PPUSTATUS&=~0x80;
             vblank = false;
-            if (!mutex_locked && image_mutex.try_lock()) {
-                mutex_locked = true;
-            }
         }
 
     }

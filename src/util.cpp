@@ -33,8 +33,6 @@ SDL_Scancode mapped_keys[8] = {
     SDL_SCANCODE_LEFT,
     SDL_SCANCODE_RIGHT};
 
-Controller* cont1 = new Controller(nullptr);
-
 const uint8_t* state = SDL_GetKeyboardState(nullptr);
 SDL_Joystick* controller = NULL;
 

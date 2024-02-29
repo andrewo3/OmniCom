@@ -210,9 +210,16 @@ void init_shaders() {
 }
 
 void CPUThread() {
+    const double ns_wait = 1e9/cpu_ptr->CLOCK_SPEED;
     while(!interrupted) {
         cpu_ptr->clock();
         total_ticks = cpu_ptr->cycles;
+        real_time = epoch_nano()-start_nano;
+        long long cpu_time = ns_wait*cpu_ptr->cycles;
+        int diff = cpu_time-(real_time-paused_time);
+        if (diff > 0) {
+            std::this_thread::sleep_for(std::chrono::nanoseconds(diff));
+        }
     }
     
 }
@@ -227,6 +234,13 @@ void PPUThread() {
                 printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
             }
         }
+    }
+}
+
+void APUThread() {
+    while (apu_ptr->cycles*2<cpu_ptr->cycles) {
+        apu_ptr->cycle();
+        //apu_ptr->cycles++;
     }
 }
 
@@ -527,11 +541,11 @@ int main(int argc, char ** argv) {
     printf("Window texture bound and mapped.\n");
 
     //set up controller
-    bool controller1_inputs[8];
+    bool* controller1_inputs[8];
     for (int i=0; i<8; i++) {
-        controller1_inputs[i] = state[mapped_keys[i]];
+        controller1_inputs[i] = (bool*)(&state[mapped_keys[i]]);
     }
-    cont1 = new Controller(controller1_inputs);
+    Controller* cont1 = new Controller(controller1_inputs);
 
     start = epoch();
     start_nano = epoch_nano();
@@ -569,7 +583,7 @@ int main(int argc, char ** argv) {
     std::thread sampleGet(sampleAPU);
     //std::thread tCPU(CPUThread);
     //std::thread tPPU(PPUThread);
-    //std::thread AudioThread(AudioLoop);
+    //std::thread tAPU(APUThread);
 
     printf("NES thread started. Starting main window loop...\n");
     printf("x,y\n");
@@ -604,9 +618,9 @@ int main(int argc, char ** argv) {
             //printf("size 16 sprites: %i\n",*(ppu_ptr->PPUCTRL)&0x20);
             //ppu_ptr->image_mutex.lock();
             float diff = t_time-last_time;
-            //char * new_title = new char[255];
-            //sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
-            //SDL_SetWindowTitle(window,new_title);
+            char * new_title = new char[255];
+            sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
+            SDL_SetWindowTitle(window,new_title);
 
             last_time = SDL_GetTicks()/1000.0;
         }
@@ -677,15 +691,9 @@ int main(int argc, char ** argv) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        ppu_ptr->image_mutex.unlock();
+        //ppu_ptr->image_mutex.unlock();
         // event loop
         SDL_PumpEvents();
-        
-        //update controller inputs
-        for (int i=0; i<8; i++) {
-            controller1_inputs[i] = state[mapped_keys[i]];
-        }
-
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
                 case SDL_QUIT:
@@ -736,12 +744,18 @@ int main(int argc, char ** argv) {
                                 interrupted = true;
                                 NESThread.join();
                                 sampleGet.join();
+                                //tCPU.join();
+                                //tPPU.join();
+                                //tAPU.join();
                                 cpu.init_vals();
                                 rom.reset_mapper();
                                 cpu.loadRom(&rom);
                                 cpu.reset();
                                 interrupted = false;
                                 NESThread = std::thread(NESLoop);
+                                //tCPU = std::thread(CPUThread);
+                                //tPPU = std::thread(PPUThread);
+                                //tAPU = std::thread(APUThread);
                                 sampleGet = std::thread(sampleAPU);
                             }
                             break;
@@ -776,12 +790,13 @@ int main(int argc, char ** argv) {
     SDL_CloseAudioDevice(audio_device);
     SDL_Quit();
     free(filtered);
-    delete cont1;
+    //delete cont1;
     delete[] original_start;
     delete[] audio_buffer;
     printf("Quit successfully.\n");
     //tCPU.join();
     //tPPU.join();
+    //tAPU.join();
     //stbi_image_free(img);
     return 0;
 }
