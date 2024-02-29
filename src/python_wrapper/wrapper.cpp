@@ -31,11 +31,12 @@ class NES {
 
 NES::NES(char* rom_name) {
     rom = new ROM(rom_name);
-    cpu = new CPU();
-    ppu = new PPU(cpu);
-    apu = new APU();
-    apu->cpu = cpu;
-    cpu->apu = apu;
+    cpu = new CPU(false);
+    //ppu = new PPU(cpu);
+    //apu = new APU();
+    //apu->cpu = cpu;
+    //cpu->apu = apu;
+    cpu_mem = (uint8_t*)cpu->memory;
 }
 
 NES::~NES() {
@@ -46,5 +47,6 @@ NES::~NES() {
 }
 
 PYBIND11_MODULE(pyNES,m) {
-    py::class_<NES>(m,"NES").def(py::init<char*>());
+    py::class_<NES>(m,"NES").def(py::init<char*>())
+    .def_readwrite("cpu_mem",&NES::cpu_mem);
 }
