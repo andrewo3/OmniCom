@@ -44,9 +44,7 @@ ext_modules = [
     Pybind11Extension(
         "pyNES",
         sources = files,
-        include_dirs = include_path.split(sep),
-        libraries = ["SDL2main","SDL2","user32","kernel32"],
-        library_dirs = library_paths
+        include_dirs = include_path.split(sep)
     )
 ]
 

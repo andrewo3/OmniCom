@@ -5,6 +5,7 @@
 #include "mapper.h"
 #include "apu.h"
 #include "pybind11/pybind11.h"
+#include "pybind11/numpy.h"
 #include <cstdint>
 
 
@@ -20,8 +21,8 @@ class NES {
         NES(char* rom_name);
         ~NES();
         int mapper;
-        uint8_t* cpu_mem;
-        uint8_t* ppu_mem;
+        py::array_t<uint8_t> cpuMem();
+
     private:
         CPU* cpu;
         PPU* ppu;
@@ -36,7 +37,17 @@ NES::NES(char* rom_name) {
     //apu = new APU();
     //apu->cpu = cpu;
     //cpu->apu = apu;
-    cpu_mem = (uint8_t*)cpu->memory;
+}
+
+py::array_t<uint8_t> NES::cpuMem() {
+    uint8_t* tmp = (uint8_t*)cpu->memory;
+    py::capsule cleanup(tmp,[](void *f){});
+    return py::array_t<uint8_t>(
+        {0x10000},
+        {sizeof(uint8_t)},
+        tmp,
+        cleanup
+    );
 }
 
 NES::~NES() {
@@ -48,5 +59,5 @@ NES::~NES() {
 
 PYBIND11_MODULE(pyNES,m) {
     py::class_<NES>(m,"NES").def(py::init<char*>())
-    .def_readwrite("cpu_mem",&NES::cpu_mem);
+    .def("cpuMem",&NES::cpuMem);
 }
