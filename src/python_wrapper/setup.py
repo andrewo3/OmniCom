@@ -2,8 +2,6 @@ from glob import glob
 from sys import platform
 from os import environ, chdir
 from os.path import *
-from setuptools import setup
-from pybind11.setup_helpers import Pybind11Extension
 file_sep = "/"
 sep = ":"
 folder = "unix"
@@ -15,29 +13,42 @@ if platform == "win32":
 cwd = dirname(realpath(__file__))
 chdir(cwd)
 #sorted(glob("*.cpp")),  # Sort source files for reproducibility
-root_src = glob("../*.cpp")
-imgui = glob("../imgui/*.cpp")
-imgui_backends = glob("../imgui/backend/*.cpp")
+root_src = glob(f"{realpath("..")}"+f"{file_sep}*.cpp")
+imgui = glob(f"..{file_sep}imgui{file_sep}*.cpp")
+imgui_backends = glob(f"..{file_sep}imgui{file_sep}backend{file_sep}*.cpp")
 files = sorted(root_src+imgui+imgui_backends)
 files.append("wrapper.cpp")
-files.remove(f"..{file_sep}main.cpp")
-libs = sorted(glob("../../lib/*.*"))
-include_path = f"{realpath(f"../../include/{folder}")}{sep}{realpath("../ntsc-filter")}{sep}{realpath("../../include/universal")}{sep}{realpath("../imgui")}{sep}{realpath("../imgui/backends")}"
-ext_modules = [
-    Pybind11Extension(
-        "pyNES",
-        files
-    ),
-]
+files.remove(realpath(f"..{file_sep}main.cpp"))
+lib_path = realpath(f"..{file_sep}..{file_sep}lib")
+libs = sorted(glob(f"{lib_path}{file_sep}*.*"))
+include_path = f"{realpath(f"../../include/{folder}".replace("/",file_sep))}{sep}{realpath("../ntsc-filter".replace("/",file_sep))}{sep}{realpath("../../include/universal".replace("/",file_sep))}{sep}{realpath("../imgui".replace("/",file_sep))}{sep}{realpath("../imgui/backends".replace("/",file_sep))}"
+include_path = include_path.replace("/",file_sep)
+
+library_paths = []
+library_paths.append(lib_path)
 
 environ["CFLAGS"] = "-std=c++11"
 if platform == "win32":
-    environ["INCLUDE"] = include_path
-    environ["LIB"] = realpath("../../lib")
+    #environ["INCLUDE"] = include_path
+    environ["LIBPATH"] = realpath("..\\..\\lib")
+    #environ["CFLAGS"]+=f" -L{realpath("..\\..\\lib")} -rpath {realpath("..\\..\\lib")} -lmingw32 -lSDL2main -lSDL2 -mwindows"
 else:
     environ["CFLAGS"]+=f" -F{realpath("../../bin")} -framework SDL2 -rpath {realpath("../../bin")}"
     environ["CPLUS_INCLUDE_PATH"] += include_path
     environ["LD_LIBRARY_PATH"] = realpath("../../lib")
+
+from setuptools import setup
+from pybind11.setup_helpers import Pybind11Extension
+
+ext_modules = [
+    Pybind11Extension(
+        "pyNES",
+        sources = files,
+        include_dirs = include_path.split(sep),
+        libraries = ["SDL2main","SDL2","user32","kernel32"],
+        library_dirs = library_paths
+    )
+]
 
 setup(
     name='pyNES',
