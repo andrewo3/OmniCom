@@ -527,7 +527,7 @@ int main(int argc, char ** argv) {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -541,11 +541,14 @@ int main(int argc, char ** argv) {
     printf("Window texture bound and mapped.\n");
 
     //set up controller
-    bool* controller1_inputs[8];
+    bool controller1_inputs[8];
+    bool controller2_inputs[8];
     for (int i=0; i<8; i++) {
-        controller1_inputs[i] = (bool*)(&state[mapped_keys[i]]);
+        controller1_inputs[i] = state[mapped_keys[i]];
+        controller2_inputs[i] = false;
     }
     Controller* cont1 = new Controller(controller1_inputs);
+    Controller* cont2 = new Controller(controller2_inputs);
 
     start = epoch();
     start_nano = epoch_nano();
@@ -563,6 +566,7 @@ int main(int argc, char ** argv) {
 
     cpu.loadRom(&rom);
     cpu.set_controller(cont1,0);
+    cpu.set_controller(cont2,1);
     cpu.reset();
     printf("ROM loaded into CPU.\n");
 
@@ -627,7 +631,7 @@ int main(int argc, char ** argv) {
         //logic is executed in nes thread
         //apply ntsc filter before drawing
         if (use_shaders) {
-            ntsc.data = out_img; /* buffer from your rendering */
+            ntsc.data = ppu.getImg(); /* buffer from your rendering */
             ntsc.format = CRT_PIX_FORMAT_RGB;
             ntsc.w = NES_DIM[0];
             ntsc.h = NES_DIM[1];
@@ -644,7 +648,7 @@ int main(int argc, char ** argv) {
             //render texture from nes (temporarily test_image.jpg)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
         } else {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, out_img);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, ppu.getImg());
             
         }
 
@@ -694,6 +698,15 @@ int main(int argc, char ** argv) {
         //ppu_ptr->image_mutex.unlock();
         // event loop
         SDL_PumpEvents();
+
+        //update controllers
+        for (int i=0; i<8; i++) {
+            controller1_inputs[i] = state[mapped_keys[i]];
+            controller2_inputs[i] = false;
+        }
+        cont1->update_inputs(controller1_inputs);
+        cont2->update_inputs(controller2_inputs);
+
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
                 case SDL_QUIT:
@@ -793,6 +806,8 @@ int main(int argc, char ** argv) {
     //delete cont1;
     delete[] original_start;
     delete[] audio_buffer;
+    delete cont1;
+    delete cont2;
     printf("Quit successfully.\n");
     //tCPU.join();
     //tPPU.join();

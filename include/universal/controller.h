@@ -5,18 +5,19 @@
 
 class Controller {
     public:
-        Controller(bool** inputs);
-        void set_inputs(bool** new_inputs);
+        Controller() {}
+        Controller(bool* inputs);
+        void update_inputs(bool* new_inputs);
         uint8_t get_input_byte();
-        bool** cont_inputs;
-        bool* A;
-        bool* B;
-        bool* Select;
-        bool* Start;
-        bool* Up;
-        bool* Down;
-        bool* Left;
-        bool* Right;
+        bool cont_inputs[8] = {0};
+        bool A;
+        bool B;
+        bool Select;
+        bool Start;
+        bool Up;
+        bool Down;
+        bool Left;
+        bool Right;
 };
 
 

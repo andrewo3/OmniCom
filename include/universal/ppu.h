@@ -32,6 +32,11 @@ class PPU {
         bool mutex_locked = false;
         int chr_bank_num = 0;
 
+        //image
+        unsigned char* getImg() {
+            return current_img;
+        }
+
 
         //test
         int vbl_count = 0;
@@ -91,6 +96,7 @@ class PPU {
         bool nextspritezeropresent = false;
         bool sprite_eval = false;
         unsigned char internal_img[184320]; //output image running copy
+        unsigned char current_img[184320] = {0}; //output full frame
 };
 
 #endif

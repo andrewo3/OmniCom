@@ -233,7 +233,6 @@ void CPU::write(int8_t* address, int8_t value) {
             input_strobe = value&1;
             if (input_strobe) {
                 //poll input
-                SDL_PumpEvents();
                 inputs[0] = conts[0] == nullptr ? 0 : conts[0]->get_input_byte();
                 inputs[1] = conts[1] == nullptr ? 0 : conts[1]->get_input_byte();
             }

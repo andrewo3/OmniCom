@@ -2,14 +2,15 @@
 #include <cstdint>
 #include <cstdbool>
 #include <cstdio>
+#include <cstring>
 
-Controller::Controller(bool** inputs)  {
-    printf("Class Input: %08x\n",inputs);
-    set_inputs(inputs);
+
+Controller::Controller(bool* inputs)  {
+    update_inputs(inputs);
 }
 
-void Controller::set_inputs(bool** new_inputs) {
-    cont_inputs = new_inputs;
+void Controller::update_inputs(bool* new_inputs) {
+    memcpy(cont_inputs,new_inputs,8*sizeof(bool));
     A = cont_inputs[0];
     B = cont_inputs[1];
     Select = cont_inputs[2];
@@ -23,7 +24,7 @@ void Controller::set_inputs(bool** new_inputs) {
 uint8_t Controller::get_input_byte() {
     uint8_t res = 0;
     for (int i=0; i<8; i++) {
-        res|=*(cont_inputs[7-i])<<i;
+        res|=(cont_inputs[7-i])<<i;
     }
     return res;
 }

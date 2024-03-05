@@ -357,7 +357,7 @@ void PPU::cycle() {
         //printf("vblank!\n");
         if (vblank==false && scycle>=1) { //start vblank as soon as you reach this
             vblank = true;
-            memcpy(out_img,internal_img,sizeof(uint8_t)*184320); //copy internal img to out image every frame update
+            memcpy(current_img,internal_img,sizeof(uint8_t)*184320); //copy internal img to out image every frame update
             mutex_locked = false;
             *PPUSTATUS|=0x80;
             if ((*PPUCTRL)&0x80) { // if ppu is configured to generate nmi, do so.

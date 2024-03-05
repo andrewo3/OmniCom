@@ -10,7 +10,6 @@
 #include "controller.h"
 
 const int BUFFER_LEN = 1024;
-unsigned char out_img[184320]; //output image
 std::string config_dir;
 char sep;
 
