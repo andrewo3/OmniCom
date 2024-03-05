@@ -7,9 +7,14 @@ nesObj = pyNES.NES(abspath("../../res/roms/Super Mario Bros. 3 (U) (PRG1) [!].ne
 #nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld2.nes"))
 print(dir(nesObj))
 nesObj.start()
+
+controller_port1 = pyNES.Controller()
+nesObj.setController(controller_port1,0)
+cpu_mem = nesObj.cpuMem()
+
 window_dim = [256,240]
 window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
-nes_surf = pygame.Surface((256,240))
+nes_surf = pygame.Surface((240,256))
 running = True
 while running:
     state = pygame.key.get_pressed()
@@ -21,6 +26,8 @@ while running:
             state[pygame.K_DOWN],
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
+    controller_port1.updateInputs(keys)
+    cpu_mem[0x736] = 10
     pygame.pixelcopy.array_to_surface(nes_surf,nesObj.getImg())
     window.blit(pygame.transform.scale(pygame.transform.flip(pygame.transform.rotate(nes_surf,-90),True,False),window_dim),(0,0))
     pygame.display.update()

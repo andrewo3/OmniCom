@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <thread>
 #include <chrono>
+#include <vector>
 
 enum class Button {
     A = 0,
@@ -30,6 +31,21 @@ class PPU;
 class APU;
 class ROM;
 
+class ControllerWrapper {
+    public:
+        Controller cont;
+        ControllerWrapper() {cont = Controller();}
+        void updateInputs(py::list inputs);
+};
+
+void ControllerWrapper::updateInputs(py::list inputs) {
+    bool data[8];
+    for (int i=0; i<8; i++) {
+        data[i] = py::cast<bool>(inputs[i]);
+    }
+    cont.update_inputs(data);
+}
+
 class NES {
     public:
         NES(char* rom_name);
@@ -37,7 +53,7 @@ class NES {
         int mapper;
         py::array_t<uint8_t> cpuMem();
         py::array_t<uint8_t> getImg();
-        void setController(Controller& cont,int port);
+        void setController(ControllerWrapper& cont,int port);
         void start();
         void stop();
         void operation_thread();
@@ -73,8 +89,8 @@ NES::NES(char* rom_name) {
 
 }
 
-void NES::setController(Controller& cont, int port) {
-    cpu->set_controller(&cont,port);
+void NES::setController(ControllerWrapper& cont, int port) {
+    cpu->set_controller(&(cont.cont),port);
 }
 
 void NES::operation_thread() {
@@ -145,7 +161,7 @@ py::array_t<uint8_t> NES::getImg() {
     uint8_t* tmp = (uint8_t*)ppu->getImg();
     py::capsule cleanup(tmp,[](void *f){});
     return py::array_t<uint8_t>(
-        {256,240,3},
+        {240,256,3},
         {sizeof(uint8_t)*256*3,sizeof(uint8_t)*3,sizeof(uint8_t)},
         tmp,
         cleanup
@@ -166,7 +182,7 @@ PYBIND11_MODULE(pyNES,m) {
     .def("start",&NES::start)
     .def("stop",&NES::stop)
     .def("setController",&NES::setController);
-    py::class_<Controller>(m,"Controller").def(py::init<bool*>())
-    .def("updateInputs",&Controller::update_inputs);
+    py::class_<ControllerWrapper>(m,"Controller").def(py::init<>())
+    .def("updateInputs",&ControllerWrapper::updateInputs);
 
 }
