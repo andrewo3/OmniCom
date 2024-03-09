@@ -57,6 +57,8 @@ class NES {
         void start();
         void stop();
         void operation_thread();
+        void save(char * name);
+        void load(char * name);
         
         Controller cont1;
         Controller cont2;
@@ -86,6 +88,14 @@ NES::NES(char* rom_name) {
     cpu->reset();
     ppu = new PPU(cpu);
 
+
+}
+
+void NES::save(char* name) {
+    
+}
+
+void NES::load(char* name) {
 
 }
 
