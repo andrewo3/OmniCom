@@ -78,7 +78,7 @@ NES::NES(char* rom_name) {
     rom = new ROM(rom_name);
     cpu = new CPU(false);
     apu = new APU();
-    apu->cpu = cpu;
+    apu->setCPU(cpu);
     cpu->apu = apu;
     cpu->loadRom(rom);
     cont1 = Controller();

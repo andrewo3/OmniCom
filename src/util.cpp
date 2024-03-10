@@ -37,6 +37,7 @@ SDL_Joystick* controller = NULL;
 
 //parameters
 float global_volume = 50;
+float global_db = 0.24;
 bool use_shaders = false;
 int changing_keybind = -1;
 int render_engine = 0;
@@ -182,6 +183,7 @@ void pause_menu(void** system) {
             }
         case 4:
             ImGui::SliderFloat(labelPrefix("Volume").c_str(),&global_volume,0.0,100.0,"%.0f%",0);
+            global_db = (powf(10,global_volume/100)-1)/9;
             break;
     }
     ImGui::End();

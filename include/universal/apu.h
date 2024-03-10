@@ -9,6 +9,7 @@ class CPU;
 class APU {
     public:
         ~APU();
+        APU();
         void setCPU(CPU* c_ptr);
         void cycle(); 
         void send();// final output (modify current_out variable and send to audio callback)
@@ -17,7 +18,10 @@ class APU {
         long long timer_reset = 0;
         SDL_AudioDeviceID device;
         int sample_adj = 0;
-        int16_t* audio_buffer = new int16_t[BUFFER_LEN];
+        int16_t* buffer = new int16_t[BUFFER_LEN];
+        int16_t* buffer_copy = new int16_t[BUFFER_LEN];
+        bool queue_audio_flag = false;
+        int clock_speed;
 
         CPU* cpu;
         long long audio_frame = 0;

@@ -5,24 +5,31 @@
 
 
 APU::~APU() {
-    delete[] audio_buffer;
+    delete[] buffer;
+    delete[] buffer_copy;
 }
+
+APU::APU() {
+    for (int i=0; i<BUFFER_LEN; i++) {
+        buffer[i] = 0;
+    }
+}
+
 void APU::setCPU(CPU* c_ptr) {
     cpu = c_ptr;
-    FRAME_COUNTER = &cpu->memory[0x4017];
+    clock_speed = c_ptr->CLOCK_SPEED/2;
 }
 
 int16_t mix(APU* a_ptr) {
     //pulse1/60.0+pulse2/60.0+
     //a_ptr->audio_frame++;
-    long clock_speed = a_ptr->cpu->CLOCK_SPEED/2;
     int sr = a_ptr->sample_rate;
     bool* en = a_ptr->enabled;
     int8_t p_out = (en[0] ? a_ptr->pulse_out[0] : 0)+(en[1] ? a_ptr->pulse_out[1] : 0);
     float tnd_out = 0.00851*(en[2] ? a_ptr->tri_out : 0) + 0.00494*(en[3] ? a_ptr->noise_out : 0) + 0.00335*(en[4] ? (a_ptr->dmc_out-64)*2 : 0);
     //p_out = 15*((a_ptr->cycles*2*440/(clock_speed))%2);
     float final_vol = 0.00752*p_out+tnd_out;
-    int16_t output = final_vol*32767*(powf(10,global_volume/100)-1)/9;
+    int16_t output = final_vol*32767*global_db;
     //output = a_ptr->audio_buffer[(a_ptr->buffer_ind+ind)%BUFFER_LEN];
     //printf("out: %f\n", (float)output/32767);
     return output;
@@ -168,6 +175,15 @@ void APU::cycle() { // apu clock (every other cpu cycle)
 
     noise();
     dmc();
+
+    if (audio_frame<cycles*sample_rate/clock_speed) {
+        if (audio_frame%BUFFER_LEN==0) {
+            memcpy(buffer_copy,buffer,sizeof(int16_t)*BUFFER_LEN);
+            queue_audio_flag = true;
+        }
+        buffer[audio_frame%BUFFER_LEN] = mix(this);
+        audio_frame++;
+    }
 
     cycles++;
 }

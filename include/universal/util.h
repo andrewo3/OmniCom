@@ -31,6 +31,7 @@ extern const uint8_t* state;
 
 //parameters
 extern float global_volume;
+extern float global_db;
 extern bool use_shaders;
 extern int changing_keybind;
 extern SDL_Scancode mapped_keys[8];

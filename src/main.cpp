@@ -83,7 +83,6 @@ double t = 0;
 bool fullscreen_toggle = 0;
 static int16_t audio_pt = 0;
 bool paused = false;
-long clock_speed = 0;
 int diffs[10] = {0};
 int frames = 0;
 int desired_fps = 60;
@@ -97,10 +96,11 @@ GLuint fragmentShader;
 CPU *cpu_ptr;
 PPU *ppu_ptr;
 APU * apu_ptr;
-SDL_AudioDeviceID audio_device;
+
 char* device_name;
 SDL_AudioSpec audio_spec;
 
+SDL_AudioDeviceID audio_device;
 
 
 int usage_error() {
@@ -129,6 +129,7 @@ void get_filename(char** path) {
 
 void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
+    int clock_speed = cpu_ptr->emulated_clock_speed();
     printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",clock_speed,clock_speed/1789773.0*100);
     //for test purpose: remove once done testing!!
     /*std::FILE* memory_dump = fopen("dump","w");
@@ -251,14 +252,21 @@ void sampleAPU() {
     int16_t buffer[BUFFER_LEN] = {0};
     int16_t buffer_copy[BUFFER_LEN] = {0};
     long long last_q = 0;
+    long long last_cycles = 0;
+    long long cycles_per_audio = cpu_ptr->CLOCK_SPEED/sr;
     while (!interrupted) {
-        int16_t out = mix(apu_ptr);
+        if (apu_ptr->queue_audio_flag) {
+            SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
+            apu_ptr->queue_audio_flag = false;
+        }
+        /*int16_t out = mix(apu_ptr);
         long long internal_nano = apu_ptr->cycles*2*1e9/cpu_ptr->CLOCK_SPEED;
         //out = 0;
         //std::lock_guard<std::mutex> lock(audioBufferMutex);
         //printf("queue: %i\n",out);
-        while (loops<internal_nano/ns_wait) {
+        if (loops < cpu_ptr->cycles/sr) {
             //buffer[loops%BUFFER_LEN] = loops%BUFFER_LEN ? mix(apu_ptr) : 32767;
+            last_cycles = cpu_ptr->cycles;
             buffer[loops%BUFFER_LEN] = mix(apu_ptr);
             //printf("%lf,%i\n",(double)loops/sr,buffer[loops%BUFFER_LEN]);
             loops++;
@@ -274,12 +282,10 @@ void sampleAPU() {
                     SDL_QueueAudio(audio_device,&buffer_copy,sizeof(int16_t)*BUFFER_LEN);
                 }
             }
-            if (internal_nano/ns_wait>last_q+1) {
-                //printf("skipped smth: %lli %lli\n",internal_nano/ns_wait,last_q);
-            }
             last_q = internal_nano/ns_wait;
-        }
-        std::this_thread::sleep_for(std::chrono::nanoseconds(ns_wait));
+            //std::this_thread::sleep_for(std::chrono::nanoseconds(ns_wait));
+        }*/
+        //printf("test smth\n");
         //audio_buffer[buffer_ind++] = out;
         //if (buffer_ind>=BUFFER_LEN) {
             //buffer_ind = 0;
@@ -291,6 +297,7 @@ void sampleAPU() {
 void NESLoop() {
     
     const double ns_wait = 1e9/cpu_ptr->CLOCK_SPEED;
+    long ns_wait_l = (long)ns_wait;
     printf("Elapsed: %lf\n",ns_wait);
     void* system[3] = {cpu_ptr,ppu_ptr,apu_ptr};
     //emulator loop
@@ -298,33 +305,32 @@ void NESLoop() {
         if (!paused) {
             //if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
             //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
-            cpu_ptr->clock();
-            // 3 dots per cpu cycle
-            total_ticks = cpu_ptr->cycles;
-            clock_speed = cpu_ptr->emulated_clock_speed();
+            while (cpu_ptr->cycles<(real_time-paused_time)*cpu_ptr->CLOCK_SPEED/1000000000) {
+                cpu_ptr->clock();
 
-            while (apu_ptr->cycles*2<cpu_ptr->cycles) {
-                apu_ptr->cycle();
-                //apu_ptr->cycles++;
-            }
-            while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
-                ppu_ptr->cycle();
-                cpu_ptr->rom->get_mapper()->clock(&system[0]);
-                
-                
-                if (ppu_ptr->debug) {
-                    printf("PPU REGISTERS: ");
-                    printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
-                    printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
+                while (apu_ptr->cycles*2<cpu_ptr->cycles) {
+                    apu_ptr->cycle();
+                    //apu_ptr->cycles++;
                 }
-                //printf("%i\n",ppu.v);
+                while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
+                    ppu_ptr->cycle();
+                    cpu_ptr->rom->get_mapper()->clock(&system[0]);
+                    
+                    
+                    if (ppu_ptr->debug) {
+                        printf("PPU REGISTERS: ");
+                        printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
+                        printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
+                    }
+                    //printf("%i\n",ppu.v);
+                }
             }
             real_time = epoch_nano()-start_nano;
-            long long cpu_time = ns_wait*cpu_ptr->cycles;
-            int diff = cpu_time-(real_time-paused_time);
-            if (diff > 0) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(diff));
-            }
+            //long long cpu_time = ns_wait*cpu_ptr->cycles;
+            //int diff = cpu_time-(real_time-paused_time);
+            /*if (diff > 0) {
+                std::this_thread::sleep_for(std::chrono::nanoseconds(ns_wait_l));
+            }*/
         }
         
     }
@@ -561,7 +567,7 @@ int main(int argc, char ** argv) {
     apu.device = audio_device;
     cpu.apu = &apu;
     apu_ptr = &apu;
-    apu.cpu = &cpu;
+    apu.setCPU(&cpu);
     printf("APU set\n");
 
     cpu.loadRom(&rom);
