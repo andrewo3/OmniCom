@@ -256,7 +256,13 @@ void sampleAPU() {
     long long cycles_per_audio = cpu_ptr->CLOCK_SPEED/sr;
     while (!interrupted) {
         if (apu_ptr->queue_audio_flag) {
-            SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
+            int buffer_size = SDL_GetQueuedAudioSize(audio_device); 
+            if (buffer_size>BUFFER_LEN*sizeof(int16_t)*2) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
+                SDL_DequeueAudio(audio_device,nullptr,sizeof(int16_t)*BUFFER_LEN);
+            } else {
+                SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
+            }
+            //SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
             apu_ptr->queue_audio_flag = false;
         }
         /*int16_t out = mix(apu_ptr);
