@@ -49,7 +49,7 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
                 }
             }
             int bank_size = (0x400<<(r<2));
-            memcpy(ppu->memory+start_loc,rom->get_chr_bank((val&(~(r<2)))),bank_size);
+            memcpy(ppu->memory+start_loc,rom->get_chr_bank((uint8_t)(val&(~(r<2)))),bank_size);
         } else {
             uint16_t start_loc = 0x2000*(r==7)+0x4000*(r!=7 && (xbase&0x40));
             memcpy(&cpu->memory[0x8000]+start_loc,rom->get_prg_bank((val&0x3F)<<3),0x2000);
@@ -270,10 +270,10 @@ void MMC1::map_write(void** ptrs, int8_t* address, int8_t* value) {
                     control(cpu,ppu,bank_reg);
                     //printf("MMC1 Control: ");
                 } else if (location >= 0xA000 && location <= 0xBFFF) {
-                    memcpy(ppu->memory,rom->get_chr_bank((bank_reg&(~(!chr_mode)))<<2),sizeof(uint8_t)*(0x1000)<<(!chr_mode));
+                    memcpy(ppu->memory,rom->get_chr_bank((uint8_t)((bank_reg&(~(!chr_mode)))<<2)),sizeof(uint8_t)*(0x1000)<<(!chr_mode));
                     //printf("MMC1 CHR BANK 1: ");
                 } else if (location >= 0xC000 && location <= 0xDFFF && chr_mode) {
-                    memcpy(&ppu->memory[0x1000],rom->get_chr_bank(bank_reg<<2),sizeof(uint8_t)*0x1000);
+                    memcpy(&ppu->memory[0x1000],rom->get_chr_bank((uint8_t)(bank_reg<<2)),sizeof(uint8_t)*0x1000);
                     //printf("MMC1 CHR BANK 2: ");
                 } else if (location >= 0xE000 && location <= 0xFFFF) {
                     //printf("MMC1 PRG BANK: ");
