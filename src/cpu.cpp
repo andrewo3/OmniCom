@@ -169,6 +169,7 @@ void CPU::write(int8_t* address, int8_t value) {
             break;
         case 0x400A:
             apu->tri_period=(value&0xff)|((memory[0x400B]&0x7)<<8);
+            break;
         case 0x400B:
             apu->tri_period=(memory[0x400A]&0xff)|((value&0x7)<<8);
             apu->length_counter[2] = apu->length_lookup((value&0xF8)>>3);

@@ -210,7 +210,7 @@ void APU::pulse(bool ind) {
 }
 
 void APU::triangle() {
-    if (linear_counter==0 || length_counter[2]==0) {
+    if (linear_counter==0 || length_counter[2]==0 || tri_period<2) {
         tri_out = 0;
     } else {
         tri_out = (tri_sequence[tri_ind]-7.5)*2;

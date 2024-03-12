@@ -307,13 +307,13 @@ void PPU::cycle() {
             internal_img[3*(scan_cyc+(scanline<<8))+1] = NTSC_TO_RGB[color_ind+1];
             internal_img[3*(scan_cyc+(scanline<<8))+2] = NTSC_TO_RGB[color_ind+2];
             if ((*PPUMASK)&0x80) {
-                internal_img[3*(scan_cyc+(scanline<<8))+2] = 255;
+                //internal_img[3*(scan_cyc+(scanline<<8))+2] = 255;
             }
             if ((*PPUMASK)&0x40) {
-                internal_img[3*(scan_cyc+(scanline<<8))+1] = 255;
+                //internal_img[3*(scan_cyc+(scanline<<8))+1] = 255;
             }
             if ((*PPUMASK)&0x20) {
-                internal_img[3*(scan_cyc+(scanline<<8))] = 255;
+                //internal_img[3*(scan_cyc+(scanline<<8))] = 255;
             }
             
             internalx++;
@@ -420,7 +420,8 @@ void PPU::map_memory(int16_t* addr) {
                 *addr -= location&0x800; //horizontal nametable mirroring
                 break;
             case SINGLESCREEN:
-                *addr -= 0x400*((location-0x2000)/0x400);
+                *addr = 0x2000|(location&0x3ff);
+                break;
 
             //fourtable has nothing because four table is no mirroring at all
         }

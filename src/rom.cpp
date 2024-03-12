@@ -211,23 +211,16 @@ void ROM::load_file(const char* src) {
 }
 
 uint8_t* ROM::get_prg_bank(int bank_num) { //gets banks in 1 KB units
-    if (bank_num>prgsize/0x400) {
-        printf("Bank number out of bounds\n");
-        throw(1);
-   }
-    return prg+0x400*bank_num;
+    return prg+0x400*(bank_num%(prgsize/0x400));
 }
 
 uint8_t* ROM::get_chr_bank(int bank_num) { //gets banks in 1 KB units
-    if (chrsize!=0 && bank_num>(chrsize/0x400-1)) {
-        printf("Bank number %i out of bounds - %i, %i\n",bank_num,chrsize,chrsize/0x400);
-        throw(1);
-    } else if (chrsize==0) { // using chr-ram
+    if (chrsize==0) { // using chr-ram
         //something else will be done
-        printf("CHR-RAM\n");
+        //printf("CHR-RAM\n");
         return chr_ram;
     }
-    return chr+0x400*bank_num;
+    return chr+0x400*(bank_num%(chrsize/0x400));
 }
 
 ROM::~ROM() {
