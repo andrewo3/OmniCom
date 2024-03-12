@@ -1,7 +1,6 @@
 #include "rom.h"
 #include "cpu.h"
 #include "ppu.h"
-#include "util.h"
 #include "mapper.h"
 #include <cstdint>
 #include <cstdio>

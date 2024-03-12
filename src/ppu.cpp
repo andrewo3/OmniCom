@@ -1,4 +1,3 @@
-#include "util.h"
 #include "rom.h"
 #include "ppu.h"
 #include "cpu.h"

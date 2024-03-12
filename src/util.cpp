@@ -9,10 +9,6 @@
 #include "cpu.h"
 #include "controller.h"
 
-const int BUFFER_LEN = 1024;
-std::string config_dir;
-char sep;
-
 GLfloat vertices[16] = {
         -1.0f, 1.0f,0.0f,0.0f,
         -1.0f, -1.0f,0.0f,1-0.04f*use_shaders,
@@ -160,7 +156,11 @@ void pause_menu(void** system) {
                     ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
                     active = true;
                 }
-                if (ImGui::Button(SDL_GetScancodeName(mapped_keys[i]),ImVec2(100,50)) && changing_keybind==-1) {
+                std::string labelID = "";
+                labelID+=SDL_GetScancodeName(mapped_keys[i]);
+                labelID+="##";
+                labelID+='0'+i;
+                if (ImGui::Button(labelID.c_str(),ImVec2(100,50)) && changing_keybind==-1) {
                     changing_keybind = i;
                 }
                 if (active) {

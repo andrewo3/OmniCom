@@ -230,7 +230,8 @@ void NTDEC2722::clock(void** ptrs) {
 void MMC1::control(CPU* cpu, PPU* ppu, uint8_t val) {
     uint8_t mirroring = val&0x3;
     switch (mirroring) {
-        case 0 ... 1:
+        case 0:
+        case 1:
             cpu->rom->mirrormode = SINGLESCREEN;
             break;
         case 2:
@@ -278,7 +279,8 @@ void MMC1::map_write(void** ptrs, int8_t* address, int8_t* value) {
                 } else if (location >= 0xE000 && location <= 0xFFFF) {
                     //printf("MMC1 PRG BANK: ");
                     switch (prg_mode) {
-                        case 0 ... 1:
+                        case 0:
+                        case 1:
                             memcpy(&cpu->memory[0x8000],rom->get_prg_bank((bank_reg&(~1))<<4),sizeof(uint8_t)*0x8000);
                             break;
                         case 2:

@@ -3,7 +3,7 @@
 
 #include "rom.h"
 #include "apu.h"
-#include "util.h"
+#include "glob_const.h"
 #include "controller.h"
 #include <cstdint>
 

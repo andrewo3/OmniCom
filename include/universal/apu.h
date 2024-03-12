@@ -2,7 +2,7 @@
 #define APU_H
 #include <cstdint>
 #include "cpu.h"
-#include "util.h"
+#include "glob_const.h"
 
 class CPU;
 
@@ -16,7 +16,6 @@ class APU {
         long long start = epoch_nano();
         long long cycles = 0;
         long long timer_reset = 0;
-        SDL_AudioDeviceID device;
         int sample_adj = 0;
         int16_t* buffer = new int16_t[BUFFER_LEN];
         int16_t* buffer_copy = new int16_t[BUFFER_LEN];

@@ -1,4 +1,3 @@
-#include "util.h"
 #include "apu.h"
 #include <cstdint>
 #include <cmath>
@@ -29,7 +28,7 @@ int16_t mix(APU* a_ptr) {
     float tnd_out = 0.00851*(en[2] ? a_ptr->tri_out : 0) + 0.00494*(en[3] ? a_ptr->noise_out : 0) + 0.00335*(en[4] ? (a_ptr->dmc_out-64)*2 : 0);
     //p_out = 15*((a_ptr->cycles*2*440/(clock_speed))%2);
     float final_vol = 0.00752*p_out+tnd_out;
-    int16_t output = final_vol*32767*global_db;
+    int16_t output = final_vol*32767;
     //output = a_ptr->audio_buffer[(a_ptr->buffer_ind+ind)%BUFFER_LEN];
     //printf("out: %f\n", (float)output/32767);
     return output;

@@ -260,43 +260,14 @@ void sampleAPU() {
             if (buffer_size>BUFFER_LEN*sizeof(int16_t)*2) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
                 SDL_DequeueAudio(audio_device,nullptr,sizeof(int16_t)*BUFFER_LEN);
             } else {
+                for (int i=0; i<BUFFER_LEN; i++) {
+                    apu_ptr->buffer_copy[i]*=global_db;
+                }
                 SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
             }
             //SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
             apu_ptr->queue_audio_flag = false;
         }
-        /*int16_t out = mix(apu_ptr);
-        long long internal_nano = apu_ptr->cycles*2*1e9/cpu_ptr->CLOCK_SPEED;
-        //out = 0;
-        //std::lock_guard<std::mutex> lock(audioBufferMutex);
-        //printf("queue: %i\n",out);
-        if (loops < cpu_ptr->cycles/sr) {
-            //buffer[loops%BUFFER_LEN] = loops%BUFFER_LEN ? mix(apu_ptr) : 32767;
-            last_cycles = cpu_ptr->cycles;
-            buffer[loops%BUFFER_LEN] = mix(apu_ptr);
-            //printf("%lf,%i\n",(double)loops/sr,buffer[loops%BUFFER_LEN]);
-            loops++;
-            if (loops%BUFFER_LEN==0) {
-                int buffer_size = SDL_GetQueuedAudioSize(audio_device);
-                
-                memcpy(&buffer_copy,&buffer,BUFFER_LEN*sizeof(int16_t));
-                if (buffer_size>BUFFER_LEN*sizeof(int16_t)*2) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
-                    //printf("overflow\n");
-                    //printf("%i\n",buffer_size);
-                    SDL_DequeueAudio(audio_device,&buffer_copy,sizeof(int16_t)*BUFFER_LEN);
-                } else {
-                    SDL_QueueAudio(audio_device,&buffer_copy,sizeof(int16_t)*BUFFER_LEN);
-                }
-            }
-            last_q = internal_nano/ns_wait;
-            //std::this_thread::sleep_for(std::chrono::nanoseconds(ns_wait));
-        }*/
-        //printf("test smth\n");
-        //audio_buffer[buffer_ind++] = out;
-        //if (buffer_ind>=BUFFER_LEN) {
-            //buffer_ind = 0;
-        //}
-
     }
 }
 
@@ -570,7 +541,6 @@ int main(int argc, char ** argv) {
     printf("CPU Initialized.\n");
     static APU apu;
     apu.sample_rate = audio_spec.freq;
-    apu.device = audio_device;
     cpu.apu = &apu;
     apu_ptr = &apu;
     apu.setCPU(&cpu);
