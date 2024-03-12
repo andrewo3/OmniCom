@@ -225,3 +225,75 @@ void NTDEC2722::clock(void** ptrs) {
         }
     }
 }
+
+
+void MMC1::control(CPU* cpu, PPU* ppu, uint8_t val) {
+    uint8_t mirroring = val&0x3;
+    switch (mirroring) {
+        case 0 ... 1:
+            cpu->rom->mirrormode = SINGLESCREEN;
+            break;
+        case 2:
+            cpu->rom->mirrormode = VERTICAL;
+            break;
+        case 3:
+            cpu->rom->mirrormode = HORIZONTAL;
+            break;
+    }
+    prg_mode = ((val&0xc)>>2)&0x3;
+    chr_mode = ((val&0x10)>>4)&0x1;
+    if (prg_mode == 2) {
+        memcpy(&cpu->memory[0x8000],cpu->rom->get_prg_bank(0),sizeof(uint8_t)*0x4000);
+    } else if (prg_mode == 3) {
+        memcpy(&cpu->memory[0xC000],cpu->rom->get_prg_bank((cpu->rom->get_prgsize()/0x400)-16),sizeof(uint8_t)*0x4000);
+    }
+
+}
+
+void MMC1::map_write(void** ptrs, int8_t* address, int8_t* value) {
+    CPU* cpu = (CPU*)ptrs[0];
+    ROM* rom = cpu->rom;
+    PPU* ppu = (PPU*)ptrs[1];
+    int8_t val = *value;
+    long long location = address-(cpu->memory);
+    if (location >= 0x8000 && location <= 0xFFFF) {
+        if (val&0x80) {
+            shift_reg = 0x10;
+            control(cpu,ppu,0xc);
+        } else {
+            uint8_t cp = shift_reg&1;
+            shift_reg >>=1;
+            shift_reg |= (val&1)<<4;
+            if (cp) {
+                bank_reg = shift_reg;
+                if (location>=0x8000 && location <= 0x9FFF) {
+                    control(cpu,ppu,bank_reg);
+                    //printf("MMC1 Control: ");
+                } else if (location >= 0xA000 && location <= 0xBFFF) {
+                    memcpy(ppu->memory,rom->get_chr_bank((bank_reg&(~(!chr_mode)))<<2),sizeof(uint8_t)*(0x1000)<<(!chr_mode));
+                    //printf("MMC1 CHR BANK 1: ");
+                } else if (location >= 0xC000 && location <= 0xDFFF && chr_mode) {
+                    memcpy(&ppu->memory[0x1000],rom->get_chr_bank(bank_reg<<2),sizeof(uint8_t)*0x1000);
+                    //printf("MMC1 CHR BANK 2: ");
+                } else if (location >= 0xE000 && location <= 0xFFFF) {
+                    //printf("MMC1 PRG BANK: ");
+                    switch (prg_mode) {
+                        case 0 ... 1:
+                            memcpy(&cpu->memory[0x8000],rom->get_prg_bank((bank_reg&(~1))<<4),sizeof(uint8_t)*0x8000);
+                            break;
+                        case 2:
+                            memcpy(&cpu->memory[0x8000],cpu->rom->get_prg_bank(0),sizeof(uint8_t)*0x4000);
+                            memcpy(&cpu->memory[0xC000],rom->get_prg_bank(bank_reg<<4),sizeof(uint8_t)*0x4000);
+                            break;
+                        case 3:
+                            memcpy(&cpu->memory[0x8000],rom->get_prg_bank(bank_reg<<4),sizeof(uint8_t)*0x4000);
+                            memcpy(&cpu->memory[0xC000],cpu->rom->get_prg_bank(cpu->rom->get_prgsize()/0x400-16),sizeof(uint8_t)*0x4000);
+                            break;
+                    }
+                }
+                //printf("%02x\n",bank_reg);
+                shift_reg = 0x10;
+            }
+        }
+    }
+}

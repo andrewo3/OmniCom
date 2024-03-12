@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstdio>
 
-enum NT_MIRROR { HORIZONTAL, VERTICAL, FOURSCREEN };
+enum NT_MIRROR { HORIZONTAL, VERTICAL, FOURSCREEN, SINGLESCREEN };
 
 class ROM {
     public:
@@ -30,7 +30,7 @@ class ROM {
         void reset_mapper();
         int get_prgsize() {return prgsize;}
         int get_chrsize() {return chrsize;}
-        uint8_t chr_ram[0x2000];
+        uint8_t chr_ram[0x2000] = {0};
         ~ROM();
         NT_MIRROR mirrormode;
     private:

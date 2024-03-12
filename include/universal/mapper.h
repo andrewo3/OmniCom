@@ -45,14 +45,19 @@ class NROM: public Mapper {
 
 class MMC1: public Mapper {
     public:
-        virtual void map_write(void** ptrs,int8_t* address, int8_t *val) {}
+        virtual void map_write(void** ptrs,int8_t* address, int8_t *val);
         virtual void map_read(void** ptrs, int8_t* address) {}
         virtual void clock(void** system) {}
+        uint8_t prg_mode = 3;
+        uint8_t chr_mode = 0;
         MMC1() {
             type = 1;
         }
+        uint8_t shift_reg = 0x10;
+        uint8_t bank_reg = 0;
         virtual void serialize(void** system, char* out) {}
         virtual void deserialize(void** system, char* in) {}
+        void control(CPU* cpu, PPU* ppu, uint8_t val);
 };
 
 class UxROM: public Mapper {

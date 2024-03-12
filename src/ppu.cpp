@@ -419,6 +419,8 @@ void PPU::map_memory(int16_t* addr) {
             case VERTICAL:
                 *addr -= location&0x800; //horizontal nametable mirroring
                 break;
+            case SINGLESCREEN:
+                *addr -= 0x400*((location-0x2000)/0x400);
 
             //fourtable has nothing because four table is no mirroring at all
         }

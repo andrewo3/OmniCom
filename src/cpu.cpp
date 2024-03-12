@@ -482,6 +482,7 @@ void CPU::loadRom(ROM *r) {
             memcpy(&memory[0x8000],rom->prg,rom->get_prgsize());
             break;
         case 1:
+            memcpy(&memory[0x8000],rom->get_prg_bank(0),0x4000);
             memcpy(&memory[0xc000],rom->get_prg_bank((rom->get_prgsize()/0x400)-16),0x4000);
             break;
         case 2:

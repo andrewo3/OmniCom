@@ -22,7 +22,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main.exe",
             "args": [
-                "${workspaceRoot}\\res\\working_roms\\Pac-Man (U) (Namco) [!p].nes"
+                "${workspaceRoot}\\res\\roms\\Tetris (U) [!].nes"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

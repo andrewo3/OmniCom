@@ -586,7 +586,7 @@ int main(int argc, char ** argv) {
     ppu_ptr = &ppu;
     ppu.debug = false;
     printf("PPU Initialized\n");
-
+    load = false;
     if (load) {
         FILE* save_file = fopen((config_dir+sep+std::string("state")).c_str(),"rb");
         cpu.load(save_file);
