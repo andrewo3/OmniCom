@@ -116,6 +116,7 @@ void NES::operation_thread() {
     paused_time = start_nano;
     void* system[3] = {cpu,ppu,apu};
     cpu->reset();
+    cpu->cycles = 0;
     //emulator loop
     while (running) {
         if (!paused) {
