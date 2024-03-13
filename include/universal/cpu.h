@@ -58,7 +58,7 @@ class CPU {
         int8_t memory[0x10000] ={0};
         ROM* rom;
         void write(int8_t* address,int8_t value);
-        int8_t read(int8_t* address);
+        int8_t read(int8_t* address, bool from_cpu = true);
         long long cycles = 0;
         void start_nmi();
         void start_irq();

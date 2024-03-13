@@ -1,4 +1,5 @@
 #include "util.h"
+#include "glob_const.h"
 #include "rom.h"
 #include "cpu.h"
 #include "ppu.h"
@@ -52,7 +53,9 @@ class NES {
         ~NES();
         int mapper;
         py::array_t<uint8_t> cpuMem();
+        py::array_t<uint8_t> ppuMem();
         py::array_t<uint8_t> getImg();
+        py::bytes getAudio();
         void setController(ControllerWrapper& cont,int port);
         void start();
         void stop();
@@ -79,6 +82,7 @@ NES::NES(char* rom_name) {
     cpu = new CPU(false);
     apu = new APU();
     apu->setCPU(cpu);
+    apu->sample_rate = 44100;
     cpu->apu = apu;
     cpu->loadRom(rom);
     cont1 = Controller();
@@ -106,11 +110,12 @@ void NES::setController(ControllerWrapper& cont, int port) {
 void NES::operation_thread() {
     
     const double ns_wait = 1e9/cpu->CLOCK_SPEED;
-    printf("Elapsed: %lf\n",ns_wait);
     long long real_time = 0;
     long long cpu_time;
     long long start_nano = epoch_nano();
+    paused_time = start_nano;
     void* system[3] = {cpu,ppu,apu};
+    cpu->reset();
     //emulator loop
     while (running) {
         if (!paused) {
@@ -149,6 +154,9 @@ void NES::operation_thread() {
 
 void NES::start() {
     running = true;
+    long long start = epoch_nano();
+    cpu->start = start;
+    apu->start = start;
     running_t = std::thread( [this] { this->operation_thread(); } );
 }
 
@@ -167,6 +175,17 @@ py::array_t<uint8_t> NES::cpuMem() {
     );
 }
 
+py::array_t<uint8_t> NES::ppuMem() {
+    uint8_t* tmp = (uint8_t*)ppu->memory;
+    py::capsule cleanup(tmp, [](void *f){});
+    return py::array_t<uint8_t>(
+        {0x4000},
+        {sizeof(uint8_t)},
+        tmp,
+        cleanup
+    );
+}
+
 py::array_t<uint8_t> NES::getImg() {
     uint8_t* tmp = (uint8_t*)ppu->getImg();
     py::capsule cleanup(tmp,[](void *f){});
@@ -178,6 +197,15 @@ py::array_t<uint8_t> NES::getImg() {
     );
 }
 
+py::bytes NES::getAudio() {
+    if (apu->queue_audio_flag) {
+        apu->queue_audio_flag = false;
+        return py::bytes((char *)apu->buffer_copy,BUFFER_LEN*sizeof(int16_t));
+    } else {
+        return py::bytes("");
+    }
+}
+
 NES::~NES() {
     delete rom;
     delete cpu;
@@ -187,8 +215,10 @@ NES::~NES() {
 
 PYBIND11_MODULE(pyNES,m) {
     py::class_<NES>(m,"NES").def(py::init<char*>())
-    .def("cpuMem",&NES::cpuMem)
+    .def("WRAM",&NES::cpuMem)
+    .def("VRAM",&NES::ppuMem)
     .def("getImg",&NES::getImg)
+    .def("getAudio",&NES::getAudio)
     .def("start",&NES::start)
     .def("stop",&NES::stop)
     .def("setController",&NES::setController);

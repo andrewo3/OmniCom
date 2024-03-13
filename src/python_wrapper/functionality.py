@@ -1,4 +1,4 @@
-import sys, random, time
+import sys, random, time, pyaudio, tracemalloc
 from copy import deepcopy
 import numpy as np
 from os.path import abspath
@@ -6,25 +6,35 @@ sys.path.append(abspath("build/lib.macosx-10.9-universal2-cpython-312"))
 sys.path.append(abspath("build\\lib.win-amd64-cpython-38"))
 import pyNES,pygame
 
-nesObj = pyNES.NES(abspath("../../res/roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
-#nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
-#nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld2.nes"))
-print(dir(nesObj))
-nesObj.start()
-
-controller_port1 = pyNES.Controller()
-nesObj.setController(controller_port1,0)
-cpu_mem = nesObj.cpuMem()
-
+pygame.init()
 window_dim = [256,240]
 window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
 nes_surf = pygame.Surface((240,256))
+p = pyaudio.PyAudio()
+
+stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True)
+
+#nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
+#nesObj = pyNES.NES("C:\\Users\\Andrew Ogundimu\\Desktop\\smb3mix-rev2B-prg1.nes")
+if len(sys.argv)>=2:
+    nesObj = pyNES.NES(sys.argv[1])
+else:
+    nesObj = pyNES.NES(abspath("../../res/working_roms/Tetris (U) [!].nes"))
+#nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
+#nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld2.nes"))
+
+controller_port1 = pyNES.Controller()
+nesObj.setController(controller_port1,0)
+cpu_mem = nesObj.WRAM()
 running = True
 matches = np.arange(0,0x10000)
 last_mem = deepcopy(cpu_mem)
 def mem_s(ind):
     return str(cpu_mem[ind])
+nesObj.start()
 while running:
+    c = nesObj.getAudio()
+    stream.write(c)
     state = pygame.key.get_pressed()
     keys = [state[pygame.K_SPACE],
             state[pygame.K_LSHIFT],
@@ -35,13 +45,17 @@ while running:
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
     pygame.display.set_caption("World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])) #[ 1894  1917  1918 32723 32724] 5
-    cpu_mem[0x7D00:0x7D40] = np.zeros(0x40)
+    #cpu_mem[0x7D00:0x7D40] = np.zeros(0x40)
     #keys = random.choices([0,1],k=8)
     #keys[3] = state[pygame.K_RETURN]
     controller_port1.updateInputs(keys)
     frame = deepcopy(nesObj.getImg())
     pygame.pixelcopy.array_to_surface(nes_surf,frame)
-    window.blit(pygame.transform.scale(pygame.transform.flip(pygame.transform.rotate(nes_surf,-90),True,False),window_dim),(0,0))
+    scaled_ind = int(240/256<window_dim[1]/window_dim[0])
+    scale_fac = [window_dim[0]/256,window_dim[1]/240][1-scaled_ind]
+    nes_window_pos = [0,0]
+    nes_window_pos[scaled_ind] = (window_dim[scaled_ind]-[256*scale_fac,240*scale_fac][scaled_ind])/2
+    window.blit(pygame.transform.scale_by(pygame.transform.flip(pygame.transform.rotate(nes_surf,-90),True,False),scale_fac),nes_window_pos)
     pygame.display.update()
     window.fill((0,0,0))
     for event in pygame.event.get():
@@ -87,4 +101,5 @@ while running:
                     matches = matches[last_mem[matches]>tmp_mem[matches]]
                     print(matches,matches.size)
                 last_mem = tmp_mem.copy()
-                
+stream.close()
+p.terminate()

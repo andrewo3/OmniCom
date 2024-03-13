@@ -253,7 +253,7 @@ void APU::dmc() {
 
     //memory reader
     if (enabled[4] && sample_empty && sample_bytes_remaining!=0) {
-        sample_buffer = cpu->memory[current_address];
+        sample_buffer = cpu->read(cpu->memory+current_address,false);
         uint16_t bef = current_address;
         current_address++;
         if (current_address==0 && bef==0xffff) {

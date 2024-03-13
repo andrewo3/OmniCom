@@ -52,7 +52,7 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
             memcpy(ppu->memory+start_loc,rom->get_chr_bank((uint8_t)(val&(~(r<2)))),bank_size);
         } else {
             uint16_t start_loc = 0x2000*(r==7)+0x4000*(r!=7 && (xbase&0x40));
-            memcpy(&cpu->memory[0x8000]+start_loc,rom->get_prg_bank((val&0x3F)<<3),0x2000);
+            memcpy(&cpu->memory[0x8000]+start_loc,rom->get_prg_bank((uint16_t)((val&0x3F)<<3)),0x2000);
         }
     } else if (0xA000<=location && location<=0xBFFF && !(location&0x1) && rom->mirrormode!=FOURSCREEN) { //mirroring
         rom->mirrormode = (NT_MIRROR)!(val&0x1); //0 is vertical, 1 is horizontal - opposite of the enum defined in rom.h

@@ -176,6 +176,7 @@ void CPU::write(int8_t* address, int8_t value) {
             break;
         case 0x400F:
             apu->length_counter[3] = apu->length_lookup((value&0xF8)>>3);
+            apu->env[2][0] = 1; //set envelope start flag
             break;
         case 0x4010:
             apu->dmc_flags = value;
@@ -262,7 +263,7 @@ void CPU::set_controller(Controller* cont, uint8_t port) {
     conts[port] = cont;
 }
 
-int8_t CPU::read(int8_t* address) {
+int8_t CPU::read(int8_t* address, bool from_cpu) {
     map_memory(&address);
     uint16_t mem = get_addr(address);
     int8_t value = *address;
@@ -320,8 +321,10 @@ int8_t CPU::read(int8_t* address) {
             break;
 
     }
-    void* system[3] = {this,ppu,apu};
-    rom->get_mapper()->map_read(&system[0],address);
+    if (from_cpu) {
+        void* system[3] = {this,ppu,apu};
+        rom->get_mapper()->map_read(&system[0],address);
+    }
     return value;
 }
 
