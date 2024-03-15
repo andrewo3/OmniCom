@@ -175,7 +175,7 @@ void APU::cycle() { // apu clock (every other cpu cycle)
     noise();
     dmc();
 
-    if (audio_frame<cycles*sample_rate/clock_speed) {
+    if (audio_frame<cycles*(sample_rate)/clock_speed) {
         if (audio_frame%BUFFER_LEN==0) {
             memcpy(buffer_copy,buffer,sizeof(int16_t)*BUFFER_LEN);
             queue_audio_flag = true;

@@ -6,8 +6,14 @@
 #include <cmath>
 
 
-ROM::ROM() {
-    
+ROM::ROM() { //if no rom specified, make dummy rom
+    unsigned char dummy_prg[0x4010] = {0};
+    dummy_prg[0] = 'N';
+    dummy_prg[1] = 'E';
+    dummy_prg[2] = 'S';
+    dummy_prg[3] = 0x1a;
+    dummy_prg[4] = 1;
+    this->load_arr(0x4010,dummy_prg);
 }
 
 ROM::ROM(const char* src) {

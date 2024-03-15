@@ -50,11 +50,14 @@ void ControllerWrapper::updateInputs(py::list inputs) {
 class NES {
     public:
         NES(char* rom_name);
+        NES();
         ~NES();
         int mapper;
         py::array_t<uint8_t> cpuMem();
         py::array_t<uint8_t> ppuMem();
+        py::array_t<uint8_t> OAM();
         py::array_t<uint8_t> getImg();
+        py::array_t<uint8_t> color_lookup();
         py::bytes getAudio();
         void setController(ControllerWrapper& cont,int port);
         void start();
@@ -79,6 +82,26 @@ class NES {
 
 NES::NES(char* rom_name) {
     rom = new ROM(rom_name);
+    cpu = new CPU(false);
+    apu = new APU();
+    apu->setCPU(cpu);
+    apu->sample_rate = 44100;
+    cpu->apu = apu;
+    cpu->loadRom(rom);
+    cont1 = Controller();
+    cont2 = Controller();
+    cpu->set_controller(&cont1,0);
+    cpu->set_controller(&cont2,1);
+    cpu->reset();
+    ppu = new PPU(cpu);
+
+
+}
+
+NES::NES() {
+    printf("No rom specified.\n");
+    rom = new ROM();
+    printf("rom created.\n");
     cpu = new CPU(false);
     apu = new APU();
     apu->setCPU(cpu);
@@ -163,6 +186,7 @@ void NES::start() {
 
 void NES::stop() {
     running = false;
+    running_t.join();
 }
 
 py::array_t<uint8_t> NES::cpuMem() {
@@ -176,11 +200,33 @@ py::array_t<uint8_t> NES::cpuMem() {
     );
 }
 
+py::array_t<uint8_t> NES::color_lookup() {
+    uint8_t* tmp = NTSC_TO_RGB;
+    py::capsule cleanup(tmp, [](void *f){});
+    return py::array_t<uint8_t>(
+        {64,3},
+        {sizeof(uint8_t)*3,sizeof(uint8_t)},
+        tmp,
+        cleanup
+    );
+}
+
 py::array_t<uint8_t> NES::ppuMem() {
     uint8_t* tmp = (uint8_t*)ppu->memory;
     py::capsule cleanup(tmp, [](void *f){});
     return py::array_t<uint8_t>(
         {0x4000},
+        {sizeof(uint8_t)},
+        tmp,
+        cleanup
+    );
+}
+
+py::array_t<uint8_t> NES::OAM() {
+    uint8_t* tmp = (uint8_t*)ppu->oam;
+    py::capsule cleanup(tmp, [](void *f){});
+    return py::array_t<uint8_t>(
+        {0x100},
         {sizeof(uint8_t)},
         tmp,
         cleanup
@@ -215,10 +261,12 @@ NES::~NES() {
 }
 
 PYBIND11_MODULE(pyNES,m) {
-    py::class_<NES>(m,"NES").def(py::init<char*>())
-    .def("WRAM",&NES::cpuMem)
-    .def("VRAM",&NES::ppuMem)
+    py::class_<NES>(m,"NES").def(py::init<char*>()).def(py::init<>())
+    .def("cpuMem",&NES::cpuMem)
+    .def("ppuMem",&NES::ppuMem)
+    .def("OAM",&NES::OAM)
     .def("getImg",&NES::getImg)
+    .def("colorLookup",&NES::color_lookup)
     .def("getAudio",&NES::getAudio)
     .def("start",&NES::start)
     .def("stop",&NES::stop)

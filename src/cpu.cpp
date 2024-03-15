@@ -467,6 +467,7 @@ int CPU::emulated_clock_speed() {
 void CPU::reset() {
     int8_t * res = &memory[RESET];
     printf("Before: %04x\n",get_addr(res));
+    printf("reset loc: %p, memory loc: %p\n",res,memory);
     map_memory(&res);
     printf("After: %04x\n",get_addr(res));
     printf("%02x %02x\n",*res,*(res+1));
