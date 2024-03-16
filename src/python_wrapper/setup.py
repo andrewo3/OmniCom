@@ -27,11 +27,14 @@ include_path = include_path.replace("/",file_sep)
 
 library_paths = []
 library_paths.append(lib_path)
+libraries = []
 
 environ["CFLAGS"] = "-std=c++11"
 if platform == "win32":
+    environ["CL"] = "/std:c++17"
     #environ["INCLUDE"] = include_path
     environ["LIBPATH"] = realpath("..\\..\\lib")
+    libraries.append("shell32")
     #environ["CFLAGS"]+=f" -L{realpath("..\\..\\lib")} -rpath {realpath("..\\..\\lib")} -lmingw32 -lSDL2main -lSDL2 -mwindows"
 else:
     environ["CFLAGS"]+=f" -F{realpath('../../bin')} -framework SDL2 -rpath {realpath('../../bin')}"
@@ -45,7 +48,8 @@ ext_modules = [
     Pybind11Extension(
         "pyNES",
         sources = files,
-        include_dirs = include_path.split(sep)
+        include_dirs = include_path.split(sep),
+        libraries=libraries
     )
 ]
 

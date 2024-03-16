@@ -233,12 +233,15 @@ void MMC1::control(CPU* cpu, PPU* ppu, uint8_t val) {
         case 0:
         case 1:
             cpu->rom->mirrormode = SINGLESCREEN;
+            printf("singlescreen mirroring\n");
             break;
         case 2:
             cpu->rom->mirrormode = VERTICAL;
+            printf("vertical mirroring\n");
             break;
         case 3:
             cpu->rom->mirrormode = HORIZONTAL;
+            printf("horizontal mirroring\n");
             break;
     }
     prg_mode = ((val&0xc)>>2)&0x3;
@@ -271,7 +274,7 @@ void MMC1::map_write(void** ptrs, int8_t* address, int8_t* value) {
                     control(cpu,ppu,bank_reg);
                     //printf("MMC1 Control: ");
                 } else if (location >= 0xA000 && location <= 0xBFFF) {
-                    memcpy(ppu->memory,rom->get_chr_bank((uint8_t)((bank_reg&(~(!chr_mode)))<<2)),sizeof(uint8_t)*(0x1000)<<(!chr_mode));
+                    memcpy(ppu->memory,rom->get_chr_bank((uint8_t)((bank_reg&(~(!chr_mode))))<<2),sizeof(uint8_t)*(0x1000)<<(!chr_mode));
                     //printf("MMC1 CHR BANK 1: ");
                 } else if (location >= 0xC000 && location <= 0xDFFF && chr_mode) {
                     memcpy(&ppu->memory[0x1000],rom->get_chr_bank((uint8_t)(bank_reg<<2)),sizeof(uint8_t)*0x1000);

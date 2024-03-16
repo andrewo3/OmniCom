@@ -2,6 +2,7 @@
 #define GLOB_CONST_H
 
 #include <string>
+#include <cstring>
 #include <chrono>
 
 //audio buffer length
@@ -25,6 +26,20 @@ inline long long epoch_nano() {  //1*10^9
     auto durationSinceEpoch = currentTimePoint.time_since_epoch();
     auto nanosecondsSinceEpoch = std::chrono::duration_cast<std::chrono::nanoseconds>(durationSinceEpoch);
     return nanosecondsSinceEpoch.count();
+}
+
+inline void get_filename(char** path) {
+    int l = strlen(*path);
+    bool end_set = false;
+    for (int i=l-1; i>=0; i--) {
+        if ((*path)[i]=='.' && !end_set) {
+            (*path)[i] = '\0';
+            end_set = true;
+        } else if ((*path)[i]=='/' || (*path)[i]=='\\') {
+            *path = &(*path)[i+1];
+            return;
+        }
+    }
 }
 
 static uint8_t NTSC_TO_RGB[192] = {

@@ -113,20 +113,6 @@ int invalid_error() {
     return -1;
 }
 
-void get_filename(char** path) {
-    int l = strlen(*path);
-    bool end_set = false;
-    for (int i=l-1; i>=0; i--) {
-        if ((*path)[i]=='.' && !end_set) {
-            (*path)[i] = '\0';
-            end_set = true;
-        } else if ((*path)[i]=='/' || (*path)[i]=='\\') {
-            *path = &(*path)[i+1];
-            return;
-        }
-    }
-}
-
 void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
     int clock_speed = cpu_ptr->emulated_clock_speed();
@@ -135,8 +121,11 @@ void quit(int signal) {
     /*std::FILE* memory_dump = fopen("dump","w");
     fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
     fclose(memory_dump);*/
-    cpu_ptr->save();
-
+    if (cpu_ptr->rom->battery_backed) {
+        std::FILE* ram_save = fopen((config_dir+sep+std::string("ram")).c_str(),"wb");
+        cpu_ptr->save_ram(ram_save);
+        fclose(ram_save);
+    }
     interrupted = 1;
     if (signal==SIGSEGV) {
         printf("Segfault!\n");
@@ -559,7 +548,7 @@ int main(int argc, char ** argv) {
     load = false;
     if (load) {
         FILE* save_file = fopen((config_dir+sep+std::string("state")).c_str(),"rb");
-        cpu.load(save_file);
+        cpu.load_state(save_file);
         fclose(save_file);
         printf("Loaded save\n");
     }

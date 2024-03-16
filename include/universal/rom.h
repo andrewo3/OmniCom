@@ -15,6 +15,7 @@ class ROM {
         void load_file(const char* src);
         const char* src_filename;
         bool is_valid() { return valid_rom; }
+        bool battery_backed = false;
         uint8_t* prg;
         uint8_t* chr;
         uint8_t mmc1shift = 0x10;

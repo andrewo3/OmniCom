@@ -3,6 +3,7 @@
 #include "ppu.h"
 #include "mapper.h"
 #include <cstdint>
+#include <filesystem>
 #include <cstdio>
 #include <cstring>
 #include <SDL2/SDL.h>
@@ -479,6 +480,15 @@ void CPU::reset() {
 void CPU::loadRom(ROM *r) {
     rom = r;
     Mapper* m = rom->get_mapper();
+    if (rom->battery_backed) {
+        printf("load RAM file: %s\n",(config_dir+sep+std::string("ram")).c_str());
+        printf("RAM file exists: %i\n",std::filesystem::exists(config_dir+sep+std::string("ram")));
+        if (std::filesystem::exists(config_dir+sep+std::string("ram"))) {
+            FILE* ram = fopen((config_dir+sep+std::string("ram")).c_str(),"rb");
+            load_ram(ram);
+            fclose(ram);
+        }
+    }
     //printf("test %i\n",rom->get_prgsize());
     //printf("CPU PRG SIZE: %i\n",rom->get_prgsize());
     switch(m->type) {
@@ -586,8 +596,7 @@ void CPU::set_flag(char flag,bool val) {
     }
 }
 
-void CPU::save() {
-    FILE* save_file = fopen((config_dir+sep+std::string("state")).c_str(),"wb");
+void CPU::save_state(FILE* save_file) {
     fwrite(&flags,sizeof(flags),1,save_file);
     fwrite(&accumulator,sizeof(accumulator),1,save_file);
     fwrite(&x,sizeof(x),1,save_file);
@@ -601,10 +610,9 @@ void CPU::save() {
     void* system[3] = {this,ppu,apu};
     rom->get_mapper()->serialize(&system[0],&mapper[0]);
     fwrite(mapper,sizeof(char),256,save_file);
-    fclose(save_file);
 }
 
-void CPU::load(FILE* save_file) {
+void CPU::load_state(FILE* save_file) {
     fread(&flags,sizeof(flags),1,save_file);
     fread(&accumulator,sizeof(accumulator),1,save_file);
     fread(&x,sizeof(x),1,save_file);
@@ -619,6 +627,14 @@ void CPU::load(FILE* save_file) {
     fread(mapper,sizeof(char),256,save_file);
     void* system[3] = {this,ppu,apu};
     rom->get_mapper()->deserialize(&system[0],&mapper[0]);  
+}
+
+void CPU::save_ram(FILE* save_file) {
+    fwrite(&memory[0x6000],sizeof(uint8_t),0x2000,save_file);
+}
+
+void CPU::load_ram(FILE* save_file) {
+    fread(&memory[0x6000],sizeof(uint8_t),0x2000,save_file);
 }
 
 void CPU::stack_push(int8_t val) {

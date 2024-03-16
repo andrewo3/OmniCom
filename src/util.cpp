@@ -130,19 +130,21 @@ void pause_menu(void** system) {
                 std::string load_dir = config_dir+sep+std::string("state");
                 if (std::filesystem::exists(load_dir)) {
                     FILE* save_file = fopen(load_dir.c_str(),"rb");
-                    cpu->load(save_file);
+                    cpu->load_state(save_file);
                     fclose(save_file);
                 } else {
                     printf("Nothing to load at: %s\n",load_dir.c_str());
                 }
                 
             }
-            /*ImGui::SameLine(0);
+            ImGui::SameLine(0);
             if (ImGui::Button("Save")) {
                 std::string load_dir = config_dir+sep+std::string("state");
                 printf("save game at: %s\n",load_dir.c_str());
-                cpu->save();
-            }*/
+                FILE* save_file = fopen(load_dir.c_str(),"rb");
+                cpu->save_state(save_file);
+                fclose(save_file);
+            }
             
             break;
         case 2:

@@ -70,8 +70,10 @@ class CPU {
         int prg_bank_num = 0;
         long long last = epoch_nano();
         long long elapsed_time = 0;
-        void save();
-        void load(FILE* data);
+        void save_state(FILE* data);
+        void load_state(FILE* data);
+        void save_ram(FILE* data);
+        void load_ram(FILE* data);
         void set_controller(Controller* cont,uint8_t port);
         Controller* conts[2];
     private:

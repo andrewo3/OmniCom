@@ -11,6 +11,11 @@
 #include <thread>
 #include <chrono>
 #include <vector>
+#include <filesystem>
+#ifdef __WIN32__
+#include "Shlobj.h"
+#include "Windows.h"
+#endif
 
 enum class Button {
     A = 0,
@@ -80,7 +85,67 @@ class NES {
         std::thread running_t;
 };
 
+void detect_OS(char* ROM_NAME) {
+    char* filename = new char[strlen(ROM_NAME)+1];
+    char* original_start = filename;
+    memcpy(filename,ROM_NAME,strlen(ROM_NAME)+1);
+    get_filename(&filename);
+
+    char* removed_spaces = new char[strlen(filename)+1];
+
+    for (int i=0; i<strlen(filename); i++) {
+        removed_spaces[i] = filename[i];
+        if (removed_spaces[i]==' ') {
+            removed_spaces[i] = '_';
+        }
+    }
+    removed_spaces[strlen(filename)] = '\0';
+    int os = -1;
+    #ifdef __APPLE__
+        config_dir = std::string(std::getenv("HOME"))+"/Library/Containers";
+        sep = '/';
+        printf("MACOS, %s\n", config_dir.c_str());
+        os = 0;
+    #endif
+    #ifdef __WIN32__
+        TCHAR appdata[MAX_PATH] = {0};
+        SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appdata);
+        config_dir = std::string(appdata);
+        sep = '\\';
+        printf("WINDOWS, %s\n", config_dir.c_str());
+        os = 1;
+    #endif
+    #ifdef __unix__
+        config_dir = std::string(std::getenv("HOME"))+"/.config";
+        sep = '/';
+        printf("LINUX, %s\n", config_dir.c_str());
+        os = 2;
+    #endif
+    bool load = false;
+    if (os != -1) {
+        config_dir+=sep;
+        config_dir+=std::string("Nes2Exec");
+        if (!std::filesystem::exists(config_dir)) { //make Nes2Exec appdata folder
+            std::filesystem::create_directory(config_dir);
+        }
+        config_dir+=sep;
+        config_dir+=std::string(removed_spaces);
+        printf("%s\n",(config_dir).c_str());
+        if (!std::filesystem::exists(config_dir)) { //make specific game save folder
+            std::filesystem::create_directory(config_dir);
+        } else {
+            printf("Folder already exists. Checking for save...\n");
+            if (std::filesystem::exists(config_dir+sep+std::string("state"))) {
+                load = true;
+            }
+        }
+    } else {
+        printf("OS not detected. No save folder created.\n");
+    }
+}
+
 NES::NES(char* rom_name) {
+    detect_OS(rom_name);
     rom = new ROM(rom_name);
     cpu = new CPU(false);
     apu = new APU();
@@ -185,6 +250,11 @@ void NES::start() {
 }
 
 void NES::stop() {
+    if (cpu->rom->battery_backed) {
+        std::FILE* ram_save = fopen((config_dir+sep+std::string("ram")).c_str(),"wb");
+        cpu->save_ram(ram_save);
+        fclose(ram_save);
+    }
     running = false;
     running_t.join();
 }
