@@ -29,7 +29,7 @@ library_paths = []
 library_paths.append(lib_path)
 libraries = []
 
-environ["CFLAGS"] = "-std=c++11"
+environ["CFLAGS"] = "-std=c++17"
 if platform == "win32":
     environ["CL"] = "/std:c++17"
     #environ["INCLUDE"] = include_path
@@ -37,8 +37,11 @@ if platform == "win32":
     libraries.append("shell32")
     #environ["CFLAGS"]+=f" -L{realpath("..\\..\\lib")} -rpath {realpath("..\\..\\lib")} -lmingw32 -lSDL2main -lSDL2 -mwindows"
 else:
-    environ["CFLAGS"]+=f" -F{realpath('../../bin')} -framework SDL2 -rpath {realpath('../../bin')}"
-    environ["CPLUS_INCLUDE_PATH"] += include_path
+    #environ["CFLAGS"]+=f" -F{realpath('../../bin')} -framework SDL2 -rpath {realpath('../../bin')}"
+    try:
+        environ["CPLUS_INCLUDE_PATH"] += include_path
+    except KeyError:
+        pass
     environ["LD_LIBRARY_PATH"] = realpath("../../lib")
 
 from setuptools import setup

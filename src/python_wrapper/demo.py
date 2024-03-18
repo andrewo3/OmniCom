@@ -1,9 +1,10 @@
-import sys, random, time, pyaudio
+import sys, random, time, pyaudio, threading
 from copy import deepcopy
 import numpy as np
 from os.path import abspath
 sys.path.append(abspath("build/lib.macosx-10.9-universal2-cpython-312"))
-sys.path.append(abspath("build\\lib.win-amd64-cpython-38"))
+sys.path.append(abspath("build\\lib.win-amd64-cpython-312"))
+sys.path.append(abspath("build/lib.linux-x86_64-cpython-311"))
 import pyNES,pygame
 
 pygame.init()
@@ -12,7 +13,7 @@ window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
 nes_surf = pygame.Surface((240,256))
 p = pyaudio.PyAudio()
 
-stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True)
+stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True,frames_per_buffer = 4096)
 
 #nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
 #nesObj = pyNES.NES("C:\\Users\\Andrew Ogundimu\\Desktop\\smb3mix-rev2B-prg1.nes")
@@ -32,9 +33,17 @@ last_mem = deepcopy(cpu_mem)
 def mem_s(ind):
     return str(cpu_mem[ind])
 nesObj.start()
+
+def tAudio():
+    global running, nesObj, stream
+    while running:
+        c = nesObj.getAudio()
+        stream.write(c)
+
+audio_thread = threading.Thread(target=tAudio)
+audio_thread.start()
+world_num = 0
 while running:
-    c = nesObj.getAudio()
-    stream.write(c)
     state = pygame.key.get_pressed()
     keys = [state[pygame.K_SPACE],
             state[pygame.K_LSHIFT],
@@ -45,6 +54,8 @@ while running:
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
     pygame.display.set_caption("World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])) #[ 1894  1917  1918 32723 32724] 5
+    #cpu_mem[0x75F]=world_num
+    cpu_mem[0x47] = world_num
     #cpu_mem[0x7D00:0x7D40] = np.zeros(0x40)
     #keys = random.choices([0,1],k=8)
     #keys[3] = state[pygame.K_RETURN]
@@ -67,9 +78,13 @@ while running:
             window_dim = [event.w,event.h]
             window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
         elif event.type == pygame.KEYDOWN:
+
             if event.key == pygame.K_r:
                 pass
-            if event.key == pygame.K_s:
+            elif event.key == pygame.K_i:
+                world_num = int(input("World number: "))%256-1
+                print(world_num+1)
+            elif event.key == pygame.K_s:
                 type = int(input(
 """Type of search: 
 0 - reset memory table
@@ -101,5 +116,6 @@ while running:
                     matches = matches[last_mem[matches]>tmp_mem[matches]]
                     print(matches,matches.size)
                 last_mem = tmp_mem.copy()
+audio_thread.join()
 stream.close()
 p.terminate()

@@ -97,6 +97,9 @@ CPU *cpu_ptr;
 PPU *ppu_ptr;
 APU * apu_ptr;
 
+Controller* cont1;
+Controller* cont2;
+
 char* device_name;
 SDL_AudioSpec audio_spec;
 
@@ -319,6 +322,27 @@ void AudioLoop(void* userdata, uint8_t* stream, int len) {
     memcpy(stream+samplesToEnd*sizeof(int16_t),audio_buffer,buffer_ind*sizeof(int16_t));
 }
 
+void update_inputs() {
+    //set up controller
+    bool controller1_inputs[8];
+    bool controller2_inputs[8];
+    for (int i=0; i<8; i++) {
+        controller1_inputs[i] = state[mapped_keys[i]];
+        controller2_inputs[i] = false;
+    }
+    cont1 = new Controller(controller1_inputs);
+    cont2 = new Controller(controller2_inputs);
+    while (!interrupted) {
+        //update controllers
+        for (int i=0; i<8; i++) {
+            controller1_inputs[i] = state[mapped_keys[i]];
+            controller2_inputs[i] = false;
+        }
+        cont1->update_inputs(controller1_inputs);
+        cont2->update_inputs(controller2_inputs);
+    }
+}
+
 int main(int argc, char ** argv) {
     std::signal(SIGINT,quit);
     std::signal(SIGSEGV,quit);
@@ -512,15 +536,7 @@ int main(int argc, char ** argv) {
     
     printf("Window texture bound and mapped.\n");
 
-    //set up controller
-    bool controller1_inputs[8];
-    bool controller2_inputs[8];
-    for (int i=0; i<8; i++) {
-        controller1_inputs[i] = state[mapped_keys[i]];
-        controller2_inputs[i] = false;
-    }
-    Controller* cont1 = new Controller(controller1_inputs);
-    Controller* cont2 = new Controller(controller2_inputs);
+    std::thread tInputs(update_inputs);
 
     start = epoch();
     start_nano = epoch_nano();
@@ -596,12 +612,14 @@ int main(int argc, char ** argv) {
             char * new_title = new char[255];
             sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
             SDL_SetWindowTitle(window,new_title);
+            delete[] new_title;
 
             last_time = SDL_GetTicks()/1000.0;
         }
         //logic is executed in nes thread
-        //apply ntsc filter before drawing
+        
         if (use_shaders) {
+            //apply ntsc filter before drawing
             ntsc.data = ppu.getImg(); /* buffer from your rendering */
             ntsc.format = CRT_PIX_FORMAT_RGB;
             ntsc.w = NES_DIM[0];
@@ -669,14 +687,6 @@ int main(int argc, char ** argv) {
         //ppu_ptr->image_mutex.unlock();
         // event loop
         SDL_PumpEvents();
-
-        //update controllers
-        for (int i=0; i<8; i++) {
-            controller1_inputs[i] = state[mapped_keys[i]];
-            controller2_inputs[i] = false;
-        }
-        cont1->update_inputs(controller1_inputs);
-        cont2->update_inputs(controller2_inputs);
 
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
@@ -759,6 +769,7 @@ int main(int argc, char ** argv) {
         SDL_Delay(1000/desired_fps);
         t_time = SDL_GetTicks()/1000.0;
     }
+    tInputs.join();
     NESThread.join();
     sampleGet.join();
     glDetachShader(shaderProgram,vertexShader);
