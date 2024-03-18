@@ -15,14 +15,7 @@ p = pyaudio.PyAudio()
 
 stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True,frames_per_buffer = 4096)
 
-#nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
-#nesObj = pyNES.NES("C:\\Users\\Andrew Ogundimu\\Desktop\\smb3mix-rev2B-prg1.nes")
-if len(sys.argv)>=2:
-    nesObj = pyNES.NES(sys.argv[1])
-else:
-    nesObj = pyNES.NES(abspath("../../res/working_roms/Tetris (U) [!].nes"))
-#nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
-#nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld2.nes"))
+nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
 print("SAVEDIR:",nesObj.getSaveDir())
 success = nesObj.setSaveDir(abspath("./states"))
 print("NEWSAVEDIR:",nesObj.getSaveDir(),success)
@@ -42,13 +35,21 @@ def tAudio():
         c = nesObj.getAudio()
         stream.write(c)
 
-audio_thread = threading.Thread(target=tAudio)
+audio_thread = threading.Thread(target=tAudio,daemon=True)
 audio_thread.start()
 world_num = 0
 saves = 3
 nesObj.loadState(random.randint(0,3))
+keys = [False for i in range(8)]
+jump_seconds = 1
+level_pos = 0
+repeats = 0
+last_pos = 0
+repeated = False
 while running:
     state = pygame.key.get_pressed()
+    last_a = keys[0]
+    #random.choices([0,1],[1-1/(60*jump_seconds),1/(60*jump_seconds)][::(-1)**(last_a)])[0]
     keys = [state[pygame.K_SPACE],
             state[pygame.K_LSHIFT],
             state[pygame.K_TAB],
@@ -58,8 +59,19 @@ while running:
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
     nesObj.setPaused(state[pygame.K_p])
-    pygame.display.set_caption("World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])) #[ 1894  1917  1918 32723 32724] 5
+    pygame.display.set_caption("World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])+" Level Pos: "+str(level_pos)) #[ 35  36 144 228 233] 5
+    level_pos = repeats*255+cpu_mem[0x90]
+    if ((last_pos-int(cpu_mem[0x90]))>150 and last_pos > 250) and not(repeated):
+        repeats+=1
+        repeated = True
+    elif (cpu_mem[0x90]>250 and (int(cpu_mem[0x90])-last_pos)>150) and not(repeated):
+        repeats-=1
+        repeated = True
+    elif abs(cpu_mem[0x90]-last_pos)<=150:
+        repeated = False
+    last_pos = cpu_mem[0x90]
     if (cpu_mem[0x7F5]>0):
+        repeats = 0
         nesObj.loadState(random.randint(0,3))
         continue
     #cpu_mem[0x75F]=world_num
@@ -94,6 +106,7 @@ while running:
                 saves+=1
             elif event.unicode and 0<=(ord(event.unicode)-ord('0'))<=9:
                 num = ord(event.unicode)-ord('0')
+                repeats = 0
                 if nesObj.loadState(num):
                     print("Successfully loaded state",num)
                 else:
