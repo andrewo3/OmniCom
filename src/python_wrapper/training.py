@@ -47,6 +47,7 @@ repeats = 0
 last_pos = 0
 repeated = False
 while running:
+    fitnessFont = pygame.font.SysFont("arial",int(window_dim[1]/12))
     state = pygame.key.get_pressed()
     last_a = keys[0]
     #random.choices([0,1],[1-1/(60*jump_seconds),1/(60*jump_seconds)][::(-1)**(last_a)])[0]
@@ -67,10 +68,11 @@ while running:
     elif (cpu_mem[0x90]>250 and (int(cpu_mem[0x90])-last_pos)>150) and not(repeated):
         repeats-=1
         repeated = True
-    elif abs(cpu_mem[0x90]-last_pos)<=150:
+    elif abs(int(cpu_mem[0x90])-last_pos)<=150:
         repeated = False
     last_pos = cpu_mem[0x90]
     if (cpu_mem[0x7F5]>0):
+        print(cpu_mem[0x7F5])
         repeats = 0
         nesObj.loadState(random.randint(0,3))
         continue
@@ -87,6 +89,7 @@ while running:
     nes_window_pos = [0,0]
     nes_window_pos[scaled_ind] = (window_dim[scaled_ind]-[256*scale_fac,240*scale_fac][scaled_ind])/2
     window.blit(pygame.transform.scale_by(pygame.transform.flip(pygame.transform.rotate(nes_surf,-90),True,False),scale_fac),nes_window_pos)
+    window.blit(fitnessFont.render(hex(level_pos),True,(255,255,0)),(0,0))
     pygame.display.update()
     window.fill((0,0,0))
     for event in pygame.event.get():
