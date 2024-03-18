@@ -58,6 +58,8 @@ class NES {
         NES();
         ~NES();
         int mapper;
+        long long start_nano;
+        long long real_time = 0;
         py::array_t<uint8_t> cpuMem();
         py::array_t<uint8_t> ppuMem();
         py::array_t<uint8_t> OAM();
@@ -68,9 +70,13 @@ class NES {
         void start();
         void stop();
         void operation_thread();
-        void save(char * name);
-        void load(char * name);
-        
+        void save(int ind);
+        bool load(int ind);
+        void set_pause(bool paused);
+        bool setSaveDir(std::string dir);
+        std::string getSaveDir();
+        void detectOS(char* ROM_NAME);
+        std::string state_save_dir;
         Controller cont1;
         Controller cont2;
 
@@ -85,7 +91,27 @@ class NES {
         std::thread running_t;
 };
 
-void detect_OS(char* ROM_NAME) {
+void NES::set_pause(bool p) {
+    if (!p && paused) {
+        paused_time += (epoch_nano()-start_nano)-real_time;
+    }
+    paused = p;
+}
+
+bool NES::setSaveDir(std::string dir) {
+    if (std::filesystem::exists(dir)) {
+        state_save_dir = dir;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+std::string NES::getSaveDir() {
+    return state_save_dir;
+}
+
+void NES::detectOS(char* ROM_NAME) {
     char* filename = new char[strlen(ROM_NAME)+1];
     char* original_start = filename;
     memcpy(filename,ROM_NAME,strlen(ROM_NAME)+1);
@@ -130,6 +156,7 @@ void detect_OS(char* ROM_NAME) {
         }
         config_dir+=sep;
         config_dir+=std::string(removed_spaces);
+        state_save_dir = config_dir;
         printf("%s\n",(config_dir).c_str());
         if (!std::filesystem::exists(config_dir)) { //make specific game save folder
             std::filesystem::create_directory(config_dir);
@@ -145,7 +172,7 @@ void detect_OS(char* ROM_NAME) {
 }
 
 NES::NES(char* rom_name) {
-    detect_OS(rom_name);
+    detectOS(rom_name);
     rom = new ROM(rom_name);
     cpu = new CPU(false);
     apu = new APU();
@@ -183,12 +210,21 @@ NES::NES() {
 
 }
 
-void NES::save(char* name) {
-    
+void NES::save(int ind) {
+    FILE* s = fopen((state_save_dir+sep+std::to_string(ind)).c_str(),"wb");
+    cpu->save_state(s);
+    fclose(s);
 }
 
-void NES::load(char* name) {
-
+bool NES::load(int ind) {
+    if (std::filesystem::exists(state_save_dir+sep+std::to_string(ind))) {
+        FILE* s = fopen((state_save_dir+sep+std::to_string(ind)).c_str(),"rb");
+        cpu->load_state(s);
+        fclose(s);
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void NES::setController(ControllerWrapper& cont, int port) {
@@ -198,13 +234,9 @@ void NES::setController(ControllerWrapper& cont, int port) {
 void NES::operation_thread() {
     
     const double ns_wait = 1e9/cpu->CLOCK_SPEED;
-    long long real_time = 0;
     long long cpu_time;
-    long long start_nano = epoch_nano();
     paused_time = start_nano;
     void* system[3] = {cpu,ppu,apu};
-    cpu->reset();
-    cpu->cycles = 0;
     //emulator loop
     while (running) {
         if (!paused) {
@@ -243,9 +275,9 @@ void NES::operation_thread() {
 
 void NES::start() {
     running = true;
-    long long start = epoch_nano();
-    cpu->start = start;
-    apu->start = start;
+    start_nano = epoch_nano();
+    cpu->start = start_nano;
+    apu->start = start_nano;
     running_t = std::thread( [this] { this->operation_thread(); } );
 }
 
@@ -340,8 +372,13 @@ PYBIND11_MODULE(pyNES,m) {
     .def("getAudio",&NES::getAudio)
     .def("start",&NES::start)
     .def("stop",&NES::stop)
+    .def("saveState",&NES::save)
+    .def("loadState",&NES::load)
+    .def("setPaused",&NES::set_pause)
+    .def("setSaveDir",&NES::setSaveDir)
+    .def("getSaveDir",&NES::getSaveDir)
     .def("setController",&NES::setController);
     py::class_<ControllerWrapper>(m,"Controller").def(py::init<>())
     .def("updateInputs",&ControllerWrapper::updateInputs);
 
-}
+} 

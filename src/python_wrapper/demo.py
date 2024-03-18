@@ -23,7 +23,9 @@ else:
     nesObj = pyNES.NES(abspath("../../res/working_roms/Tetris (U) [!].nes"))
 #nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
 #nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld2.nes"))
-
+print("SAVEDIR:",nesObj.getSaveDir())
+success = nesObj.setSaveDir(abspath("./states"))
+print("NEWSAVEDIR:",nesObj.getSaveDir(),success)
 controller_port1 = pyNES.Controller()
 nesObj.setController(controller_port1,0)
 cpu_mem = nesObj.cpuMem()
@@ -43,6 +45,7 @@ def tAudio():
 audio_thread = threading.Thread(target=tAudio)
 audio_thread.start()
 world_num = 0
+saves = 2
 while running:
     state = pygame.key.get_pressed()
     keys = [state[pygame.K_SPACE],
@@ -53,6 +56,7 @@ while running:
             state[pygame.K_DOWN],
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
+    nesObj.setPaused(state[pygame.K_p])
     pygame.display.set_caption("World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])) #[ 1894  1917  1918 32723 32724] 5
     #cpu_mem[0x75F]=world_num
     cpu_mem[0x47] = world_num
@@ -78,13 +82,21 @@ while running:
             window_dim = [event.w,event.h]
             window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
         elif event.type == pygame.KEYDOWN:
-
             if event.key == pygame.K_r:
                 pass
-            elif event.key == pygame.K_i:
-                world_num = int(input("World number: "))%256-1
-                print(world_num+1)
             elif event.key == pygame.K_s:
+                nesObj.saveState(saves)
+                print("Saved state",saves)
+                saves+=1
+            elif event.unicode and 0<=(ord(event.unicode)-ord('0'))<=9:
+                num = ord(event.unicode)-ord('0')
+                nesObj.setPaused(True)
+                if nesObj.loadState(num):
+                    print("Successfully loaded state",num)
+                else:
+                    print("Unable to load state",num)
+                nesObj.setPaused(False)
+            elif event.key == pygame.K_d:
                 type = int(input(
 """Type of search: 
 0 - reset memory table

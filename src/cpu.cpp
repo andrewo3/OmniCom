@@ -626,7 +626,7 @@ void CPU::load_state(FILE* save_file) {
     char mapper[256];
     fread(mapper,sizeof(char),256,save_file);
     void* system[3] = {this,ppu,apu};
-    rom->get_mapper()->deserialize(&system[0],&mapper[0]);  
+    rom->get_mapper()->deserialize(&system[0],&mapper[0]);
 }
 
 void CPU::save_ram(FILE* save_file) {
