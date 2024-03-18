@@ -45,7 +45,7 @@ def tAudio():
 audio_thread = threading.Thread(target=tAudio)
 audio_thread.start()
 world_num = 0
-saves = 2
+saves = 3
 while running:
     state = pygame.key.get_pressed()
     keys = [state[pygame.K_SPACE],
@@ -97,6 +97,7 @@ while running:
                     print("Unable to load state",num)
                 nesObj.setPaused(False)
             elif event.key == pygame.K_d:
+                tmp_mem = deepcopy(cpu_mem)
                 type = int(input(
 """Type of search: 
 0 - reset memory table
@@ -106,7 +107,6 @@ while running:
 4 - increased (since last search)
 5 - decreased (since last search)
 """))
-                tmp_mem = deepcopy(cpu_mem)
                 if type == 0:
                     matches = np.arange(0,0x10000)
                     print("Values reset!")
