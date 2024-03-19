@@ -217,7 +217,6 @@ void NES::save(int ind) {
 }
 
 bool NES::load(int ind) {
-    set_pause(true);
     if (std::filesystem::exists(state_save_dir+sep+std::to_string(ind))) {
         FILE* s = fopen((state_save_dir+sep+std::to_string(ind)).c_str(),"rb");
         cpu->load_state(s);
@@ -226,7 +225,6 @@ bool NES::load(int ind) {
     } else {
         return false;
     }
-    set_pause(false);
 }
 
 void NES::setController(ControllerWrapper& cont, int port) {

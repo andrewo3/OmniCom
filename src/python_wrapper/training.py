@@ -2,6 +2,7 @@ import sys, random, time, pyaudio, threading
 from copy import deepcopy
 import numpy as np
 from os.path import abspath
+from os import listdir
 sys.path.append(abspath("build/lib.macosx-10.9-universal2-cpython-312"))
 sys.path.append(abspath("build\\lib.win-amd64-cpython-312"))
 sys.path.append(abspath("build/lib.linux-x86_64-cpython-311"))
@@ -38,14 +39,20 @@ def tAudio():
 audio_thread = threading.Thread(target=tAudio,daemon=True)
 audio_thread.start()
 world_num = 0
-saves = 3
-nesObj.loadState(random.randint(0,3))
+saves = len(listdir("states"))
+print(saves)
+nesObj.setPaused(True)
+nesObj.loadState(0)
+nesObj.setPaused(False)
 keys = [False for i in range(8)]
 jump_seconds = 1
 level_pos = 0
 repeats = 0
 last_pos = 0
 repeated = False
+moved = time.time()
+selected = 0
+worlds_completed = 9
 while running:
     fitnessFont = pygame.font.SysFont("arial",int(window_dim[1]/12))
     state = pygame.key.get_pressed()
@@ -60,7 +67,8 @@ while running:
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
     nesObj.setPaused(state[pygame.K_p])
-    pygame.display.set_caption("World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])+" Level Pos: "+str(level_pos)) #[ 35  36 144 228 233] 5
+    cpu_mem[0x736] = 4
+    pygame.display.set_caption("World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])+" Level Pos: "+str(level_pos)+" Level Num: ") #[ 35  36 144 228 233] 5
     level_pos = repeats*255+cpu_mem[0x90]
     if ((last_pos-int(cpu_mem[0x90]))>150 and last_pos > 250) and not(repeated):
         repeats+=1
@@ -70,15 +78,20 @@ while running:
         repeated = True
     elif abs(int(cpu_mem[0x90])-last_pos)<=150:
         repeated = False
+    if abs(int(cpu_mem[0x90])-last_pos)>0:
+        moved = time.time()
+    if (cpu_mem[0x7F5]>0 or (time.time()-moved>5)):
+        pass
+        #print(cpu_mem[0x7F5])
+        #repeats = 0
+        #nesObj.setPaused(True)
+        #nesObj.loadState(random.randint(0,saves))
+        #nesObj.setPaused(False)
+        #continue
     last_pos = cpu_mem[0x90]
-    if (cpu_mem[0x7F5]>0):
-        print(cpu_mem[0x7F5])
-        repeats = 0
-        nesObj.loadState(random.randint(0,3))
-        continue
     #cpu_mem[0x75F]=world_num
     cpu_mem[0x47] = world_num
-    #cpu_mem[0x7D00:0x7D40] = np.zeros(0x40)
+    cpu_mem[0x7D00:0x7D40] = np.zeros(0x40)
     #keys = random.choices([0,1],k=8)
     #keys[3] = state[pygame.K_RETURN]
     controller_port1.updateInputs(keys)
@@ -107,13 +120,44 @@ while running:
                 nesObj.saveState(saves)
                 print("Saved state",saves)
                 saves+=1
-            elif event.unicode and 0<=(ord(event.unicode)-ord('0'))<=9:
-                num = ord(event.unicode)-ord('0')
-                repeats = 0
-                if nesObj.loadState(num):
-                    print("Successfully loaded state",num)
-                else:
-                    print("Unable to load state",num)
+            elif event.key == pygame.K_LEFT:
+                if state[pygame.K_l]:
+                    selected-=1
+                    selected%=saves
+                    repeats = 0
+                    nesObj.setPaused(True)
+                    if nesObj.loadState(selected):
+                        print("Successfully loaded state",selected)
+                    else:
+                        print("Unable to load state",selected)
+                    nesObj.setPaused(False)
+                elif state[pygame.K_m]:
+                    print("Force mario left")
+                    cpu_mem[0x79]-=32
+            elif event.key == pygame.K_RIGHT:
+                if state[pygame.K_l]:
+                    selected+=1
+                    selected%=saves
+                    repeats = 0
+                    nesObj.setPaused(True)
+                    if nesObj.loadState(selected):
+                        print("Successfully loaded state",selected)
+                    else:
+                        print("Unable to load state",selected)
+                    nesObj.setPaused(False)
+                elif state[pygame.K_m]:
+                    print("Force mario right")
+                    cpu_mem[0x79]+=32
+            elif event.key == pygame.K_UP:
+                if state[pygame.K_m]:
+                    print("Force mario up")
+                    cpu_mem[0x75]-=32
+            elif event.key == pygame.K_DOWN:
+                if state[pygame.K_m]:
+                    print("Force mario down")
+                    cpu_mem[0x75]+=32
+            elif event.key == pygame.K_n:
+                cpu_mem[0x727] = int(input("New world: "))-1
             elif event.key == pygame.K_d:
                 tmp_mem = deepcopy(cpu_mem)
                 type = int(input(
