@@ -23,9 +23,6 @@ else:
     nesObj = pyNES.NES(abspath("../../res/working_roms/Tetris (U) [!].nes"))
 #nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
 #nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld2.nes"))
-print("SAVEDIR:",nesObj.getSaveDir())
-success = nesObj.setSaveDir(abspath("./states"))
-print("NEWSAVEDIR:",nesObj.getSaveDir(),success)
 controller_port1 = pyNES.Controller()
 nesObj.setController(controller_port1,0)
 cpu_mem = nesObj.cpuMem()
@@ -45,8 +42,6 @@ def tAudio():
 audio_thread = threading.Thread(target=tAudio)
 audio_thread.start()
 world_num = 0
-saves = 3
-nesObj.loadState(random.randint(0,3))
 while running:
     state = pygame.key.get_pressed()
     keys = [state[pygame.K_SPACE],
@@ -58,15 +53,6 @@ while running:
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
     nesObj.setPaused(state[pygame.K_p])
-    pygame.display.set_caption("World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])) #[ 1894  1917  1918 32723 32724] 5
-    if (cpu_mem[0x7F5]>0):
-        nesObj.loadState(random.randint(0,3))
-        continue
-    #cpu_mem[0x75F]=world_num
-    cpu_mem[0x47] = world_num
-    #cpu_mem[0x7D00:0x7D40] = np.zeros(0x40)
-    #keys = random.choices([0,1],k=8)
-    #keys[3] = state[pygame.K_RETURN]
     controller_port1.updateInputs(keys)
     frame = deepcopy(nesObj.getImg())
     pygame.pixelcopy.array_to_surface(nes_surf,frame)
@@ -86,19 +72,8 @@ while running:
             window_dim = [event.w,event.h]
             window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_r:
-                pass
-            elif event.key == pygame.K_s:
-                nesObj.saveState(saves)
-                print("Saved state",saves)
-                saves+=1
-            elif event.unicode and 0<=(ord(event.unicode)-ord('0'))<=9:
-                num = ord(event.unicode)-ord('0')
-                if nesObj.loadState(num):
-                    print("Successfully loaded state",num)
-                else:
-                    print("Unable to load state",num)
-            elif event.key == pygame.K_d:
+            if event.key == pygame.K_d:
+                nesObj.setPaused(True)
                 tmp_mem = deepcopy(cpu_mem)
                 type = int(input(
 """Type of search: 
@@ -109,6 +84,7 @@ while running:
 4 - increased (since last search)
 5 - decreased (since last search)
 """))
+                nesObj.setPaused(False)
                 if type == 0:
                     matches = np.arange(0,0x10000)
                     print("Values reset!")

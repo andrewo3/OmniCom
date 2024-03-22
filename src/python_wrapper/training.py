@@ -9,7 +9,7 @@ sys.path.append(abspath("build/lib.linux-x86_64-cpython-311"))
 import pyNES,pygame
 
 pygame.init()
-window_dim = [256,240]
+window_dim = [128,120]
 window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
 nes_surf = pygame.Surface((240,256))
 p = pyaudio.PyAudio()
@@ -28,7 +28,9 @@ matches = np.arange(0,0x10000)
 last_mem = deepcopy(cpu_mem)
 def mem_s(ind):
     return str(cpu_mem[ind])
+
 nesObj.start()
+saves = len(listdir("states"))
 
 def tAudio():
     global running, nesObj, stream
@@ -36,13 +38,18 @@ def tAudio():
         c = nesObj.getAudio()
         stream.write(c)
 
+def set_mario_state(state):
+    cpu_mem[0xed] = state
+    cpu_mem[0x578] = state
+
+
 audio_thread = threading.Thread(target=tAudio,daemon=True)
 audio_thread.start()
 world_num = 0
-saves = len(listdir("states"))
 print(saves)
 nesObj.setPaused(True)
 nesObj.loadState(0)
+set_mario_state(random.randint(0,6))
 nesObj.setPaused(False)
 keys = [False for i in range(8)]
 jump_seconds = 1
@@ -52,8 +59,36 @@ last_pos = 0
 repeated = False
 moved = time.time()
 selected = 0
-worlds_completed = 9
+win = cpu_mem[0x5F3]
+
+def load_level(choice = None):
+    global repeats, moved
+    if not(choice):
+        select = random.randint(0,saves-1)
+    else:
+        select = choice
+    nesObj.setPaused(True)
+    if nesObj.loadState(select):
+        repeats = 0
+        print("Successfully loaded state",select)
+    else:
+        print("Unable to load state",select)
+    set_mario_state(random.randint(0,6))
+    cpu_mem[0x5F3] = 0
+    nesObj.setPaused(False)
+    moved = time.time()
+
+def draw_image():
+    frame = deepcopy(nesObj.getImg())
+    pygame.pixelcopy.array_to_surface(nes_surf,frame)
+    scaled_ind = int(240/256<window_dim[1]/window_dim[0])
+    scale_fac = [window_dim[0]/256,window_dim[1]/240][1-scaled_ind]
+    nes_window_pos = [0,0]
+    nes_window_pos[scaled_ind] = (window_dim[scaled_ind]-[256*scale_fac,240*scale_fac][scaled_ind])/2
+    window.blit(pygame.transform.scale_by(pygame.transform.flip(pygame.transform.rotate(nes_surf,-90),True,False),scale_fac),nes_window_pos)
+
 while running:
+    win = cpu_mem[0x5F3]
     fitnessFont = pygame.font.SysFont("arial",int(window_dim[1]/12))
     state = pygame.key.get_pressed()
     last_a = keys[0]
@@ -68,7 +103,7 @@ while running:
             state[pygame.K_RIGHT]]
     nesObj.setPaused(state[pygame.K_p])
     cpu_mem[0x736] = 4
-    pygame.display.set_caption("World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])+" Level Pos: "+str(level_pos)+" Level Num: ") #[ 35  36 144 228 233] 5
+    pygame.display.set_caption("Win: "+str(cpu_mem[1523])+" World: "+str(cpu_mem[0x727]+1)+", Lives: "+str(cpu_mem[0x736])+" Level Pos: "+str(level_pos)+" Level Num: ") #[ 35  36 144 228 233] 5
     level_pos = repeats*255+cpu_mem[0x90]
     if ((last_pos-int(cpu_mem[0x90]))>150 and last_pos > 250) and not(repeated):
         repeats+=1
@@ -78,15 +113,17 @@ while running:
         repeated = True
     elif abs(int(cpu_mem[0x90])-last_pos)<=150:
         repeated = False
-    if abs(int(cpu_mem[0x90])-last_pos)>0:
+    if abs(int(cpu_mem[0x90])-last_pos)>1:
         moved = time.time()
-    if (cpu_mem[0x7F5]>0 or (time.time()-moved>5)):
-        pass
-        #print(cpu_mem[0x7F5])
-        #repeats = 0
-        #nesObj.setPaused(True)
-        #nesObj.loadState(random.randint(0,saves))
-        #nesObj.setPaused(False)
+    if (cpu_mem[0x7F5]>0 or cpu_mem[0x5F3] in [129,2,1] or (time.time()-moved>5)):
+        print(cpu_mem[0x5F3])
+        if cpu_mem[0x5F3] in [129,2,1]:
+            print("Beat level!")
+        elif cpu_mem[0x7F5]>0:
+            print("Died")
+        else:
+            print("Stayed still for too long")
+        load_level(random.randint(0,saves-1))
         #continue
     last_pos = cpu_mem[0x90]
     #cpu_mem[0x75F]=world_num
@@ -95,13 +132,7 @@ while running:
     #keys = random.choices([0,1],k=8)
     #keys[3] = state[pygame.K_RETURN]
     controller_port1.updateInputs(keys)
-    frame = deepcopy(nesObj.getImg())
-    pygame.pixelcopy.array_to_surface(nes_surf,frame)
-    scaled_ind = int(240/256<window_dim[1]/window_dim[0])
-    scale_fac = [window_dim[0]/256,window_dim[1]/240][1-scaled_ind]
-    nes_window_pos = [0,0]
-    nes_window_pos[scaled_ind] = (window_dim[scaled_ind]-[256*scale_fac,240*scale_fac][scaled_ind])/2
-    window.blit(pygame.transform.scale_by(pygame.transform.flip(pygame.transform.rotate(nes_surf,-90),True,False),scale_fac),nes_window_pos)
+    draw_image()
     window.blit(fitnessFont.render(hex(level_pos),True,(255,255,0)),(0,0))
     pygame.display.update()
     window.fill((0,0,0))
@@ -124,13 +155,7 @@ while running:
                 if state[pygame.K_l]:
                     selected-=1
                     selected%=saves
-                    repeats = 0
-                    nesObj.setPaused(True)
-                    if nesObj.loadState(selected):
-                        print("Successfully loaded state",selected)
-                    else:
-                        print("Unable to load state",selected)
-                    nesObj.setPaused(False)
+                    load_level(selected)
                 elif state[pygame.K_m]:
                     print("Force mario left")
                     cpu_mem[0x79]-=32
@@ -138,13 +163,7 @@ while running:
                 if state[pygame.K_l]:
                     selected+=1
                     selected%=saves
-                    repeats = 0
-                    nesObj.setPaused(True)
-                    if nesObj.loadState(selected):
-                        print("Successfully loaded state",selected)
-                    else:
-                        print("Unable to load state",selected)
-                    nesObj.setPaused(False)
+                    load_level(selected)
                 elif state[pygame.K_m]:
                     print("Force mario right")
                     cpu_mem[0x79]+=32
@@ -160,6 +179,7 @@ while running:
                 cpu_mem[0x727] = int(input("New world: "))-1
             elif event.key == pygame.K_d:
                 tmp_mem = deepcopy(cpu_mem)
+                nesObj.setPaused(True)
                 type = int(input(
 """Type of search: 
 0 - reset memory table
@@ -169,6 +189,7 @@ while running:
 4 - increased (since last search)
 5 - decreased (since last search)
 """))
+                nesObj.setPaused(False)
                 if type == 0:
                     matches = np.arange(0,0x10000)
                     print("Values reset!")

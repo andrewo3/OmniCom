@@ -86,7 +86,7 @@ class NES {
         APU* apu;
         ROM* rom;
         bool running = false;
-        bool paused = false;
+        volatile bool paused = false;
         long long paused_time = epoch_nano();
         std::thread running_t;
 };

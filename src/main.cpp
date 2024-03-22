@@ -326,12 +326,6 @@ void update_inputs() {
     //set up controller
     bool controller1_inputs[8];
     bool controller2_inputs[8];
-    for (int i=0; i<8; i++) {
-        controller1_inputs[i] = state[mapped_keys[i]];
-        controller2_inputs[i] = false;
-    }
-    cont1 = new Controller(controller1_inputs);
-    cont2 = new Controller(controller2_inputs);
     while (!interrupted) {
         //update controllers
         for (int i=0; i<8; i++) {
@@ -536,6 +530,16 @@ int main(int argc, char ** argv) {
     
     printf("Window texture bound and mapped.\n");
 
+    //set up controller
+    bool controller1_inputs[8];
+    bool controller2_inputs[8];
+    for (int i=0; i<8; i++) {
+        controller1_inputs[i] = state[mapped_keys[i]];
+        controller2_inputs[i] = false;
+    }
+    cont1 = new Controller(controller1_inputs);
+    cont2 = new Controller(controller2_inputs);
+
     std::thread tInputs(update_inputs);
 
     start = epoch();
@@ -738,6 +742,7 @@ int main(int argc, char ** argv) {
                                 interrupted = true;
                                 NESThread.join();
                                 sampleGet.join();
+                                tInputs.join();
                                 //tCPU.join();
                                 //tPPU.join();
                                 //tAPU.join();
@@ -747,6 +752,7 @@ int main(int argc, char ** argv) {
                                 cpu.reset();
                                 interrupted = false;
                                 NESThread = std::thread(NESLoop);
+                                tInputs = std::thread(update_inputs);
                                 //tCPU = std::thread(CPUThread);
                                 //tPPU = std::thread(PPUThread);
                                 //tAPU = std::thread(APUThread);
