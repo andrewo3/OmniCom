@@ -255,11 +255,13 @@ void sampleAPU() {
                 for (int i=0; i<BUFFER_LEN; i++) {
                     apu_ptr->buffer_copy[i]*=global_db;
                 }
+        
                 SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
             }
             //SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
             apu_ptr->queue_audio_flag = false;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500*BUFFER_LEN/sr));
     }
 }
 
@@ -274,32 +276,30 @@ void NESLoop() {
         if (!paused) {
             //if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
             //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
-            while (cpu_ptr->cycles<(real_time-paused_time)*cpu_ptr->CLOCK_SPEED/1000000000) {
-                cpu_ptr->clock();
+            cpu_ptr->clock();
 
-                while (apu_ptr->cycles*2<cpu_ptr->cycles) {
-                    apu_ptr->cycle();
-                    //apu_ptr->cycles++;
+            while (apu_ptr->cycles*2<cpu_ptr->cycles) {
+                apu_ptr->cycle();
+                //apu_ptr->cycles++;
+            }
+            while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
+                ppu_ptr->cycle();
+                cpu_ptr->rom->get_mapper()->clock(&system[0]);
+                
+                
+                if (ppu_ptr->debug) {
+                    printf("PPU REGISTERS: ");
+                    printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
+                    printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
                 }
-                while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
-                    ppu_ptr->cycle();
-                    cpu_ptr->rom->get_mapper()->clock(&system[0]);
-                    
-                    
-                    if (ppu_ptr->debug) {
-                        printf("PPU REGISTERS: ");
-                        printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
-                        printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
-                    }
-                    //printf("%i\n",ppu.v);
-                }
+                //printf("%i\n",ppu.v);
             }
             real_time = epoch_nano()-start_nano;
-            //long long cpu_time = ns_wait*cpu_ptr->cycles;
-            //int diff = cpu_time-(real_time-paused_time);
-            /*if (diff > 0) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(ns_wait_l));
-            }*/
+            long long cpu_time = ns_wait*cpu_ptr->cycles;
+            int diff = cpu_time-(real_time-paused_time);
+            if (diff > 0) {
+                std::this_thread::sleep_for(std::chrono::nanoseconds(diff));
+            }
         }
         
     }
@@ -334,6 +334,7 @@ void update_inputs() {
         }
         cont1->update_inputs(controller1_inputs);
         cont2->update_inputs(controller2_inputs);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000/120));
     }
 }
 
