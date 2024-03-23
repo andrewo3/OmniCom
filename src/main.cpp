@@ -246,24 +246,20 @@ void sampleAPU() {
     long long last_q = 0;
     long long last_cycles = 0;
     long long cycles_per_audio = cpu_ptr->CLOCK_SPEED/sr;
-    while (!interrupted) {
-        if (apu_ptr->queue_audio_flag) {
-            int buffer_size = SDL_GetQueuedAudioSize(audio_device); 
-            if (buffer_size>BUFFER_LEN*sizeof(int16_t)*2) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
-                SDL_DequeueAudio(audio_device,nullptr,sizeof(int16_t)*BUFFER_LEN);
-            } else {
-                for (int i=0; i<BUFFER_LEN; i++) {
-                    apu_ptr->buffer_copy[i]*=global_db;
-                }
-        
-                SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
-            }
-            //SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
-            apu_ptr->queue_audio_flag = false;
+    int buffer_size = SDL_GetQueuedAudioSize(audio_device); 
+    if (buffer_size>BUFFER_LEN*sizeof(int16_t)*2) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
+        SDL_DequeueAudio(audio_device,nullptr,sizeof(int16_t)*BUFFER_LEN);
+    } else {
+        for (int i=0; i<BUFFER_LEN; i++) {
+            apu_ptr->buffer_copy[i]*=global_db;
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500*BUFFER_LEN/sr));
+
+        SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
     }
+    //SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
+    apu_ptr->queue_audio_flag = false;
 }
+//std::this_thread::sleep_for(std::chrono::milliseconds(500*BUFFER_LEN/sr));
 
 void NESLoop() {
     
@@ -576,7 +572,7 @@ int main(int argc, char ** argv) {
 
     //Enter NES logic loop alongside window loop
     std::thread NESThread(NESLoop);
-    std::thread sampleGet(sampleAPU);
+    //std::thread sampleGet(sampleAPU);
     //std::thread tCPU(CPUThread);
     //std::thread tPPU(PPUThread);
     //std::thread tAPU(APUThread);
@@ -622,6 +618,9 @@ int main(int argc, char ** argv) {
             last_time = SDL_GetTicks()/1000.0;
         }
         //logic is executed in nes thread
+        if (apu_ptr->queue_audio_flag) {
+            sampleAPU();
+        }
         
         if (use_shaders) {
             //apply ntsc filter before drawing
@@ -742,7 +741,7 @@ int main(int argc, char ** argv) {
                             if (state[modifier] && !paused) { //ctrl+r (or cmd+r) - reset shortcut
                                 interrupted = true;
                                 NESThread.join();
-                                sampleGet.join();
+                                //sampleGet.join();
                                 tInputs.join();
                                 //tCPU.join();
                                 //tPPU.join();
@@ -757,7 +756,7 @@ int main(int argc, char ** argv) {
                                 //tCPU = std::thread(CPUThread);
                                 //tPPU = std::thread(PPUThread);
                                 //tAPU = std::thread(APUThread);
-                                sampleGet = std::thread(sampleAPU);
+                                //sampleGet = std::thread(sampleAPU);
                             }
                             break;
                             }
@@ -778,7 +777,7 @@ int main(int argc, char ** argv) {
     }
     tInputs.join();
     NESThread.join();
-    sampleGet.join();
+    //sampleGet.join();
     glDetachShader(shaderProgram,vertexShader);
     glDetachShader(shaderProgram,fragmentShader);
     glDeleteProgram(shaderProgram);

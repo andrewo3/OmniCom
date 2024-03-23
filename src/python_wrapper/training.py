@@ -32,19 +32,10 @@ def mem_s(ind):
 nesObj.start()
 saves = len(listdir("states"))
 
-def tAudio():
-    global running, nesObj, stream
-    while running:
-        c = nesObj.getAudio()
-        stream.write(c)
-
 def set_mario_state(state):
     cpu_mem[0xed] = state
     cpu_mem[0x578] = state
 
-
-audio_thread = threading.Thread(target=tAudio,daemon=True)
-audio_thread.start()
 world_num = 0
 print(saves)
 nesObj.setPaused(True)
@@ -62,11 +53,12 @@ selected = 0
 win = cpu_mem[0x5F3]
 
 def load_level(choice = None):
-    global repeats, moved
+    global repeats, moved, selected
     if not(choice):
         select = random.randint(0,saves-1)
     else:
         select = choice
+    selected = choice
     nesObj.setPaused(True)
     if nesObj.loadState(select):
         repeats = 0
@@ -80,6 +72,8 @@ def load_level(choice = None):
 
 def draw_image():
     frame = deepcopy(nesObj.getImg())
+    grey = (np.sum(frame,2)/3).repeat(3).reshape(240,256,3).astype(np.uint8)
+    frame = grey
     pygame.pixelcopy.array_to_surface(nes_surf,frame)
     scaled_ind = int(240/256<window_dim[1]/window_dim[0])
     scale_fac = [window_dim[0]/256,window_dim[1]/240][1-scaled_ind]
@@ -88,6 +82,8 @@ def draw_image():
     window.blit(pygame.transform.scale_by(pygame.transform.flip(pygame.transform.rotate(nes_surf,-90),True,False),scale_fac),nes_window_pos)
 
 while running:
+    c = nesObj.getAudio()
+    stream.write(c)
     win = cpu_mem[0x5F3]
     fitnessFont = pygame.font.SysFont("arial",int(window_dim[1]/12))
     state = pygame.key.get_pressed()
@@ -115,7 +111,7 @@ while running:
         repeated = False
     if abs(int(cpu_mem[0x90])-last_pos)>1:
         moved = time.time()
-    if (cpu_mem[0x7F5]>0 or cpu_mem[0x5F3] in [129,2,1] or (time.time()-moved>5)):
+    if (cpu_mem[0x7F5]>0 or cpu_mem[0x5F3] in [129,2,1] or (time.time()-moved>10)):
         print(cpu_mem[0x5F3])
         if cpu_mem[0x5F3] in [129,2,1]:
             print("Beat level!")
