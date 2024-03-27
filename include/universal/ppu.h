@@ -34,7 +34,7 @@ class PPU {
 
         //image
         unsigned char* getImg() {
-            return current_img;
+            return internal_img;
         }
 
 

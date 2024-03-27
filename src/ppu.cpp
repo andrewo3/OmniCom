@@ -355,6 +355,7 @@ void PPU::cycle() {
     } else if (241<=scanline && scanline<=260) { //vblank
         //printf("vblank!\n");
         if (vblank==false && scycle>=1) { //start vblank as soon as you reach this
+            image_mutex.unlock();
             vblank = true;
             memcpy(current_img,internal_img,sizeof(uint8_t)*184320); //copy internal img to out image every frame update
             mutex_locked = false;
@@ -375,6 +376,7 @@ void PPU::cycle() {
         }
         if (scycle==1 && vblank==true) {
             *PPUSTATUS&=~0x80;
+            image_mutex.lock();
             vblank = false;
         }
 

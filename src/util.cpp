@@ -141,7 +141,7 @@ void pause_menu(void** system) {
             if (ImGui::Button("Save")) {
                 std::string load_dir = config_dir+sep+std::string("state");
                 printf("save game at: %s\n",load_dir.c_str());
-                FILE* save_file = fopen(load_dir.c_str(),"rb");
+                FILE* save_file = fopen(load_dir.c_str(),"wb");
                 cpu->save_state(save_file);
                 fclose(save_file);
             }

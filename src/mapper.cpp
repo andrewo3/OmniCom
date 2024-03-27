@@ -233,15 +233,15 @@ void MMC1::control(CPU* cpu, PPU* ppu, uint8_t val) {
         case 0:
         case 1:
             cpu->rom->mirrormode = SINGLESCREEN;
-            printf("singlescreen mirroring\n");
+            //printf("singlescreen mirroring\n");
             break;
         case 2:
             cpu->rom->mirrormode = VERTICAL;
-            printf("vertical mirroring\n");
+            //printf("vertical mirroring\n");
             break;
         case 3:
             cpu->rom->mirrormode = HORIZONTAL;
-            printf("horizontal mirroring\n");
+            //printf("horizontal mirroring\n");
             break;
     }
     prg_mode = ((val&0xc)>>2)&0x3;

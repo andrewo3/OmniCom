@@ -3,6 +3,7 @@
 #include <cstdint>
 #include "cpu.h"
 #include "glob_const.h"
+#include <mutex>
 
 class CPU;
 
@@ -21,7 +22,8 @@ class APU {
         int16_t* buffer_copy = new int16_t[BUFFER_LEN];
         bool queue_audio_flag = false;
         int clock_speed;
-
+        bool play_audio = false;
+        std::mutex queue_mutex;
         CPU* cpu;
         long long audio_frame = 0;
         long long audio_sent = 0;
