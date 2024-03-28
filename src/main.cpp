@@ -299,7 +299,7 @@ void NESLoop() {
             real_time = epoch_nano()-start_nano;
             long long cpu_time = ns_wait*cpu_ptr->cycles;
             int diff = cpu_time-(real_time-paused_time);
-            if (diff > 0) {
+            if (cpu_time > (real_time-paused_time)) {
                 std::this_thread::sleep_for(std::chrono::nanoseconds(diff));
             }
         }
@@ -602,7 +602,7 @@ int main(int argc, char ** argv) {
     SDL_PauseAudioDevice(audio_device,0);
     //main window loop
     while (!interrupted) {
-        //check if checkbox was clicked
+        //check if checkbox for shaders was clicked
         if (changed_use_shaders!=use_shaders) {
             GLfloat new_vertices[] = {
                 -1.0f, 1.0f,0.0f,0.0f,
@@ -619,178 +619,178 @@ int main(int argc, char ** argv) {
             glBindBuffer(GL_ARRAY_BUFFER,0);
         }
         changed_use_shaders = use_shaders;
-
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame(window);
-        ImGui::NewFrame();
+        //logic is executed in nes thread
         if (!paused) {
-            //printf("size 16 sprites: %i\n",*(ppu_ptr->PPUCTRL)&0x20);
-            //ppu_ptr->image_mutex.lock();
+            ppu_ptr->image_mutex.lock();
+        }
+        if (!ppu_ptr->image_drawn || paused) { //if ppu hasnt registered image as being drawn yet
+            t_time = SDL_GetTicks()/1000.0;
             float diff = t_time-last_time;
             char * new_title = new char[255];
             sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
             SDL_SetWindowTitle(window,new_title);
             delete[] new_title;
 
-            last_time = SDL_GetTicks()/1000.0;
-        }
-        //logic is executed in nes thread
-        if (!paused) {
-            //ppu_ptr->image_mutex.lock();
-        }
-        if (use_shaders) {
-            //apply ntsc filter before drawing
-            ntsc.data = ppu.getImg(); /* buffer from your rendering */
-            ntsc.format = CRT_PIX_FORMAT_RGB;
-            ntsc.w = NES_DIM[0];
-            ntsc.h = NES_DIM[1];
-            ntsc.as_color = color;
-            ntsc.field = field & 1;
-            ntsc.raw = raw;
-            ntsc.hue = hue;
-            if (ntsc.field == 0) {
-            ntsc.frame ^= 1;
+            last_time = t_time;
+
+            if (use_shaders) {
+                //apply ntsc filter before drawing
+                ntsc.data = ppu.getImg(); /* buffer from your rendering */
+                ntsc.format = CRT_PIX_FORMAT_RGB;
+                ntsc.w = NES_DIM[0];
+                ntsc.h = NES_DIM[1];
+                ntsc.as_color = color;
+                ntsc.field = field & 1;
+                ntsc.raw = raw;
+                ntsc.hue = hue;
+                if (ntsc.field == 0) {
+                ntsc.frame ^= 1;
+                }
+                crt_modulate(&crt, &ntsc);
+                crt_demodulate(&crt, noise);
+                field ^= 1;
+                //render texture from nes (temporarily test_image.jpg)
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
+            } else {
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, ppu.getImg());
+
             }
-            crt_modulate(&crt, &ntsc);
-            crt_demodulate(&crt, noise);
-            field ^= 1;
-            //render texture from nes (temporarily test_image.jpg)
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0]*filtered_res_scale,NES_DIM[1]*filtered_res_scale, 0, GL_RGB, GL_UNSIGNED_BYTE, filtered);
+
+            glUseProgram(shaderProgram);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture);
+
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_TRIANGLE_FAN,0,4);
+            glBindVertexArray(0);
+            glUseProgram(0);
+
+            //ImGui::ShowDemoWindow(NULL);
+            //render gui
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplSDL2_NewFrame(window);
+            ImGui::NewFrame();
+            if (paused) {
+                void * system[3] = {cpu_ptr,ppu_ptr,apu_ptr};
+                pause_menu(&system[0]);
+            } else {
+                changing_keybind = -1;
+            }
+            if (paused && !paused_window) {
+                paused_time += (epoch_nano()-start_nano)-real_time;
+                paused = false;              
+            }
+            ImGui::Render();
+            
+            if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+            {
+                ImGui::UpdatePlatformWindows();
+                ImGui::RenderPlatformWindowsDefault();
+                SDL_GL_MakeCurrent(window,context);
+            }
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            //update screen
+            //reset viewport
+            int* new_viewport = new int[4];
+            SDL_GetWindowSize(window,&new_viewport[2],&new_viewport[3]);
+            viewportBox(&new_viewport,new_viewport[2],new_viewport[3]);
+            glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+            delete[] new_viewport;
+
+            SDL_GL_SwapWindow(window);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
             ppu_ptr->image_mutex.unlock();
-        } else {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, NES_DIM[0],NES_DIM[1], 0, GL_RGB, GL_UNSIGNED_BYTE, ppu.getImg());
-            ppu_ptr->image_mutex.unlock();
-        }
-
-        glUseProgram(shaderProgram);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLE_FAN,0,4);
-        glBindVertexArray(0);
-        glUseProgram(0);
-
-        //ImGui::ShowDemoWindow(NULL);
-        //render gui
-        if (paused) {
-            void * system[3] = {cpu_ptr,ppu_ptr,apu_ptr};
-            pause_menu(&system[0]);
-        } else {
-            changing_keybind = -1;
-        }
-        if (paused && !paused_window) {
-            paused_time += (epoch_nano()-start_nano)-real_time;
-            paused = false;              
-        }
-        ImGui::Render();
+            ppu_ptr->image_drawn = true;
         
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            SDL_GL_MakeCurrent(window,context);
-        }
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        //update screen
-        //reset viewport
-        int* new_viewport = new int[4];
-        SDL_GetWindowSize(window,&new_viewport[2],&new_viewport[3]);
-        viewportBox(&new_viewport,new_viewport[2],new_viewport[3]);
-        glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
-        delete[] new_viewport;
 
-        SDL_GL_SwapWindow(window);
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+            //ppu_ptr->image_mutex.unlock();
+            // event loop
+            SDL_PumpEvents();
 
-        //ppu_ptr->image_mutex.unlock();
-        // event loop
-        SDL_PumpEvents();
-
-        while(SDL_PollEvent(&event)) {
-            switch(event.type) {
-                case SDL_QUIT:
-                    quit(0);
-                    break;
-                case SDL_WINDOWEVENT:
-                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                        int* new_viewport = new int[4];
-                        int new_width = event.window.data1;
-                        int new_height = event.window.data2;
-                        viewportBox(&new_viewport,new_width,new_height);
-                        printf("%i %i %i %i\n",new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
-                        glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
-                        //glViewport(0,0,new_width,new_height);
-                        delete[] new_viewport;
-                    } else if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+            while(SDL_PollEvent(&event)) {
+                switch(event.type) {
+                    case SDL_QUIT:
                         quit(0);
                         break;
-                    }
-                    break;
-                case SDL_KEYDOWN:
-                    if (changing_keybind>-1) {
-                        mapped_keys[changing_keybind] = event.key.keysym.scancode;
-                        changing_keybind = -1;
-                    }
-                    switch (event.key.keysym.sym) {
-                        case SDLK_F11:
-                            {
-                            fullscreen_toggle = fullscreen_toggle ? false : true;
-                            SDL_SetWindowFullscreen(window,fullscreen_toggle*SDL_WINDOW_FULLSCREEN_DESKTOP);
-                            SDL_SetWindowSize(window,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
-                            SDL_SetWindowPosition(window,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED);
+                    case SDL_WINDOWEVENT:
+                        if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
                             int* new_viewport = new int[4];
-                            viewportBox(&new_viewport,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
+                            int new_width = event.window.data1;
+                            int new_height = event.window.data2;
+                            viewportBox(&new_viewport,new_width,new_height);
                             printf("%i %i %i %i\n",new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
                             glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+                            //glViewport(0,0,new_width,new_height);
                             delete[] new_viewport;
+                        } else if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+                            quit(0);
                             break;
-                            }
-                        case SDLK_r:
-                            {
-                            SDL_Scancode modifier = SDL_SCANCODE_LCTRL;
-                            #ifdef __APPLE__
-                                modifier = SDL_SCANCODE_LGUI;
-                            #endif
-                            
-                            if (state[modifier] && !paused) { //ctrl+r (or cmd+r) - reset shortcut
-                                interrupted = true;
-                                NESThread.join();
-                                sampleGet.join();
-                                tInputs.join();
-                                //tCPU.join();
-                                //tPPU.join();
-                                //tAPU.join();
-                                cpu.init_vals();
-                                rom.reset_mapper();
-                                cpu.loadRom(&rom);
-                                cpu.reset();
-                                interrupted = false;
-                                NESThread = std::thread(NESLoop);
-                                tInputs = std::thread(update_inputs);
-                                //tCPU = std::thread(CPUThread);
-                                //tPPU = std::thread(PPUThread);
-                                //tAPU = std::thread(APUThread);
-                                sampleGet = std::thread(sampleAPU);
-                            }
-                            break;
-                            }
-                        case SDLK_ESCAPE:
-                            paused = paused ? false : true;
-                            paused_window = true;
-                            if (!paused) {
-                                paused_time += (epoch_nano()-start_nano)-real_time;
-                            }
-                            cpu.last = epoch_nano(); // reset timing
-                            break;
-                    }
+                        }
+                        break;
+                    case SDL_KEYDOWN:
+                        if (changing_keybind>-1) {
+                            mapped_keys[changing_keybind] = event.key.keysym.scancode;
+                            changing_keybind = -1;
+                        }
+                        switch (event.key.keysym.sym) {
+                            case SDLK_F11:
+                                {
+                                fullscreen_toggle = fullscreen_toggle ? false : true;
+                                SDL_SetWindowFullscreen(window,fullscreen_toggle*SDL_WINDOW_FULLSCREEN_DESKTOP);
+                                SDL_SetWindowSize(window,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
+                                SDL_SetWindowPosition(window,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED);
+                                int* new_viewport = new int[4];
+                                viewportBox(&new_viewport,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
+                                printf("%i %i %i %i\n",new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+                                glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
+                                delete[] new_viewport;
+                                break;
+                                }
+                            case SDLK_r:
+                                {
+                                SDL_Scancode modifier = SDL_SCANCODE_LCTRL;
+                                #ifdef __APPLE__
+                                    modifier = SDL_SCANCODE_LGUI;
+                                #endif
+                                
+                                if (state[modifier] && !paused) { //ctrl+r (or cmd+r) - reset shortcut
+                                    interrupted = true;
+                                    NESThread.join();
+                                    sampleGet.join();
+                                    tInputs.join();
+                                    //tCPU.join();
+                                    //tPPU.join();
+                                    //tAPU.join();
+                                    cpu.init_vals();
+                                    rom.reset_mapper();
+                                    cpu.loadRom(&rom);
+                                    cpu.reset();
+                                    interrupted = false;
+                                    NESThread = std::thread(NESLoop);
+                                    tInputs = std::thread(update_inputs);
+                                    //tCPU = std::thread(CPUThread);
+                                    //tPPU = std::thread(PPUThread);
+                                    //tAPU = std::thread(APUThread);
+                                    sampleGet = std::thread(sampleAPU);
+                                }
+                                break;
+                                }
+                            case SDLK_ESCAPE:
+                                paused = paused ? false : true;
+                                paused_window = true;
+                                if (!paused) {
+                                    paused_time += (epoch_nano()-start_nano)-real_time;
+                                }
+                                cpu.last = epoch_nano(); // reset timing
+                                break;
+                        }
+                }
+                ImGui_ImplSDL2_ProcessEvent(&event);
             }
-            ImGui_ImplSDL2_ProcessEvent(&event);
         }
-        SDL_Delay(1000/desired_fps);
-        t_time = SDL_GetTicks()/1000.0;
+        //SDL_Delay(1000/desired_fps);
     }
     tInputs.join();
     NESThread.join();

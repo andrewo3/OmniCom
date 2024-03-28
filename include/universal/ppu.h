@@ -29,7 +29,7 @@ class PPU {
         bool debug = false;
         bool vblank = false;
         std::mutex image_mutex;
-        bool mutex_locked = false;
+        bool image_drawn = false;
         int chr_bank_num = 0;
 
         //image

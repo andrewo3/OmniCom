@@ -21,7 +21,7 @@ class CPU {
         APU* apu;
         //int CLOCK_SPEED = 1790210;
         int CLOCK_SPEED = 1789773; //original
-        //int CLOCK_SPEED = 2147483647; //for test purposes
+        //int CLOCK_SPEED = 2147483647; //test how fast it can go
         int emulated_clock_speed();
         long long start = epoch();
         void clock();
