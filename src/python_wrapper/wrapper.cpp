@@ -5,6 +5,7 @@
 #include "ppu.h"
 #include "mapper.h"
 #include "apu.h"
+#include "pybind11/functional.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 #include <cstdint>
@@ -69,6 +70,10 @@ class NES {
         void setController(ControllerWrapper& cont,int port);
         void start();
         void runFrame();
+        std::function<void()> perframefunc = [](){};
+        void perFrame(const std::function<void()> &f) { // define a function to run every frame
+            perframefunc = f;
+        }
         void stop();
         void operation_thread();
         void save(int ind);
@@ -291,9 +296,12 @@ void NES::operation_thread() {
 
             // 3 dots per cpu cycle
             while (ppu->cycles<(cpu->cycles*3)) {
+                long long last_frame_count = ppu->frames;
                 ppu->cycle();
                 cpu->rom->get_mapper()->clock(&system[0]);
-                
+                if (ppu->frames != last_frame_count) {
+                    perframefunc();
+                }
                 if (ppu->debug) {
                     printf("PPU REGISTERS: ");
                     printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu->vblank, (uint8_t)cpu->memory[0x2000],(uint8_t)cpu->memory[0x2001],(uint8_t)cpu->memory[0x2002],ppu->v);
@@ -420,7 +428,8 @@ PYBIND11_MODULE(pyNES,m) {
     .def("setController",&NES::setController)
     .def("frameCount",&NES::frame_count)
     .def("cycleCount",&NES::cycle_count)
-    .def("runFrame",&NES::runFrame);
+    .def("runFrame",&NES::runFrame)
+    .def("perFrame",&NES::perFrame);
     py::class_<ControllerWrapper>(m,"Controller").def(py::init<>())
     .def("updateInputs",&ControllerWrapper::updateInputs);
 

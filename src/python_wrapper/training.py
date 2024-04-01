@@ -7,9 +7,10 @@ sys.path.append(abspath("build/lib.macosx-10.9-universal2-cpython-312"))
 sys.path.append(abspath("build\\lib.win-amd64-cpython-312"))
 sys.path.append(abspath("build/lib.linux-x86_64-cpython-311"))
 import pyNES,pygame
+#import tensorflow as tf
 
 pygame.init()
-window_dim = [128,120]
+window_dim = [256,240]
 window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
 nes_surf = pygame.Surface((240,256))
 p = pyaudio.PyAudio()
@@ -207,6 +208,5 @@ while running:
                     matches = matches[last_mem[matches]>tmp_mem[matches]]
                     print(matches,matches.size)
                 last_mem = tmp_mem.copy()
-audio_thread.join()
 stream.close()
 p.terminate()

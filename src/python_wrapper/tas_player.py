@@ -14,9 +14,9 @@ p = pyaudio.PyAudio()
 
 stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True,frames_per_buffer = 4096)
 
-tas_file = open("C:\\Users\\Andrew Ogundimu\\Desktop\\HappyLee&Mars608_SMBwarpless_V5.fm2","r").readlines()
+tas_file = open("../../res/tas/lordtom_tompa-smb3-warpless.fm2","r").readlines()
 tas_inps = [list([i!="." for i in line.split("|")[2]]) for line in tas_file if line[0:2]=="|0"]
-nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
+nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG0) [!].nes"))
 nesObj.start()
 running = True
 
@@ -31,19 +31,19 @@ nesObj.setController(controller_port1,0)
 
 diff = 0
 
+
 def tasInput():
-    last = 0
-    while running:
-        frames = nesObj.frameCount()
-        controller_port1.updateInputs(tas_inps[frames][::-1])
-        print(tas_inps[frames][::-1])
-        last = frames
+    global tas_inps
+    frames = nesObj.frameCount()
+    print(nesObj.cycleCount()/frames)
+    controller_port1.updateInputs(tas_inps[frames][::-1])
 
 audio_thread = threading.Thread(target=tAudio,daemon = True)
 audio_thread.start()
 
 tas_thread = threading.Thread(target=tasInput,daemon=True)
-tas_thread.start()
+#tas_thread.start()
+nesObj.perFrame(tasInput)
 clock = pygame.time.Clock()
 while running:
     state = pygame.key.get_pressed()
@@ -66,6 +66,6 @@ while running:
             window_dim = [event.w,event.h]
             window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
 audio_thread.join()
-tas_thread.join()
+#tas_thread.join()
 stream.close()
 p.terminate()

@@ -63,7 +63,10 @@ class CPU {
         void start_nmi();
         void start_irq();
         bool recv_nmi = false;
+        bool nmi_next = false;
         bool recv_irq = false;
+        bool nmi_output = false;
+        bool last_nmi = false;
         uint8_t status() { return flags;}
         bool input_strobe = 0;
         bool debug = false;

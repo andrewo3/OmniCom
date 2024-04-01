@@ -24,7 +24,7 @@ class PPU {
         int8_t oam[256]; // OAM (Object Attribute Memory) for sprites
         int8_t secondary_oam[32]; //sprites to draw on each scanline.
         bool vram_twice = 0;
-        int scanline = 261;
+        int scanline = 0;
         int scycle = 0;
         bool debug = false;
         bool vblank = false;
@@ -32,6 +32,10 @@ class PPU {
         bool image_drawn = false;
         int chr_bank_num = 0;
         bool inhibit_nmi = false;
+        bool disable_vbl = false;
+        bool nmi_out = false;
+        bool nmi_occurred = false;
+        bool nmi_suppress = false;
 
         //image
         unsigned char* getImg() {

@@ -354,19 +354,23 @@ void PPU::cycle() {
         }
     } else if (241<=scanline && scanline<=260) { //vblank
         //printf("vblank!\n");
-        if (vblank==false && scycle>=1) { //start vblank as soon as you reach this
+        if (vblank==false && scycle==1 && scanline==241) { //start vblank as soon as you reach this
             vblank = true;
             memcpy(current_img,internal_img,sizeof(uint8_t)*184320); //copy internal img to out image every frame update
             image_mutex.unlock();
             image_drawn = false;
-            *PPUSTATUS|=0x80;
-        }
-        if (vblank && (*PPUCTRL)&0x80 && ((*PPUSTATUS)&0x80) && !inhibit_nmi) { // if ppu is configured to generate nmi, do so.
-            cpu->recv_nmi = true;
-            //printf("NMI\n");
+            if (!nmi_suppress) {
+                nmi_occurred = true;
+            }
+            if (!disable_vbl) {
+                *PPUSTATUS|=0x80;
+            }
+            nmi_suppress = false;
+            disable_vbl = false;
         }
     } else if (scanline==261) { // pre-render scanline
         if (scycle==1) {
+            nmi_occurred = false;
             (*PPUSTATUS)&=~0xE0; //clear overflow, sprite 0 hit, and vbl
         }
         if (scycle>=280 && scycle<=304 && rendering) {
@@ -376,7 +380,6 @@ void PPU::cycle() {
         if (scycle==1 && vblank==true) {
             (*PPUSTATUS)&=~0x80;
             vblank = false;
-            inhibit_nmi = false;
         }
 
     }
