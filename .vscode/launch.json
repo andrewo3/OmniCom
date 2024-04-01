@@ -22,7 +22,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main.exe",
             "args": [
-                "${workspaceRoot}\\res\\roms\\Tetris (U) [!].nes"
+                "D:\\Dropbox\\2023 Main Hard Drive\\Python Projects\\Nes2Exe-main\\nes-test-roms-master\\instr_timing\\rom_singles\\1-instr_timing.nes"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

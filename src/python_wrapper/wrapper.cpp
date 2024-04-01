@@ -68,6 +68,7 @@ class NES {
         py::bytes getAudio();
         void setController(ControllerWrapper& cont,int port);
         void start();
+        void runFrame();
         void stop();
         void operation_thread();
         void save(int ind);
@@ -76,6 +77,8 @@ class NES {
         bool setSaveDir(std::string dir);
         std::string getSaveDir();
         void detectOS(char* ROM_NAME);
+        long long frame_count();
+        long long cycle_count();
         std::string state_save_dir;
         Controller cont1;
         Controller cont2;
@@ -90,6 +93,43 @@ class NES {
         long long paused_time = epoch_nano();
         std::thread running_t;
 };
+
+void NES::runFrame() {
+    long long start_frame = ppu->frames;
+    void* system[3] = {cpu,ppu,apu};
+    while (ppu->frames==start_frame) {
+        //if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
+        //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
+        cpu->clock();
+
+        while (apu->cycles*2<cpu->cycles) {
+            apu->cycle();
+            //apu_ptr->cycles++;
+        }
+
+        // 3 dots per cpu cycle
+        while (ppu->cycles<(cpu->cycles*3)) {
+            ppu->cycle();
+            cpu->rom->get_mapper()->clock(&system[0]);
+            
+            if (ppu->debug) {
+                printf("PPU REGISTERS: ");
+                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu->vblank, (uint8_t)cpu->memory[0x2000],(uint8_t)cpu->memory[0x2001],(uint8_t)cpu->memory[0x2002],ppu->v);
+                printf("scanline: %i, cycle: %i\n",ppu->scanline,ppu->scycle);
+            }
+            //printf("%i\n",ppu.v);
+        }
+    }
+        
+}
+
+long long NES::cycle_count() {
+    return cpu->cycles;
+}
+
+long long NES::frame_count() {
+    return ppu->frames;
+}
 
 void NES::set_pause(bool p) {
     if (!p && paused) {
@@ -377,7 +417,10 @@ PYBIND11_MODULE(pyNES,m) {
     .def("setPaused",&NES::set_pause)
     .def("setSaveDir",&NES::setSaveDir)
     .def("getSaveDir",&NES::getSaveDir)
-    .def("setController",&NES::setController);
+    .def("setController",&NES::setController)
+    .def("frameCount",&NES::frame_count)
+    .def("cycleCount",&NES::cycle_count)
+    .def("runFrame",&NES::runFrame);
     py::class_<ControllerWrapper>(m,"Controller").def(py::init<>())
     .def("updateInputs",&ControllerWrapper::updateInputs);
 

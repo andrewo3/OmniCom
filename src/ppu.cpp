@@ -360,11 +360,10 @@ void PPU::cycle() {
             image_mutex.unlock();
             image_drawn = false;
             *PPUSTATUS|=0x80;
-            if ((*PPUCTRL)&0x80) { // if ppu is configured to generate nmi, do so.
-                cpu->recv_nmi = true;
-                //printf("NMI\n");
-            }
-
+        }
+        if (vblank && (*PPUCTRL)&0x80 && ((*PPUSTATUS)&0x80) && !inhibit_nmi) { // if ppu is configured to generate nmi, do so.
+            cpu->recv_nmi = true;
+            //printf("NMI\n");
         }
     } else if (scanline==261) { // pre-render scanline
         if (scycle==1) {
@@ -375,8 +374,9 @@ void PPU::cycle() {
             v |= (t&0x7BE0);
         }
         if (scycle==1 && vblank==true) {
-            *PPUSTATUS&=~0x80;
+            (*PPUSTATUS)&=~0x80;
             vblank = false;
+            inhibit_nmi = false;
         }
 
     }
@@ -389,16 +389,16 @@ void PPU::cycle() {
 
     // increment
     scycle++;
+    if (scycle==339 && frames%2==1 && scanline==261 && ((*PPUMASK)&0x8))
+        scycle++;
     scycle%=341;
     cycles++;
     if (scycle==0) {
         scanline++;
         scanline%=262;
-        if (frames%2==1 && scanline==0 && rendering) { // skip odd frames when rendering
-            cycles++;
-            scycle++;
+        if (scanline==0) {
+            frames++;
         }
-        frames++;
     }
     //apply_and_update_registers();
 }

@@ -31,6 +31,7 @@ class PPU {
         std::mutex image_mutex;
         bool image_drawn = false;
         int chr_bank_num = 0;
+        bool inhibit_nmi = false;
 
         //image
         unsigned char* getImg() {
