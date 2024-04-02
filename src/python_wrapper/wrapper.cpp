@@ -70,6 +70,7 @@ class NES {
         void setController(ControllerWrapper& cont,int port);
         void start();
         void runFrame();
+        void single_cycle();
         std::function<void()> perframefunc = [](){};
         void perFrame(const std::function<void()> &f) { // define a function to run every frame
             perframefunc = f;
@@ -92,6 +93,7 @@ class NES {
         CPU* cpu;
         PPU* ppu;
         APU* apu;
+        void* system[3];
         ROM* rom;
         bool running = false;
         volatile bool paused = false;
@@ -105,27 +107,34 @@ void NES::runFrame() {
     while (ppu->frames==start_frame) {
         //if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
         //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
-        cpu->clock();
-
-        while (apu->cycles*2<cpu->cycles) {
-            apu->cycle();
-            //apu_ptr->cycles++;
-        }
-
-        // 3 dots per cpu cycle
-        while (ppu->cycles<(cpu->cycles*3)) {
-            ppu->cycle();
-            cpu->rom->get_mapper()->clock(&system[0]);
-            
-            if (ppu->debug) {
-                printf("PPU REGISTERS: ");
-                printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu->vblank, (uint8_t)cpu->memory[0x2000],(uint8_t)cpu->memory[0x2001],(uint8_t)cpu->memory[0x2002],ppu->v);
-                printf("scanline: %i, cycle: %i\n",ppu->scanline,ppu->scycle);
-            }
-            //printf("%i\n",ppu.v);
-        }
+        single_cycle();
     }
         
+}
+
+void NES::single_cycle() {
+    cpu->clock();
+
+    while (apu->cycles*2<cpu->cycles) {
+        apu->cycle();
+        //apu_ptr->cycles++;
+    }
+
+    // 3 dots per cpu cycle
+    while (ppu->cycles<(cpu->cycles*3)) {
+        long long last_frame_count = ppu->frames;
+        ppu->cycle();
+        cpu->rom->get_mapper()->clock(&system[0]);
+        if (ppu->frames != last_frame_count) {
+            perframefunc();
+        }
+        if (ppu->debug) {
+            printf("PPU REGISTERS: ");
+            printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu->vblank, (uint8_t)cpu->memory[0x2000],(uint8_t)cpu->memory[0x2001],(uint8_t)cpu->memory[0x2002],ppu->v);
+            printf("scanline: %i, cycle: %i\n",ppu->scanline,ppu->scycle);
+        }
+        //printf("%i\n",ppu.v);
+    }
 }
 
 long long NES::cycle_count() {
@@ -231,6 +240,9 @@ NES::NES(char* rom_name) {
     cpu->set_controller(&cont2,1);
     cpu->reset();
     ppu = new PPU(cpu);
+    system[0] = cpu;
+    system[1] = ppu;
+    system[2] = apu;
 
 
 }
@@ -251,6 +263,9 @@ NES::NES() {
     cpu->set_controller(&cont2,1);
     cpu->reset();
     ppu = new PPU(cpu);
+    system[0] = cpu;
+    system[1] = ppu;
+    system[2] = apu;
 
 
 }
@@ -281,34 +296,12 @@ void NES::operation_thread() {
     const double ns_wait = 1e9/cpu->CLOCK_SPEED;
     long long cpu_time;
     paused_time = start_nano;
-    void* system[3] = {cpu,ppu,apu};
     //emulator loop
     while (running) {
         if (!paused) {
             //if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
             //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
-            cpu->clock();
-
-            while (apu->cycles*2<cpu->cycles) {
-                apu->cycle();
-                //apu_ptr->cycles++;
-            }
-
-            // 3 dots per cpu cycle
-            while (ppu->cycles<(cpu->cycles*3)) {
-                long long last_frame_count = ppu->frames;
-                ppu->cycle();
-                cpu->rom->get_mapper()->clock(&system[0]);
-                if (ppu->frames != last_frame_count) {
-                    perframefunc();
-                }
-                if (ppu->debug) {
-                    printf("PPU REGISTERS: ");
-                    printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu->vblank, (uint8_t)cpu->memory[0x2000],(uint8_t)cpu->memory[0x2001],(uint8_t)cpu->memory[0x2002],ppu->v);
-                    printf("scanline: %i, cycle: %i\n",ppu->scanline,ppu->scycle);
-                }
-                //printf("%i\n",ppu.v);
-            }
+            single_cycle();
             real_time = epoch_nano()-start_nano;
             cpu_time = ns_wait*cpu->cycles;
             int diff = cpu_time-(real_time-paused_time);
