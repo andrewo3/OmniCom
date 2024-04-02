@@ -278,15 +278,12 @@ void NESLoop() {
         if (!paused) {
             //if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
             //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
-            cpu_ptr->clock();
-
             while (apu_ptr->cycles*2<cpu_ptr->cycles) {
                 apu_ptr->cycle();
                 //apu_ptr->cycles++;
             }
             while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
                 ppu_ptr->cycle();
-                cpu_ptr->rom->get_mapper()->clock(&system[0]);
                 
                 
                 if (ppu_ptr->debug) {
@@ -296,6 +293,7 @@ void NESLoop() {
                 }
                 //printf("%i\n",ppu.v);
             }
+            cpu_ptr->clock();
             real_time = epoch_nano()-start_nano;
             long long cpu_time = ns_wait*cpu_ptr->cycles;
             int diff = cpu_time-(real_time-paused_time);

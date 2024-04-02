@@ -75,7 +75,6 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             ppu->t &= ~0xC00;
             ppu->t |= (value&0x3)<<10;
-            nmi_output = value&0x80;
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
         case 0x2004: //write to OAMDATA
@@ -271,24 +270,29 @@ int8_t CPU::read(int8_t* address, bool from_cpu) {
     int8_t value = *address;
     switch(mem) { // handle special ppu and apu registers
         case 0x2002:
+            {
             *address &= 0x7F;
             ppu->w = 0;
+            //data access happens on last cycle, so
             //|| ppu->scycle>339 && ppu->scanline==240
-            if (ppu->scycle>=1 && ppu->scanline==261) {
+            if (ppu->scycle>=2 && ppu->scanline==261) {
                 value &= 0x7f;
-            }
-            if (ppu->scycle==0 && ppu->scanline==241) {
+            } else if (ppu->scycle==1 && ppu->scanline==241) {
                 ppu->disable_vbl = true;
                 ppu->nmi_suppress = true;
+                ppu->nmi_occurred = false;
                 value &= 0x7f;
             }
-            else if (ppu->scycle==1 && ppu->scanline==241) {
+            else if (ppu->scycle==2 && ppu->scanline==241) {
                 ppu->disable_vbl = true;
                 ppu->nmi_suppress = true;
+                ppu->nmi_occurred = false;
                 value|=0x80;
+            } else {
+                ppu->nmi_occurred = false;
             }
-            ppu->nmi_occurred = false;
             break;
+            }
         case 0x2004: //OAMDATA
             value = ppu->oam[ppu->oam_addr];
             break;
@@ -418,6 +422,14 @@ void CPU::map_memory(int8_t** address) {
 void CPU::clock() {
     ins_size = 1;
     int8_t* ins = pc;
+    for (int loc: breakpoints) {
+        if (ppu->scanline == 240 && ppu->frames==9) {
+            break;
+        }
+        if (pc-memory == loc) {
+            break; //put actual breakpoint here with debugger to stop at every cpu breakpoint
+        }
+    }
     //map_memory(&ins);
     uint8_t ins_value = read(ins);
     //cycles+=inst_cycles[ins_value];
@@ -430,10 +442,37 @@ void CPU::clock() {
         arg = (this->*addr)(&ins[1]); // run addressing mode on raw value from rom
     }
     if ((addr==&CPU::absx && xpage)||((addr==&CPU::absy || addr==&CPU::indy) && ypage)) {
-        cycles+=inst_cycles_pagecross[ins_value];
+        current_cycles = inst_cycles_pagecross[ins_value];
     } else {
-        cycles+=inst_cycles[ins_value];   
+        current_cycles = inst_cycles[ins_value];
     }
+    cycles += current_cycles;
+
+    //project what ppu values will be by the time ppu is executing
+    //(they are supposed to be in parallel with each other)
+    nmi_output = memory[0x2000]&0x80;
+    bool nmi_now = read_nmi && nmi_output;
+    /*for (int i=0; i<3*(current_cycles-1); i++) { //catch ppu up to speed
+        ppu->cycle();
+    }
+    ppu->cycle();*/
+    read_nmi = ppu->nmi_occurred;
+    /*for (int i=0; i<2; i++) { //catch ppu up to speed
+        ppu->cycle();
+    }*/
+    /*int perceived_cycle = ppu->scycle+3*(current_cycles-1);
+    int perceived_scanline = ppu->scanline;
+    if (perceived_cycle>340) {
+        perceived_scanline++;
+        perceived_cycle%=341;
+    }
+    if (perceived_scanline==261 && perceived_cycle>=0) { //projected end of vblank
+        projected_nmi = false;
+    } else if (ppu->scanline<241 && perceived_scanline == 241 && perceived_cycle > 2 && !ppu->nmi_suppress) {
+        projected_nmi = true;
+    } else {
+        projected_nmi = ppu->nmi_occurred;
+    }*/
     /*if (!(!(ins_value&0xf) && (ins_value&0x10)) && ins_value<0xE4) { // if not a branch instruction
         cycles--;
     }*/
@@ -458,17 +497,13 @@ void CPU::clock() {
     if (pc-memory>=0x10000) {
         pc = memory+(pc-memory)%0x10000;
     }
-    if (nmi_next) {
-        nmi_next = false;
+    if (nmi_now && last_nmi == false) {
         start_nmi();
     }
-    if (ppu->nmi_occurred && nmi_output && last_nmi == false) {
-        nmi_next = true;
-    }
-    if (recv_irq) {
+    else if (recv_irq) {
         start_irq();
     }
-    last_nmi = ppu->nmi_occurred && nmi_output;
+    last_nmi = nmi_now;
     long long change = epoch_nano() - last;
     last = epoch_nano();
     //while ((epoch_nano() - last) < 1000000000LL/CLOCK_SPEED) {}

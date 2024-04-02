@@ -365,11 +365,11 @@ void PPU::cycle() {
             if (!disable_vbl) {
                 *PPUSTATUS|=0x80;
             }
-            nmi_suppress = false;
-            disable_vbl = false;
         }
     } else if (scanline==261) { // pre-render scanline
         if (scycle==1) {
+            nmi_suppress = false;
+            disable_vbl = false;
             nmi_occurred = false;
             (*PPUSTATUS)&=~0xE0; //clear overflow, sprite 0 hit, and vbl
         }
@@ -403,6 +403,8 @@ void PPU::cycle() {
             frames++;
         }
     }
+    void* system[3] = {cpu,this,cpu->apu};
+    cpu->rom->get_mapper()->clock(&system[0]);
     //apply_and_update_registers();
 }
 

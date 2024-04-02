@@ -25,7 +25,7 @@ class PPU {
         int8_t secondary_oam[32]; //sprites to draw on each scanline.
         bool vram_twice = 0;
         int scanline = 0;
-        int scycle = 0;
+        int scycle = 25;
         bool debug = false;
         bool vblank = false;
         std::mutex image_mutex;

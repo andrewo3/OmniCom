@@ -25,6 +25,9 @@ class CPU {
         int emulated_clock_speed();
         long long start = epoch();
         void clock();
+        //int breakpoints[1] = {0xe34e}; //for testing
+        //int breakpoints[1] = {0xe3bd};
+        int breakpoints[1] = {0xe33f};
         int8_t accumulator;
         int8_t x;
         int8_t y;
@@ -60,6 +63,8 @@ class CPU {
         void write(int8_t* address,int8_t value);
         int8_t read(int8_t* address, bool from_cpu = true);
         long long cycles = 0;
+        int current_cycles = 0;
+        bool read_nmi = false;
         void start_nmi();
         void start_irq();
         bool recv_nmi = false;
