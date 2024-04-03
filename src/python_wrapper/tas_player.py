@@ -42,7 +42,7 @@ def tasInput():
         diff = 0
         frames = nesObj.frameCount()
         if frames>=920:
-            diff = 0
+            diff = 3
         elif (frames>=914):
             diff=-3
         frames+=diff

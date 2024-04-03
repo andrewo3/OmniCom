@@ -26,6 +26,8 @@ class PPU {
         bool vram_twice = 0;
         int scanline = 0;
         int scycle = 25;
+        NT_MIRROR mirrormode;
+        Mapper* mapper;
         bool debug = false;
         bool vblank = false;
         std::mutex image_mutex;
@@ -80,7 +82,8 @@ class PPU {
         int8_t* PPUDATA; //&memory[0x2007]
         int8_t* OAMDMA; //&memory[0x4014]
     private:
-        void map_memory(int16_t* addr);
+        void* system[3];
+        void map_memory(int16_t &addr);
         long long get_addr(int8_t* ptr);
         void apply_and_update_registers();
         uint16_t upcoming_pattern;

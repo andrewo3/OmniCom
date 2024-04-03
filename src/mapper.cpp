@@ -54,8 +54,8 @@ void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
             uint16_t start_loc = 0x2000*(r==7)+0x4000*(r!=7 && (xbase&0x40));
             memcpy(&cpu->memory[0x8000]+start_loc,rom->get_prg_bank((uint16_t)((val&0x3F)<<3)),0x2000);
         }
-    } else if (0xA000<=location && location<=0xBFFF && !(location&0x1) && rom->mirrormode!=FOURSCREEN) { //mirroring
-        rom->mirrormode = (NT_MIRROR)!(val&0x1); //0 is vertical, 1 is horizontal - opposite of the enum defined in rom.h
+    } else if (0xA000<=location && location<=0xBFFF && !(location&0x1) && ppu->mirrormode!=FOURSCREEN) { //mirroring
+        ppu->mirrormode = (NT_MIRROR)!(val&0x1); //0 is vertical, 1 is horizontal - opposite of the enum defined in rom.h
     } else if (0xA000<=location && location<=0xBFFF && (location&0x1)) { //prg ram protect
         wp = val&0x40;
         prgram = val&0x80; //honestly dont know what to do with this flag
@@ -232,15 +232,15 @@ void MMC1::control(CPU* cpu, PPU* ppu, uint8_t val) {
     switch (mirroring) {
         case 0:
         case 1:
-            cpu->rom->mirrormode = SINGLESCREEN;
+            ppu->mirrormode = SINGLESCREEN;
             //printf("singlescreen mirroring\n");
             break;
         case 2:
-            cpu->rom->mirrormode = VERTICAL;
+            ppu->mirrormode = VERTICAL;
             //printf("vertical mirroring\n");
             break;
         case 3:
-            cpu->rom->mirrormode = HORIZONTAL;
+            ppu->mirrormode = HORIZONTAL;
             //printf("horizontal mirroring\n");
             break;
     }

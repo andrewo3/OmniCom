@@ -39,12 +39,12 @@ PPU::PPU(CPU* c) {
 }
 
 void PPU::write(int16_t address, int8_t value) { //write ppu memory, taking into account any mirrors or bankswitches
-    map_memory(&address);
+    map_memory(address);
     memory[address] = value;
 }
 
 int8_t PPU::read(int16_t address) {
-    map_memory(&address);
+    map_memory(address);
     int8_t res;
     res = memory[address];
     return res;
@@ -301,10 +301,10 @@ void PPU::cycle() {
             //printf("POS(%i,%i) - TILEIND $%04x: %02x, ATTRIBUTE: %04x, PATTERN - $%04x: %02x %02x,bit: %i, val: %i, finey: %i\n",scycle-1,scanline,tile_addr,read(&memory[tile_addr]),attr_addr,(((*PPUCTRL)&0x10)<<8)|((read(&memory[tile_addr]))<<4)|(((v&0x7000)>>12)&0x07),ptlow,pthigh, internalx, pattern,(((v&7000)>>12)&0x07));
             //write some pixel to image here
             int color_ind = pixel*3;
-
-            internal_img[3*(scan_cyc+(scanline<<8))] = NTSC_TO_RGB[color_ind];
-            internal_img[3*(scan_cyc+(scanline<<8))+1] = NTSC_TO_RGB[color_ind+1];
-            internal_img[3*(scan_cyc+(scanline<<8))+2] = NTSC_TO_RGB[color_ind+2];
+            int pix_loc = 3*(scan_cyc+(scanline<<8));
+            internal_img[pix_loc] = NTSC_TO_RGB[color_ind];
+            internal_img[pix_loc+1] = NTSC_TO_RGB[color_ind+1];
+            internal_img[pix_loc+2] = NTSC_TO_RGB[color_ind+2];
             if ((*PPUMASK)&0x80) {
                 //internal_img[3*(scan_cyc+(scanline<<8))+2] = 255;
             }
@@ -403,8 +403,7 @@ void PPU::cycle() {
             frames++;
         }
     }
-    void* system[3] = {cpu,this,cpu->apu};
-    cpu->rom->get_mapper()->clock(&system[0]);
+    mapper->clock(&system[0]);
     //apply_and_update_registers();
 }
 
@@ -414,34 +413,38 @@ void PPU::apply_and_update_registers() {
     }
 }
 
-void PPU::map_memory(int16_t* addr) {
-    int16_t location = *addr;
+void PPU::map_memory(int16_t &location) {
     if ((location & 0xf000) == 0x2000) { //map according to rom, which could also include CHR bankswitching
-        switch(rom->mirrormode) {
+        switch(mirrormode) {
             case HORIZONTAL:
-                *addr -= location&0x400; //horizontal nametable mirroring
+                location -= location&0x400; //horizontal nametable mirroring
                 break;
             case VERTICAL:
-                *addr -= location&0x800; //horizontal nametable mirroring
+                location -= location&0x800; //horizontal nametable mirroring
                 break;
             case SINGLESCREEN:
-                *addr = 0x2000|(location&0x3ff);
+                location = 0x2000|(location&0x3ff);
                 break;
 
             //fourtable has nothing because four table is no mirroring at all
         }
     }
     else if (0x3000 <= location && location < 0x3f00) {
-        *addr-=0x1000;
+        location-=0x1000;
     } else if ((location&(~0xc))==0x3f10) {
-        *addr&=~0xf0;
+        location&=~0xf0;
     } else if ((location & 0xff00)==0x3f00) {
-        *addr&=~0xe0;
+        location&=~0xe0;
     }
 }
 
 void PPU::loadRom(ROM *r) {
     rom = r;
+    mirrormode = rom->mirrormode;
+    system[0] = cpu;
+    system[1] = this;
+    system[2] = cpu->apu;
+    mapper = rom->get_mapper();
     //printf("PPU CHR SIZE: %i\n",rom->get_chrsize());
     if (rom->get_chrsize()>0) {
         memcpy(memory,rom->get_chr_bank(chr_bank_num),0x2000);
