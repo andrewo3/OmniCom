@@ -755,8 +755,8 @@ int main(int argc, char ** argv) {
                                 
                                 if (state[modifier] && !paused) { //ctrl+r (or cmd+r) - reset shortcut
                                     interrupted = true;
-                                    NESThread.join();
                                     sampleGet.join();
+                                    NESThread.join();
                                     tInputs.join();
                                     //tCPU.join();
                                     //tPPU.join();
@@ -764,7 +764,9 @@ int main(int argc, char ** argv) {
                                     cpu.init_vals();
                                     rom.reset_mapper();
                                     cpu.loadRom(&rom);
+                                    ppu.loadRom(&rom);
                                     cpu.reset();
+
                                     interrupted = false;
                                     NESThread = std::thread(NESLoop);
                                     tInputs = std::thread(update_inputs);
