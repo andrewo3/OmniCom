@@ -330,7 +330,12 @@ void update_inputs() {
     while (!interrupted) {
         //update controllers
         for (int i=0; i<8; i++) {
-            controller1_inputs[i] = state[mapped_keys[i]];
+            if (current_device==0) {
+                controller1_inputs[i] = state[mapped_keys[i]];
+            } else {
+                controller1_inputs[i] = mapped_joy[i]&0x80 ? ((SDL_JoystickGetHat(controller,0)&(mapped_joy[i]&0x7f)) || (joystickDir(controller)&(mapped_joy[i]&0x7f) && joystickDir(controller)!=-1)) 
+                : SDL_JoystickGetButton(controller,mapped_joy[i]);
+            }
             controller2_inputs[i] = false;
         }
         cont1->update_inputs(controller1_inputs);
@@ -427,10 +432,6 @@ int main(int argc, char ** argv) {
     SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
     //SDL_Vulkan_LoadLibrary(nullptr);
     SDL_ShowCursor(0);
-    int controller_index = 0;
-    controller = SDL_JoystickOpen(controller_index);
-    auto c_name = SDL_JoystickNameForIndex(controller_index);
-    printf("%s\n",c_name ? c_name : "null");
     printf("SDL Initialized\n");
 
     //set display dimensions
@@ -670,6 +671,7 @@ int main(int argc, char ** argv) {
             ImGui_ImplSDL2_NewFrame(window);
             ImGui::NewFrame();
             if (paused) {
+                SDL_Delay(1000/desired_fps);
                 void * system[3] = {cpu_ptr,ppu_ptr,apu_ptr};
                 pause_menu(&system[0]);
             } else {
@@ -728,7 +730,7 @@ int main(int argc, char ** argv) {
                         }
                         break;
                     case SDL_KEYDOWN:
-                        if (changing_keybind>-1) {
+                        if (changing_keybind>-1 && current_device == 0) {
                             mapped_keys[changing_keybind] = event.key.keysym.scancode;
                             changing_keybind = -1;
                         }
@@ -786,11 +788,34 @@ int main(int argc, char ** argv) {
                                 cpu.last = epoch_nano(); // reset timing
                                 break;
                         }
+                        break;
+                    case SDL_JOYBUTTONDOWN:
+                        if (changing_keybind>-1 && current_device > 0) {
+                            mapped_joy[changing_keybind] = event.jbutton.button;
+                            changing_keybind = -1;
+                        }
+                        break;
+                    case SDL_JOYHATMOTION:
+                        if (changing_keybind>-1 && current_device > 0) {
+                            if (event.jhat.value == SDL_HAT_LEFT || event.jhat.value == SDL_HAT_RIGHT
+                            || event.jhat.value == SDL_HAT_UP || event.jhat.value == SDL_HAT_DOWN) {
+                                mapped_joy[changing_keybind] = event.jhat.value|0x80;
+                                changing_keybind = -1;
+                            }
+                        }
+                        break;
+                    case SDL_JOYAXISMOTION:
+                        if (changing_keybind>-1 && current_device > 0) {
+                            if (joystickDir(controller) != -1) {
+                                mapped_joy[changing_keybind] = joystickDir(controller)|0x80;
+                                changing_keybind = -1;
+                            }
+                        }
+                        break;
                 }
                 ImGui_ImplSDL2_ProcessEvent(&event);
             }
         }
-        //SDL_Delay(1000/desired_fps);
     }
     tInputs.join();
     NESThread.join();

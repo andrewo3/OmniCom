@@ -21,6 +21,8 @@ extern float global_db;
 extern bool use_shaders;
 extern int changing_keybind;
 extern SDL_Scancode mapped_keys[8];
+extern uint8_t mapped_joy[8];
+extern int current_device;
 //currently mapped keys - set to A,B,Select,Start,Up,Down,Left,Right.
 //in the (reverse) order that the CPU reads at $4016
 

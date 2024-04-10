@@ -28,6 +28,8 @@ SDL_Scancode mapped_keys[8] = {
     SDL_SCANCODE_LEFT,
     SDL_SCANCODE_RIGHT};
 
+uint8_t mapped_joy[8] = {0};
+
 const uint8_t* state = SDL_GetKeyboardState(nullptr);
 SDL_Joystick* controller = NULL;
 
@@ -37,6 +39,7 @@ float global_db = 0.24;
 bool use_shaders = false;
 int changing_keybind = -1;
 int render_engine = 0;
+int current_device = 0;
 
 
 bool paused_window = false;
@@ -47,13 +50,13 @@ int joystickDir(SDL_Joystick* joy) {
     float x = SDL_JoystickGetAxis(joy,0)/32768.0;
     float y = SDL_JoystickGetAxis(joy,1)/32768.0;
     if (x>y && x>sqrt(2)/2) {
-        return 0; //right
+        return SDL_HAT_RIGHT; //right
     } else if (x>y && y<-sqrt(2)/2) {
-        return 3; //up
+        return SDL_HAT_UP; //up
     } else if (x<y && x<-sqrt(2)/2) {
-        return 2; //left
+        return SDL_HAT_LEFT; //left
     } else if (x<y && y>sqrt(2)/2) {
-        return 1; //down
+        return SDL_HAT_DOWN; //down
     }
     return -1;
 }
@@ -148,6 +151,39 @@ void pause_menu(void** system) {
             
             break;
         case 2:
+            {
+            int joy_count = SDL_NumJoysticks();
+            const char* device_prev = current_device > 0 ? SDL_JoystickNameForIndex(current_device-1) : "Keyboard";
+            if (ImGui::BeginCombo("Device", device_prev)) {
+                if (ImGui::Selectable("Keyboard", current_device == 0)) {
+                    printf("Set Controller Device to Keyboard\n");
+                    if (controller!=NULL) {
+                        SDL_JoystickClose(controller);
+                    }
+                    controller = NULL;
+                    current_device = 0;
+                }
+                if (current_device == 0) {
+                    ImGui::SetItemDefaultFocus();
+                }
+                for (int n = 0; n < SDL_NumJoysticks(); n++) {
+                    const bool is_selected = (current_device == n+1);
+                    if (ImGui::Selectable(SDL_JoystickNameForIndex(n), is_selected)) {
+                        if (controller!=NULL) {
+                            SDL_JoystickClose(controller);
+                        }
+                        controller = SDL_JoystickOpen(n);
+                        printf("Set Controller Device to %s\n",SDL_JoystickNameForIndex(n));
+                        current_device = n+1;
+                    }
+                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                    if (is_selected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
             for (int i=0; i<8; i++) {
                 ImGui::Text(button_names[i]);
                 ImGui::SameLine(0);
@@ -158,8 +194,27 @@ void pause_menu(void** system) {
                     ImGui::PushStyleColor(ImGuiCol_ButtonHovered,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
                     active = true;
                 }
+                std::string joystick_lbl;
+                if (mapped_joy[i]&0x80) {
+                    switch (mapped_joy[i]&0x7f) {
+                        case SDL_HAT_UP:
+                            joystick_lbl += "Up";
+                            break;
+                        case SDL_HAT_DOWN:
+                            joystick_lbl += "Down";
+                            break;
+                        case SDL_HAT_LEFT:
+                            joystick_lbl += "Left";
+                            break;
+                        case SDL_HAT_RIGHT:
+                            joystick_lbl += "Right";
+                            break;
+                    }
+                } else {
+                    joystick_lbl += "Button "+std::to_string(mapped_joy[i]);
+                }
                 std::string labelID = "";
-                labelID+=SDL_GetScancodeName(mapped_keys[i]);
+                labelID+=current_device > 0 ? joystick_lbl : SDL_GetScancodeName(mapped_keys[i]);
                 labelID+="##";
                 labelID+='0'+i;
                 if (ImGui::Button(labelID.c_str(),ImVec2(100,50)) && changing_keybind==-1) {
@@ -174,6 +229,7 @@ void pause_menu(void** system) {
                 }
             }
             break;
+            }
         case 3:
             {
             ImGui::Checkbox(labelPrefix("Use NTSC Filter").c_str(), &use_shaders);
