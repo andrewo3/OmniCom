@@ -9,20 +9,15 @@ import pyNES,pygame
 
 pygame.init()
 window_dim = [256,240]
-window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
+window = pygame.display.set_mode(window_dim,pygame.RESIZABLE|pygame.HWACCEL)
 nes_surf = pygame.Surface((240,256))
 p = pyaudio.PyAudio()
 
 stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True,frames_per_buffer = 4096)
-
-#nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
-#nesObj = pyNES.NES("C:\\Users\\Andrew Ogundimu\\Desktop\\smb3mix-rev2B-prg1.nes")
 if len(sys.argv)>=2:
     nesObj = pyNES.NES(sys.argv[1])
 else:
-    nesObj = pyNES.NES(abspath("../../res/working_roms/Tetris (U) [!].nes"))
-#nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
-#nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld2.nes"))
+    nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld.nes"))
 controller_port1 = pyNES.Controller()
 nesObj.setController(controller_port1,0)
 cpu_mem = nesObj.cpuMem()
