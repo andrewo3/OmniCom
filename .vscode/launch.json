@@ -22,7 +22,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/bin/main.exe",
             "args": [
-                "D:\\Dropbox\\2023 Main Hard Drive\\Python Projects\\Nes2Exe-main\\nes-test-roms-master\\ppu_vbl_nmi\\rom_singles\\07-nmi_on_timing.nes"
+                "${workspaceRoot}/res/roms/Legend of Zelda, The (U) (PRG1) [!].nes"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

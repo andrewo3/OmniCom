@@ -27,7 +27,7 @@ class CPU {
         void clock();
         //int breakpoints[1] = {0xe34e}; //for testing
         //int breakpoints[1] = {0xe3bd};
-        int breakpoints[1] = {0xe33f};
+        int breakpoints[1] = {0xa0d3};
         int8_t accumulator;
         int8_t x;
         int8_t y;

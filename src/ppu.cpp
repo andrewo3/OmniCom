@@ -420,7 +420,7 @@ void PPU::map_memory(int16_t &location) {
                 location -= location&0x400; //horizontal nametable mirroring
                 break;
             case VERTICAL:
-                location -= location&0x800; //horizontal nametable mirroring
+                location -= location&0x800; //vertical nametable mirroring
                 break;
             case SINGLESCREEN:
                 location = 0x2000|(location&0x3ff);
@@ -448,6 +448,9 @@ void PPU::loadRom(ROM *r) {
     //printf("PPU CHR SIZE: %i\n",rom->get_chrsize());
     if (rom->get_chrsize()>0) {
         memcpy(memory,rom->get_chr_bank(chr_bank_num),0x2000);
+    } else {
+        printf("CHR-RAM Copied.\n");
+        rom->chr_ram = (uint8_t*)&memory[0];
     }
 
 }

@@ -31,7 +31,7 @@ class ROM {
         void reset_mapper();
         int get_prgsize() {return prgsize;}
         int get_chrsize() {return chrsize;}
-        uint8_t chr_ram[0x2000] = {0};
+        uint8_t *chr_ram;
         ~ROM();
         NT_MIRROR mirrormode;
     private:

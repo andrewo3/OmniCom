@@ -164,12 +164,14 @@ uint8_t* ROM::get_prg_bank(int bank_num) { //gets banks in 1 KB units
 }
 
 uint8_t* ROM::get_chr_bank(int bank_num) { //gets banks in 1 KB units
+    uint8_t* base = chr;
     if (chrsize==0) { // using chr-ram
         //something else will be done
         //printf("CHR-RAM\n");
-        return chr_ram;
+        chrsize = 0x2000;
+        base = chr_ram;
     }
-    return chr+0x400*(bank_num%(chrsize/0x400));
+    return base+0x400*(bank_num%(chrsize/0x400));
 }
 
 ROM::~ROM() {
