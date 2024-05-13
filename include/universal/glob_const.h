@@ -12,6 +12,7 @@ extern const int BUFFER_LEN;
 extern std::string config_dir;
 //directory separator for OS
 extern char sep;
+extern int web;
 
 // get time in milliseconds since epoch
 inline long long epoch() {

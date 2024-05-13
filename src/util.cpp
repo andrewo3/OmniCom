@@ -128,25 +128,27 @@ void pause_menu(void** system) {
     };
     switch (current_tab) {
         case 0:
-            if (ImGui::Button("Load")) {
-                printf("load game\n");
-                std::string load_dir = config_dir+sep+std::string("state");
-                if (std::filesystem::exists(load_dir)) {
-                    FILE* save_file = fopen(load_dir.c_str(),"rb");
-                    cpu->load_state(save_file);
-                    fclose(save_file);
-                } else {
-                    printf("Nothing to load at: %s\n",load_dir.c_str());
+            if (!web) {
+                if (ImGui::Button("Load")) {
+                    printf("load game\n");
+                    std::string load_dir = config_dir+sep+std::string("state");
+                    if (std::filesystem::exists(load_dir)) {
+                        FILE* save_file = fopen(load_dir.c_str(),"rb");
+                        cpu->load_state(save_file);
+                        fclose(save_file);
+                    } else {
+                        printf("Nothing to load at: %s\n",load_dir.c_str());
+                    }
+                    
                 }
-                
-            }
-            ImGui::SameLine(0);
-            if (ImGui::Button("Save")) {
-                std::string load_dir = config_dir+sep+std::string("state");
-                printf("save game at: %s\n",load_dir.c_str());
-                FILE* save_file = fopen(load_dir.c_str(),"wb");
-                cpu->save_state(save_file);
-                fclose(save_file);
+                ImGui::SameLine(0);
+                if (ImGui::Button("Save")) {
+                    std::string load_dir = config_dir+sep+std::string("state");
+                    printf("save game at: %s\n",load_dir.c_str());
+                    FILE* save_file = fopen(load_dir.c_str(),"wb");
+                    cpu->save_state(save_file);
+                    fclose(save_file);
+                }
             }
             
             break;

@@ -46,7 +46,7 @@ class CPU {
         instruction opcodes[256];
         void ins_str(char * write,uint8_t opcode);
         void ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr);
-        void loadRom(ROM *r);
+        void loadRom(ROM *r,bool ram = true);
         void init_vals() {
             for (int i=0; i<=0xffff; i++) {
                 memory[i] = 0;

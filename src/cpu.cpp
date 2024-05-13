@@ -533,10 +533,10 @@ void CPU::reset() {
     //pc = &memory[0xc000];
 }
 
-void CPU::loadRom(ROM *r) {
+void CPU::loadRom(ROM *r,bool ram) {
     rom = r;
     Mapper* m = rom->get_mapper();
-    if (rom->battery_backed) {
+    if (rom->battery_backed && ram) {
         printf("load RAM file: %s\n",(config_dir+sep+std::string("ram")).c_str());
         printf("RAM file exists: %i\n",std::filesystem::exists(config_dir+sep+std::string("ram")));
         if (std::filesystem::exists(config_dir+sep+std::string("ram"))) {

@@ -1,3 +1,1 @@
-xxd -n fragment -i res/shaders/main.frag > include/universal/shader_data.h
-xxd -n vertex -i res/shaders/main.vert >> include/universal/shader_data.h
-clang++ -g -std=c++17 -F./bin -L./lib -Isrc/imgui -Isrc/imgui/backends -Iinclude/unix -Isrc/ntsc-filter -Iinclude/universal src/imgui/*.cpp src/imgui/backends/*.cpp src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/*.cpp -framework SDL2 -framework OpenGL -lGLEW -o bin/main
+clang++ -g -std=c++17 -F./bin -L./lib -Isrc/imgui -Isrc/imgui/backends -Iinclude/unix -Isrc/ntsc-filter -Iinclude -Iinclude/universal src/imgui/*.cpp src/imgui/backends/*.cpp src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/*.cpp -framework SDL2 -framework OpenGL -lGLEW -o bin/main
