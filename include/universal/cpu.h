@@ -22,7 +22,7 @@ class CPU {
         //int CLOCK_SPEED = 1790210;
         int CLOCK_SPEED = 1789773; //original
         //int CLOCK_SPEED = 2147483647; //test how fast it can go
-        int emulated_clock_speed();
+        int emulated_clock_speed(long long elapsed);
         long long start = epoch();
         void clock();
         //int breakpoints[1] = {0xe34e}; //for testing

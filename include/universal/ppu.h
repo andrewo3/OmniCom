@@ -32,6 +32,7 @@ class PPU {
         bool vblank = false;
         std::mutex image_mutex;
         bool image_drawn = false;
+        bool mutex_locked = false;
         int chr_bank_num = 0;
         bool inhibit_nmi = false;
         bool disable_vbl = false;

@@ -84,8 +84,10 @@ void PPU::v_vert() {
 void PPU::cycle() {
     bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
     if (scanline>=0 && scanline<=239) { // visible scanlines
-        if (image_drawn) {
-            image_mutex.try_lock();
+        if (image_drawn && !mutex_locked) {
+            if (image_mutex.try_lock()) {
+                mutex_locked = true;
+            }
         }
         int scan_cyc = scycle-1;
         int intile = scan_cyc%8; //get index into a tile (8 pixels in a tile)
@@ -358,6 +360,7 @@ void PPU::cycle() {
             vblank = true;
             memcpy(current_img,internal_img,sizeof(uint8_t)*184320); //copy internal img to out image every frame update
             image_mutex.unlock();
+            mutex_locked = false;
             image_drawn = false;
             if (!nmi_suppress) {
                 nmi_occurred = true;

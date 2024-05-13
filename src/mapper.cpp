@@ -283,11 +283,11 @@ void MMC1::map_write(void** ptrs, int8_t* address, int8_t* value) {
                     control(cpu,ppu,bank_reg);
                     //printf("MMC1 Control: ");
                 } else if (location >= 0xA000 && location <= 0xBFFF) {
-                    printf("chr-ram: %p, ppu memory: %p\n",rom->chr_ram,ppu->memory);
+                    //printf("chr-ram: %p, ppu memory: %p\n",rom->chr_ram,ppu->memory);
                     memcpy(ppu->memory,rom->get_chr_bank((uint8_t)((bank_reg&(~(!chr_mode))))<<2),sizeof(uint8_t)*(0x1000)<<(!chr_mode));
                     //printf("MMC1 CHR BANK 1: ");
                 } else if (location >= 0xC000 && location <= 0xDFFF && chr_mode) {
-                    printf("chr-ram: %p, ppu memory: %p\n",rom->chr_ram,ppu->memory);
+                    //printf("chr-ram: %p, ppu memory: %p\n",rom->chr_ram,ppu->memory);
                     memcpy(&ppu->memory[0x1000],rom->get_chr_bank((uint8_t)(bank_reg<<2)),sizeof(uint8_t)*0x1000);
                     //printf("MMC1 CHR BANK 2: ");
                 } else if (location >= 0xE000 && location <= 0xFFFF) {

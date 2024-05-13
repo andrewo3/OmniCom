@@ -13,6 +13,7 @@ extern std::string config_dir;
 //directory separator for OS
 extern char sep;
 extern int web;
+extern double ns_wait;
 
 // get time in milliseconds since epoch
 inline long long epoch() {

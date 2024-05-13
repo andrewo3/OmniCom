@@ -145,7 +145,7 @@ int invalid_error() {
 
 void quit(int signal) {
     std::lock_guard<std::mutex> lock(interruptedMutex);
-    int clock_speed = cpu_ptr->emulated_clock_speed();
+    int clock_speed = cpu_ptr->emulated_clock_speed(real_time-paused_time);
     printf("Emulated Clock Speed: %li - Target: (approx.) 1789773 - %.02f%% similarity\n",clock_speed,clock_speed/1789773.0*100);
     //for test purpose: remove once done testing!!
     /*std::FILE* memory_dump = fopen("dump","w");
@@ -298,9 +298,30 @@ void sampleAPU() {
 }
 //std::this_thread::sleep_for(std::chrono::milliseconds(500*BUFFER_LEN/sr));
 
+void NESsequence(double ns_wait) {
+    while (apu_ptr->cycles*2<cpu_ptr->cycles) {
+        apu_ptr->cycle();
+    }
+    while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
+        ppu_ptr->cycle();
+        
+        
+        if (ppu_ptr->debug) {
+            printf("PPU REGISTERS: ");
+            printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
+            printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
+        }
+    }
+    cpu_ptr->clock();
+    real_time = epoch_nano()-start_nano;
+    long long cpu_time = ns_wait*cpu_ptr->cycles;
+    int diff = cpu_time-(real_time-paused_time);
+    if (cpu_time > (real_time-paused_time)) {
+        std::this_thread::sleep_for(std::chrono::nanoseconds(diff));
+    }
+}
+
 void NESLoop() {
-    
-    const double ns_wait = 1e9/cpu_ptr->CLOCK_SPEED;
     long ns_wait_l = (long)ns_wait;
     printf("Clock Speed: %i\n",cpu_ptr->CLOCK_SPEED);
     printf("Elapsed: %lf\n",ns_wait);
@@ -309,27 +330,8 @@ void NESLoop() {
     while (!interrupted) {
         if (!paused) {
             //if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
-            //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
-            while (apu_ptr->cycles*2<cpu_ptr->cycles) {
-                apu_ptr->cycle();
-            }
-            while (ppu_ptr->cycles<(cpu_ptr->cycles*3)) {
-                ppu_ptr->cycle();
-                
-                
-                if (ppu_ptr->debug) {
-                    printf("PPU REGISTERS: ");
-                    printf("VBLANK: %i, PPUCTRL: %02x, PPUMASK: %02x, PPUSTATUS: %02x, OAMADDR: N/A (so far), PPUADDR: %04x\n",ppu_ptr->vblank, (uint8_t)cpu_ptr->memory[0x2000],(uint8_t)cpu_ptr->memory[0x2001],(uint8_t)cpu_ptr->memory[0x2002],ppu_ptr->v);
-                    printf("scanline: %i, cycle: %i\n",ppu_ptr->scanline,ppu_ptr->scycle);
-                }
-            }
-            cpu_ptr->clock();
-            real_time = epoch_nano()-start_nano;
-            long long cpu_time = ns_wait*cpu_ptr->cycles;
-            int diff = cpu_time-(real_time-paused_time);
-            if (cpu_time > (real_time-paused_time)) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(diff));
-            }
+            //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed(real_time-paused_time));
+            NESsequence(ns_wait);
         }
         
     }
@@ -399,13 +401,16 @@ void mainLoop(void* arg) {
     if (!ppu_ptr->image_drawn || paused) { //if ppu hasnt registered image as being drawn yet
         t_time = SDL_GetTicks()/1000.0;
         float diff = t_time-last_time;
-        char * new_title = new char[255];
-        sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
-        SDL_SetWindowTitle(window,new_title);
+        #ifndef __EMSCRIPTEN__
+            char * new_title = new char[255];
+            sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
+            SDL_SetWindowTitle(window,new_title);
+            delete[] new_title;
+        #endif
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        delete[] new_title;
+        
 
         last_time = t_time;
     
@@ -466,8 +471,6 @@ void mainLoop(void* arg) {
             SDL_GL_MakeCurrent(window,context);
         }
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        //update screen
-        SDL_GL_SwapWindow(window);
 
         //reset viewport
         int* new_viewport = new int[4];
@@ -476,6 +479,8 @@ void mainLoop(void* arg) {
         glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
         delete[] new_viewport;
 
+        //update screen
+        SDL_GL_SwapWindow(window);
         
         ppu_ptr->image_mutex.unlock();
         ppu_ptr->image_drawn = true;
@@ -518,7 +523,7 @@ void mainLoop(void* arg) {
                                 modifier = SDL_SCANCODE_LGUI;
                             #endif
                             if (state[modifier] && !paused) {
-                                printf("Current Emulated Clock Speed: %i\n",cpu_ptr->emulated_clock_speed());
+                                printf("Current Emulated Clock Speed: %i\n",cpu_ptr->emulated_clock_speed(real_time-paused_time));
                             }
                             break;
                             }
@@ -852,6 +857,8 @@ int main(int argc, char ** argv) {
     cpu_ptr->reset();
     printf("ROM loaded into CPU.\n");
 
+    ns_wait = 1e9/cpu_ptr->CLOCK_SPEED;
+
     ppu_ptr = new PPU(cpu_ptr);
     ppu_ptr->debug = false;
     printf("PPU Initialized\n");
@@ -879,7 +886,7 @@ int main(int argc, char ** argv) {
     //main window loop
     #ifdef __EMSCRIPTEN__
         int fps = 0;
-        emscripten_set_main_loop_arg(mainLoop,(void*)nullptr,fps,true);
+        emscripten_set_main_loop_arg(mainLoop,(void*)nullptr,60,true);
     #else
         while (!interrupted) {
             mainLoop((void*)nullptr);

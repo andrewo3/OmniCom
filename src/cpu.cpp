@@ -504,18 +504,13 @@ void CPU::clock() {
         start_irq();
     }
     last_nmi = nmi_now;
-    long long change = epoch_nano() - last;
-    last = epoch_nano();
-    //while ((epoch_nano() - last) < 1000000000LL/CLOCK_SPEED) {}
-    elapsed_time += change;
 
     
 }
 
-int CPU::emulated_clock_speed() {
-    if (elapsed_time!=0) {
-        //printf("total time: %lli\n",elapsed_time);
-        return (cycles*1e9)/(elapsed_time+(epoch_nano()-last));
+int CPU::emulated_clock_speed(long long elapsed) {
+    if (cycles!=0 && elapsed!=0) {
+        return cycles*1e9/elapsed;
     } else {
         return 0;
     }
