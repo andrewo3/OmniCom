@@ -22,6 +22,7 @@
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
+#include <emscripten/html5.h>
 #endif
 
 #include "SDL2/SDL.h"
@@ -88,7 +89,7 @@ double t = 0;
 bool fullscreen_toggle = 0;
 bool changed_use_shaders = false;
 static int16_t audio_pt = 0;
-bool paused = false;
+volatile bool paused = false;
 int diffs[10] = {0};
 int frames = 0;
 int desired_fps = 60;
@@ -279,7 +280,7 @@ void sampleAPU() {
         apu_ptr->queue_mutex.lock();
         if (apu_ptr->queue_audio_flag) {
             int buffer_size = SDL_GetQueuedAudioSize(audio_device); 
-            if (buffer_size>BUFFER_LEN*sizeof(int16_t)*2) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
+            if (buffer_size>BUFFER_LEN*sizeof(int16_t)*4) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
                 SDL_DequeueAudio(audio_device,nullptr,sizeof(int16_t)*BUFFER_LEN);
             } else {
                 for (int i=0; i<BUFFER_LEN; i++) {
@@ -339,9 +340,17 @@ void NESLoop() {
     
 }
 
-void placeholder() {
+#ifdef __EMSCRIPTEN__
+int display_size_changed = 0;
 
+static EM_BOOL on_web_display_size_changed( int event_type, 
+const EmscriptenUiEvent *event, void *user_data )
+{
+    display_size_changed = 1;  // custom global flag
+    return 0;
 }
+
+#endif
 
 void AudioLoop(void* userdata, uint8_t* stream, int len) {
     //printf("Buffer size: %i\n",len);
@@ -488,8 +497,17 @@ void mainLoop(void* arg) {
 
         //ppu_ptr->image_mutex.unlock();
         // event loop
-        SDL_PumpEvents();
+        #ifdef __EMSCRIPTEN__
+        if (display_size_changed)
+        {
+            double w, h;
+            emscripten_get_element_css_size( "#canvas", &w, &h );
+            SDL_SetWindowSize( window, (int)w, (int) h );
 
+            display_size_changed = 0;
+        }
+        #endif
+        SDL_PumpEvents();
         while(SDL_PollEvent(&event)) {
             switch(event.type) {
                 case SDL_QUIT:
@@ -527,6 +545,7 @@ void mainLoop(void* arg) {
                             }
                             break;
                             }
+                        #ifndef __EMSCRIPTEN__
                         case SDLK_F11:
                             {
                             fullscreen_toggle = fullscreen_toggle ? false : true;
@@ -540,6 +559,7 @@ void mainLoop(void* arg) {
                             delete[] new_viewport;
                             break;
                             }
+                        #endif
                         case SDLK_r:
                             {
                             SDL_Scancode modifier = SDL_SCANCODE_LCTRL;
@@ -886,7 +906,11 @@ int main(int argc, char ** argv) {
     //main window loop
     #ifdef __EMSCRIPTEN__
         int fps = 0;
-        emscripten_set_main_loop_arg(mainLoop,(void*)nullptr,60,true);
+        emscripten_set_resize_callback(
+        EMSCRIPTEN_EVENT_TARGET_WINDOW,
+        0, 0, on_web_display_size_changed
+        );
+        emscripten_set_main_loop_arg(mainLoop,(void*)nullptr,fps,true);
     #else
         while (!interrupted) {
             mainLoop((void*)nullptr);

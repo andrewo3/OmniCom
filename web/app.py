@@ -13,7 +13,7 @@ def set_headers(response):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('home.html')
 
 if __name__ == "__main__":
     print(root)

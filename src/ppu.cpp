@@ -149,8 +149,8 @@ void PPU::cycle() {
             if (intile==0 && rendering) { // beginning of a tile
                 tile_addr = 0x2000 | (v & 0x0fff);
                 attr_addr = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07);
-                uint8_t tile_val = read(tile_addr);
-                uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
+                tile_val = read(tile_addr);
+                pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
                 internalx = x&0x7;
                 //internalx = 0;
                 ptlow=(uint8_t)read(pattern_table_loc); // add next low byte
@@ -308,13 +308,16 @@ void PPU::cycle() {
             internal_img[pix_loc+1] = NTSC_TO_RGB[color_ind+1];
             internal_img[pix_loc+2] = NTSC_TO_RGB[color_ind+2];
             if ((*PPUMASK)&0x80) {
-                //internal_img[3*(scan_cyc+(scanline<<8))+2] = 255;
+                internal_img[pix_loc+2] /= 2;
+                internal_img[pix_loc+2] += 127;
             }
             if ((*PPUMASK)&0x40) {
-                //internal_img[3*(scan_cyc+(scanline<<8))+1] = 255;
+                internal_img[pix_loc+1] /= 2;
+                internal_img[pix_loc+1] += 127;
             }
             if ((*PPUMASK)&0x20) {
-                //internal_img[3*(scan_cyc+(scanline<<8))] = 255;
+                internal_img[pix_loc] /= 2;
+                internal_img[pix_loc] += 127;
             }
             
             internalx++;

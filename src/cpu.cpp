@@ -6,7 +6,6 @@
 #include <filesystem>
 #include <cstdio>
 #include <cstring>
-#include <SDL2/SDL.h>
 
 // description of addressing modes:
 // https://blogs.oregonstate.edu/ericmorgan/2022/01/21/6502-addressing-modes/

@@ -175,14 +175,17 @@ void APU::cycle() { // apu clock (every other cpu cycle)
 
     noise();
     dmc();
-    if (!queue_audio_flag) {
-        queue_mutex.try_lock();
+    if (!queue_audio_flag && !mutex_locked) {
+        if (queue_mutex.try_lock()) {
+            mutex_locked = true;
+        }
     }
     if (audio_frame<cycles*(sample_rate)/clock_speed) {
         if (audio_frame%BUFFER_LEN==0) {
             memcpy(buffer_copy,buffer,sizeof(int16_t)*BUFFER_LEN);
             queue_mutex.unlock();
             queue_audio_flag = true;
+            mutex_locked = false;
         }
         buffer[audio_frame%BUFFER_LEN] = mix(this);
         audio_frame++;

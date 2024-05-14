@@ -89,6 +89,8 @@ class PPU {
         void apply_and_update_registers();
         uint16_t upcoming_pattern;
         uint8_t internalx;
+        uint8_t tile_val;
+        uint16_t pattern_table_loc;
 
         //sprite stuff
         uint8_t sprite_eval_n;
