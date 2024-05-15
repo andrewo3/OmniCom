@@ -385,6 +385,44 @@ void update_inputs() {
     }
 }
 
+extern "C" {
+void changeRom(std::string name) {
+    #ifdef __EMSCRIPTEN__
+        emscripten_pause_main_loop();
+    #endif
+    rom.load_file(name.c_str());
+    interrupted = true;
+    sampleGet.join();
+    NESThread.join();
+    tInputs.join();
+    //tCPU.join();
+    //tPPU.join();
+    //tAPU.join();
+    cpu_ptr->init_vals();
+    rom.reset_mapper();
+    cpu_ptr->loadRom(&rom);
+    ppu_ptr->loadRom(&rom);
+    cpu_ptr->reset();
+    interrupted = false;
+
+    filename = new char[name.length()+1];
+    char* original_start = filename;
+    memcpy(filename,name.c_str(),name.length()+1);
+    get_filename(&filename);
+    SDL_SetWindowTitle(window,filename);
+    
+    NESThread = std::thread(NESLoop);
+    tInputs = std::thread(update_inputs);
+    //tCPU = std::thread(CPUThread);
+    //tPPU = std::thread(PPUThread);
+    //tAPU = std::thread(APUThread);
+    sampleGet = std::thread(sampleAPU);
+    #ifdef __EMSCRIPTEN__
+        emscripten_resume_main_loop();
+    #endif
+}
+}
+
 void mainLoop(void* arg) {
     //check if checkbox for shaders was clicked
     if (changed_use_shaders!=use_shaders) {

@@ -51,7 +51,7 @@ std::string xxdstring(std::string input) {
 
 int main(int argc, char ** argv) {
     if (argc!=2) {
-        return usage_error();
+        //return usage_error();
     }
     std::stringstream command_stream;
     std::stringstream xxd_stream;
@@ -68,9 +68,9 @@ int main(int argc, char ** argv) {
     auto original_path = std::filesystem::current_path();
     std::filesystem::current_path(cpath.parent_path().parent_path());
     std::system(xxd_stream.str().c_str());
-    command_stream << "\"\"D:\\C++ Projects\\emsdk\\upstream\\emscripten\\em++\" -std=c++17 -O3 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=4 -sASSERTIONS -sSTACK_SIZE=1048576 -sWASM_BIGINT=1 -lGLEW -DWEB=1 -DROM_NAME=\"\\\"" << fixed(argv[1]);
-    command_stream << "\\\"\" -DDATAROM="<<xxdstring(argv[1])<<" -DDATALENGTH="<<xxdstring(argv[1])<<"_len ";
-    get_filename(&argv[1]);
+    command_stream << "\"\"D:\\C++ Projects\\emsdk\\upstream\\emscripten\\em++\" -std=c++17 -O3 -sUSE_PTHREADS=1 -sEXPORTED_FUNCTIONS=\"_main\",\"_changeRom\" -sFORCE_FILESYSTEM=1 -sPTHREAD_POOL_SIZE=4 -sASSERTIONS -sSTACK_SIZE=1048576 -sWASM_BIGINT=1 -lGLEW -DWEB=1 ";
+    //command_stream << "\"\"D:\\C++ Projects\\emsdk\\upstream\\emscripten\\em++\" -std=c++17 -O3 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=4 -sASSERTIONS -sSTACK_SIZE=1048576 -sWASM_BIGINT=1 -lGLEW -DWEB=1 -DROM_NAME=\"\\\"" << fixed(argv[1]);
+    //command_stream << "\\\"\" -DDATAROM="<<xxdstring(argv[1])<<" -DDATALENGTH="<<xxdstring(argv[1])<<"_len ";
     command_stream << "-Isrc\\ntsc-filter -Iinclude\\universal -Isrc\\imgui -Isrc\\imgui\\backends src/imgui/backends/*.cpp src/imgui/*.cpp src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/*.cpp -Llib -sUSE_SDL=2 -o web/index.js\"";
     std::string command = command_stream.str();
     printf("%s\n",command.c_str());

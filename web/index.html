@@ -16,20 +16,10 @@
         <title></title>
     </head>
     <body>
-        <div class="game">
+        <div id="dropbox" class="game">
             <canvas class="game" id=canvas oncontextmenu=event.preventDefault()></canvas>
         </div>
-        <script>
-        Module={
-            canvas:document.getElementById("canvas")
-        };
-        window.addEventListener ("resize", function (e) {
-
-        Module.canvas.width = container.clientWidth;
-        Module.canvas.height = container.clientHeight;
-
-        }, true);
-        </script>
+        <script src="setup.js"></script>
         <script async src=index.js></script>
     </body>
 </html>
