@@ -81,7 +81,7 @@ void PPU::v_vert() {
 
 void PPU::cycle() {
     rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
-    if (scanline>=0 && scanline<=239) { // visible scanlines
+    if (!vblank_next) { // visible scanlines
         if (image_drawn && !mutex_locked) {
             if (image_mutex.try_lock()) {
                 mutex_locked = true;
@@ -282,8 +282,8 @@ void PPU::cycle() {
             }*/
             
             internalx++;
-            if (internalx==8) {
-                internalx%=8;
+            if (internalx&8) {
+                internalx&=7;
                 uint16_t fake_v = v;
                 //increment v horizontally
                 //pseudo code from: https://www.nesdev.org/wiki/PPU_scrolling#Wrapping_around
@@ -317,6 +317,9 @@ void PPU::cycle() {
         }
         if (intile==7 && rendering && (scycle>=337 || (scycle<256 && scycle>0))) {
             v_horiz();
+        }
+        if (scycle==340 && scanline==239) {
+            vblank_next = true;
         }
     } else if (241<=scanline && scanline<=260) { //vblank
         //printf("vblank!\n");
@@ -367,6 +370,7 @@ void PPU::cycle() {
         scanline++;
         if (scanline==262) {
             scanline = 0;
+            vblank_next = false;
             frames++;
         }
     }

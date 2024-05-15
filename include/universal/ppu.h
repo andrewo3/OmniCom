@@ -92,6 +92,7 @@ class PPU {
         uint8_t internalx;
         uint8_t tile_val;
         uint16_t pattern_table_loc;
+        bool vblank_next = false;
 
         //sprite stuff
         uint8_t sprite_eval_n;
