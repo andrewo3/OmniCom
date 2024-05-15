@@ -102,15 +102,7 @@ void MMC3::clock(void** system) {
     bool rendering = ((*(ppu->PPUMASK))&0x18);
     //(ppu->address_bus&0x1000) && !(last_v&0x1000)
     if (ppu->scycle==256 && rendering && ppu->vblank==false) { //rising edge of a12
-        if (off_clocks>=9) {
-            scanline_clock(cpu);
-            //printf("Scanline Counter: %i on scanline %i - reload value: %i\n",irq_counter,ppu->scanline,irq_reload);
-        }
-        off_clocks = 0;
-    }
-    last_v = ppu->address_bus;
-    if ((last_v&0x1000)==0) {
-        off_clocks++;
+        scanline_clock(cpu);
     }
 }
 

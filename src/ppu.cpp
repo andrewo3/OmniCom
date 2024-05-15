@@ -45,9 +45,7 @@ void PPU::write(int16_t address, int8_t value) { //write ppu memory, taking into
 
 int8_t PPU::read(int16_t address) {
     map_memory(address);
-    int8_t res;
-    res = memory[address];
-    return res;
+    return memory[address];
 }
 
 void PPU::v_horiz() {
@@ -82,7 +80,6 @@ void PPU::v_vert() {
 }
 
 void PPU::cycle() {
-    bool rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
     if (scanline>=0 && scanline<=239) { // visible scanlines
         if (image_drawn && !mutex_locked) {
             if (image_mutex.try_lock()) {
@@ -90,49 +87,8 @@ void PPU::cycle() {
             }
         }
         int scan_cyc = scycle-1;
-        int intile = scan_cyc%8; //get index into a tile (8 pixels in a tile)
-        if (scycle==0 && rendering) {
-            address_bus = (((*PPUCTRL)&0x10)<<8)|((read(0x2000 | (v & 0x0fff)))<<4)|(((v&0x7000)>>12)&0x07);
-        }
+        int intile = scan_cyc&7; //get index into a tile (8 pixels in a tile)
 
-        //address bus variable set (used by mappers)
-        if (((0<=scan_cyc && scan_cyc<256)||(320<=scan_cyc && scan_cyc<340)) && ((*PPUMASK)&0x8)) { //cycles 1-320 address bus fetches
-            switch(intile/2) {
-                case 0:
-                    address_bus = 0x2000 | (v & 0x0fff); //nt
-                    break;
-                case 1:
-                    address_bus = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07); //attr_table
-                    break;
-                case 2:
-                    address_bus = (((*PPUCTRL)&0x10)<<8)|((read(0x2000 | (v & 0x0fff))&0xff)<<4)|(((v&0x7000)>>12)&0x07); //pt low
-                    break;
-                case 3:
-                    address_bus += 8; //add 8 for upper pattern table
-                    break;
-            }
-        } else if (256<=scan_cyc && scan_cyc<320 && ((*PPUMASK)&0x10)) { //fetch sprite on address bus
-            bool sprite16 = (*PPUCTRL)&0x20;
-            switch(((scan_cyc-256)%8)/2) {
-                case 0:
-                    address_bus = 0x2000 | (v & 0x0fff); //nt
-                    break;
-                case 1:
-                    address_bus = 0x23c0 | (v & 0x0c00) | ((v >> 4) & 0x38) | ((v >> 2) & 0x07); //attr_table
-                    break;
-                case 2:
-                    {
-                    int s = ((scan_cyc-256)/8)*4+1;
-                    address_bus = sprite16 ? 
-                    (((*PPUCTRL)&0x8)<<9)|((secondary_oam[s]&0xff)<<4) : 
-                    ((secondary_oam[s]&0x1)<<12)|((secondary_oam[s]&0xfe)<<4);
-                    break;
-                    }
-                case 3:
-                    address_bus += 8; //add 8 for upper pattern table
-                    break;
-            }
-        }
         if (0<=scan_cyc && scan_cyc<256) {
             for (int i=0; i<scanlinespritenum; i++) {
                 if (active_sprites&(1<<i)) { //if sprite already active
@@ -303,11 +259,15 @@ void PPU::cycle() {
             //printf("POS(%i,%i) - TILEIND $%04x: %02x, ATTRIBUTE: %04x, PATTERN - $%04x: %02x %02x,bit: %i, val: %i, finey: %i\n",scycle-1,scanline,tile_addr,read(&memory[tile_addr]),attr_addr,(((*PPUCTRL)&0x10)<<8)|((read(&memory[tile_addr]))<<4)|(((v&0x7000)>>12)&0x07),ptlow,pthigh, internalx, pattern,(((v&7000)>>12)&0x07));
             //write some pixel to image here
             int color_ind = pixel*3;
-            int pix_loc = 3*(scan_cyc+(scanline<<8));
-            internal_img[pix_loc] = NTSC_TO_RGB[color_ind];
-            internal_img[pix_loc+1] = NTSC_TO_RGB[color_ind+1];
-            internal_img[pix_loc+2] = NTSC_TO_RGB[color_ind+2];
-            if ((*PPUMASK)&0x80) {
+            int pix_loc = (scan_cyc+(scanline<<8));
+            if (pixel != frame_cache[pix_loc]) {
+                frame_cache[pix_loc] = pixel;
+                pix_loc *= 3;
+                internal_img[pix_loc] = NTSC_TO_RGB[color_ind];
+                internal_img[pix_loc+1] = NTSC_TO_RGB[color_ind+1];
+                internal_img[pix_loc+2] = NTSC_TO_RGB[color_ind+2];
+            }
+            /*if ((*PPUMASK)&0x80) {
                 internal_img[pix_loc+2] /= 2;
                 internal_img[pix_loc+2] += 127;
             }
@@ -318,7 +278,7 @@ void PPU::cycle() {
             if ((*PPUMASK)&0x20) {
                 internal_img[pix_loc] /= 2;
                 internal_img[pix_loc] += 127;
-            }
+            }*/
             
             internalx++;
             if (internalx==8) {
@@ -354,7 +314,7 @@ void PPU::cycle() {
                 sprite_patterns[i]=7; //set bit to 7 for each sprite pattern
             }
         }
-        if (intile==7 && rendering && (scycle>=337 || scycle<256)) {
+        if (intile==7 && rendering && (scycle>=337 || (scycle<256 && scycle>0))) {
             v_horiz();
         }
     } else if (241<=scanline && scanline<=260) { //vblank
@@ -374,18 +334,19 @@ void PPU::cycle() {
         }
     } else if (scanline==261) { // pre-render scanline
         if (scycle==1) {
+            rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
             nmi_suppress = false;
             disable_vbl = false;
             nmi_occurred = false;
             (*PPUSTATUS)&=~0xE0; //clear overflow, sprite 0 hit, and vbl
+            if (vblank==true) {
+                (*PPUSTATUS)&=~0x80;
+                vblank = false;
+            }
         }
-        if (scycle>=280 && scycle<=304 && rendering) {
+        else if (scycle>=280 && scycle<=304 && rendering) {
             v &= ~0x7BE0;
             v |= (t&0x7BE0);
-        }
-        if (scycle==1 && vblank==true) {
-            (*PPUSTATUS)&=~0x80;
-            vblank = false;
         }
 
     }
@@ -398,14 +359,14 @@ void PPU::cycle() {
 
     // increment
     scycle++;
-    if (scycle==339 && frames%2==1 && scanline==261 && ((*PPUMASK)&0x8))
-        scycle++;
-    scycle%=341;
+    /*if (scycle==339 && frames%2==1 && scanline==261 && ((*PPUMASK)&0x8))
+        scycle++;*/
     cycles++;
-    if (scycle==0) {
+    if (scycle==341) {
+        scycle = 0;
         scanline++;
-        scanline%=262;
-        if (scanline==0) {
+        if (scanline==262) {
+            scanline = 0;
             frames++;
         }
     }

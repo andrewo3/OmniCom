@@ -39,6 +39,7 @@ class PPU {
         bool nmi_out = false;
         bool nmi_occurred = false;
         bool nmi_suppress = false;
+        bool rendering = false;
 
         //image
         unsigned char* getImg() {
@@ -108,6 +109,7 @@ class PPU {
         bool sprite_eval = false;
         unsigned char internal_img[184320]; //output image running copy
         unsigned char current_img[184320] = {0}; //output full frame
+        unsigned char frame_cache[61440] = {0};
 };
 
 #endif
