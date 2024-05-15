@@ -80,6 +80,7 @@ void PPU::v_vert() {
 }
 
 void PPU::cycle() {
+    rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
     if (scanline>=0 && scanline<=239) { // visible scanlines
         if (image_drawn && !mutex_locked) {
             if (image_mutex.try_lock()) {
@@ -294,8 +295,8 @@ void PPU::cycle() {
                 }
                 tile_addr = 0x2000 | (fake_v & 0x0fff);
                 attr_addr = 0x23c0 | (fake_v & 0x0c00) | ((fake_v >> 4) & 0x38) | ((fake_v >> 2) & 0x07);
-                uint8_t tile_val = read(tile_addr);
-                uint16_t pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
+                tile_val = read(tile_addr);
+                pattern_table_loc = (((*PPUCTRL)&0x10)<<8)|((tile_val)<<4)|(((v&0x7000)>>12)&0x07);
                 //internalx = 0;
                 ptlow=(uint8_t)read(pattern_table_loc); // add next low byte
                 pthigh = (uint8_t)read(pattern_table_loc+8); // add next high byte
@@ -334,7 +335,6 @@ void PPU::cycle() {
         }
     } else if (scanline==261) { // pre-render scanline
         if (scycle==1) {
-            rendering = ((*PPUMASK)&0x18); //checks if rendering is enabled
             nmi_suppress = false;
             disable_vbl = false;
             nmi_occurred = false;
