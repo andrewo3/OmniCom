@@ -280,7 +280,7 @@ void sampleAPU() {
         apu_ptr->queue_mutex.lock();
         if (apu_ptr->queue_audio_flag) {
             int buffer_size = SDL_GetQueuedAudioSize(audio_device); 
-            if (buffer_size>BUFFER_LEN*sizeof(int16_t)*4) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
+            if (buffer_size>BUFFER_LEN*sizeof(int16_t)*8) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
                 SDL_DequeueAudio(audio_device,nullptr,sizeof(int16_t)*BUFFER_LEN);
             } else {
                 for (int i=0; i<BUFFER_LEN; i++) {
