@@ -1,6 +1,6 @@
-# Nes2Exec
+# OmniCom
 
-Nes2Exec is an emulator for the Nintendo Entertainment System (NES), which I built for my CS50 class at Harvard and have since expanded into a much more usable program. Below is a guide on how to use it.
+OmniCom is an emulator for the Nintendo Entertainment System (and hopefully more consoles in the future), which I built for my CS50 class at Harvard and have since expanded into a much more usable program. Below is a guide on how to use it.
 
 ## Usage
 
