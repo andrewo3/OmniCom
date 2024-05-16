@@ -2,7 +2,8 @@ let reader = new FileReader();
 let romChoices = 0;
 let romNameForm = document.getElementById("romnameform");
 let romNameText = document.getElementById("newrom");
-var canvas = document.getElementById('canvas');
+let canvas = document.getElementById('canvas');
+
 var canvasClicked = false;
 
 canvas.addEventListener('click', handleCanvasClick);
@@ -40,8 +41,8 @@ Module={
 
 window.addEventListener ("resize", function (e) {
 
-Module.canvas.width = container.clientWidth;
-Module.canvas.height = container.clientHeight;
+Module.canvas.width = canvas.clientWidth;
+Module.canvas.height = canvas.clientHeight;
 
 }, true);
 
