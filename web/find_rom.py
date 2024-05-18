@@ -7,7 +7,7 @@ remove_strs = ['\(.{1,4}\)','\[.*\]']
 fixed_names = {}
 
 def fixed():
-    for f in os.listdir('../res/roms'):
+    for f in os.listdir('roms'):
         if f.split('.')[-1]=="nes":
             fixed_names[f] = f[:-4]
             for s in remove_strs:
@@ -24,6 +24,6 @@ def calc_ratio(file,s):
     w_ratio = fuzz.WRatio(file,s)
     return (normal+partial+token_sort+token_set+w_ratio)/5
 def proc(s):
-    return max(os.listdir('../res/roms'),key=lambda f: (calc_ratio(fixed_names[f],s),calc_ratio(f,s)))
+    return max(os.listdir('roms'),key=lambda f: (calc_ratio(fixed_names[f],s),calc_ratio(f,s)))
 
 fixed()

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang=en-us>
+    <head>
+        <link type="text/css" rel="stylesheet" href="../static/css/style.css">
+        <meta charset=utf-8>
+        <meta content="text/html; charset=utf-8"http-equiv=Content-Type>
+        <script src="../static/jquery-3.7.1.min.js"></script>
+        <title>OmniCom</title>
+    </head>
+    <body>
+        <div id="dropbox" class="game">
+            <canvas class="gamecanvas" id=canvas oncontextmenu=event.preventDefault() tabindex=-1></canvas>
+            <div class="sel_container">
+                <form id="romnameform" method="post">
+                    <input class="gameselector" type="text" id="newrom" name="newromchoose" placeholder="Enter a game name.">
+                </form>
+            </div>
+        </div>
+        <script src="../static/setup.js"></script>
+        <script async src="../static/index.js"></script>
+    </body>
+</html>

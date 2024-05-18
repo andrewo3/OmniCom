@@ -15,7 +15,7 @@
 //Opcode Table: https://www.masswerk.at/6502/6502_instruction_set.html#layout
 //Instruction Descriptions: https://www.nesdev.org/obelisk-6502-guide/reference.html
 //program execution steps: https://www.middle-engine.com/blog/posts/2020/06/23/programming-the-nes-the-6502-in-detail
-
+ 
 CPU::CPU() {
     define_opcodes();
     define_timings();

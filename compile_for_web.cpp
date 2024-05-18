@@ -71,7 +71,7 @@ int main(int argc, char ** argv) {
     command_stream << "\"\"D:\\C++ Projects\\emsdk\\upstream\\emscripten\\em++\" -std=c++17 -O3 -sUSE_PTHREADS=1 -sEXPORTED_FUNCTIONS=\"_main\",\"_changeRom\" -sFORCE_FILESYSTEM=1 -sPTHREAD_POOL_SIZE=4 -sASSERTIONS -sSTACK_SIZE=1048576 -sWASM_BIGINT=1 -lGLEW -DWEB=1 ";
     //command_stream << "\"\"D:\\C++ Projects\\emsdk\\upstream\\emscripten\\em++\" -std=c++17 -O3 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=4 -sASSERTIONS -sSTACK_SIZE=1048576 -sWASM_BIGINT=1 -lGLEW -DWEB=1 -DROM_NAME=\"\\\"" << fixed(argv[1]);
     //command_stream << "\\\"\" -DDATAROM="<<xxdstring(argv[1])<<" -DDATALENGTH="<<xxdstring(argv[1])<<"_len ";
-    command_stream << "-Isrc\\ntsc-filter -Iinclude\\universal -Isrc\\imgui -Isrc\\imgui\\backends src/imgui/backends/*.cpp src/imgui/*.cpp src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/*.cpp -Llib -sUSE_SDL=2 -o web/index.js\"";
+    command_stream << "-Isrc\\ntsc-filter -Iinclude\\universal -Isrc\\imgui -Isrc\\imgui\\backends src/imgui/backends/*.cpp src/imgui/*.cpp src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/*.cpp -Llib -sUSE_SDL=2 -o web/static/index.js\"";
     std::string command = command_stream.str();
     printf("%s\n",command.c_str());
     std::system("emsdk_env");

@@ -1,0 +1,4 @@
+Flask==3.0.3
+Flask-Cors==4.0.1
+fuzzywuzzy==0.18.0
+python-Levenshtein==0.25.1
