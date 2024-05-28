@@ -34,6 +34,7 @@
 #include "ppu.h"
 #include "apu.h"
 #include "util.h"
+#include "window/window.h"
 #include "controller.h"
 #include "shader_data.h"
 #define STB_IMAGE_IMPLEMENTATION
@@ -96,6 +97,7 @@ int desired_fps = 60;
 long long paused_time = 0;
 long long real_time = 0;
 float t_time, last_time;
+std::vector<int16_t> audio_queue;
 
 char* filename;
 unsigned char * filtered;
@@ -109,7 +111,7 @@ SDL_GLContext context;
 GLuint texture;
 GLuint VBO, VAO;
 
-SDL_Window* window;
+EmuWindow* window;
 
 CPU *cpu_ptr;
 PPU *ppu_ptr;
@@ -279,17 +281,18 @@ void sampleAPU() {
     while (!interrupted) {
         apu_ptr->queue_mutex.lock();
         if (apu_ptr->queue_audio_flag) {
-            int buffer_size = SDL_GetQueuedAudioSize(audio_device); 
-            if (buffer_size>BUFFER_LEN*sizeof(int16_t)*8) { //clocked to run a little bit faster, so we must account for a slight overflow in samples - better than sending too little
-                SDL_DequeueAudio(audio_device,nullptr,sizeof(int16_t)*BUFFER_LEN);
+            //int buffer_size = SDL_GetQueuedAudioSize(audio_device); 
+            int buffer_size = audio_queue.size()*sizeof(int16_t);
+            if (buffer_size>BUFFER_LEN*sizeof(int16_t)*8) { //we must account for a slight overflow in samples
+                audio_queue.erase(audio_queue.end()-BUFFER_LEN,audio_queue.end());
+                //SDL_DequeueAudio(audio_device,nullptr,sizeof(int16_t)*BUFFER_LEN);
             } else {
                 for (int i=0; i<BUFFER_LEN; i++) {
                     apu_ptr->buffer_copy[i]*=global_db;
                 }
-
-                SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
+                audio_queue.insert(audio_queue.end(),apu_ptr->buffer_copy,apu_ptr->buffer_copy+BUFFER_LEN);
+                //SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
             }
-            //SDL_QueueAudio(audio_device,apu_ptr->buffer_copy,sizeof(int16_t)*BUFFER_LEN);
             apu_ptr->queue_audio_flag = false;
             apu_ptr->queue_mutex.unlock();
         }
@@ -409,7 +412,7 @@ void changeRom(std::string name) {
     char* original_start = filename;
     memcpy(filename,name.c_str(),name.length()+1);
     get_filename(&filename);
-    SDL_SetWindowTitle(window,filename);
+    window->setTitle(std::string(filename));
     
     NESThread = std::thread(NESLoop);
     tInputs = std::thread(update_inputs);
@@ -442,6 +445,7 @@ void mainLoop(void* arg) {
     }
     changed_use_shaders = use_shaders;
     //logic is executed in nes thread
+    SDL_ShowCursor(paused);
     if (!paused) {
         ppu_ptr->image_mutex.lock();
     }
@@ -451,7 +455,7 @@ void mainLoop(void* arg) {
         #ifndef __EMSCRIPTEN__
             char * new_title = new char[255];
             sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
-            SDL_SetWindowTitle(window,new_title);
+            window->setTitle(std::string(new_title));
             delete[] new_title;
         #endif
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -496,7 +500,7 @@ void mainLoop(void* arg) {
         //ImGui::ShowDemoWindow(NULL);
         //render gui
         ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame(window);
+        ImGui_ImplSDL2_NewFrame(window->GetSDLWin());
         ImGui::NewFrame();
         if (paused) {
             SDL_Delay(1000/desired_fps);
@@ -515,19 +519,23 @@ void mainLoop(void* arg) {
         {
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
-            SDL_GL_MakeCurrent(window,context);
+            SDL_GL_MakeCurrent(window->GetSDLWin(),window->GetGLContext());
         }
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         //reset viewport
         int* new_viewport = new int[4];
-        SDL_GetWindowSize(window,&new_viewport[2],&new_viewport[3]);
+        SDL_GetWindowSize(window->GetSDLWin(),&new_viewport[2],&new_viewport[3]);
         viewportBox(&new_viewport,new_viewport[2],new_viewport[3]);
         glViewport(new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
         delete[] new_viewport;
 
         //update screen
-        SDL_GL_SwapWindow(window);
+        SDL_GL_SwapWindow(window->GetSDLWin());
+        if (audio_queue.size() >= BUFFER_LEN) {
+            SDL_QueueAudio(audio_device,audio_queue.data(),sizeof(int16_t)*audio_queue.size());
+            audio_queue.clear();
+        }
         
         ppu_ptr->image_mutex.unlock();
         ppu_ptr->image_drawn = true;
@@ -540,7 +548,7 @@ void mainLoop(void* arg) {
         {
             double w, h;
             emscripten_get_element_css_size( "#canvas", &w, &h );
-            SDL_SetWindowSize( window, (int)w, (int) h );
+            SDL_SetWindowSize( window->GetSDLWin(), (int)w, (int) h );
 
             display_size_changed = 0;
         }
@@ -587,9 +595,10 @@ void mainLoop(void* arg) {
                         case SDLK_F11:
                             {
                             fullscreen_toggle = fullscreen_toggle ? false : true;
-                            SDL_SetWindowFullscreen(window,fullscreen_toggle*SDL_WINDOW_FULLSCREEN_DESKTOP);
-                            SDL_SetWindowSize(window,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
-                            SDL_SetWindowPosition(window,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED);
+                            SDL_Window* sdlwin = window->GetSDLWin();
+                            SDL_SetWindowFullscreen(sdlwin,fullscreen_toggle*SDL_WINDOW_FULLSCREEN_DESKTOP);
+                            SDL_SetWindowSize(sdlwin,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
+                            SDL_SetWindowPosition(sdlwin,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED);
                             int* new_viewport = new int[4];
                             viewportBox(&new_viewport,WINDOW_INIT[0]/2,WINDOW_INIT[1]/2);
                             printf("%i %i %i %i\n",new_viewport[0],new_viewport[1],new_viewport[2],new_viewport[3]);
@@ -797,20 +806,11 @@ int main(int argc, char ** argv) {
     viewportBox(&viewport,WINDOW_INIT[0],WINDOW_INIT[1]);
     printf("Viewport set\n");
     printf("%i %i %i %i\n",viewport[0],viewport[1],viewport[2],viewport[3]);
-    window = SDL_CreateWindow(filename,SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,WINDOW_INIT[0],WINDOW_INIT[1],FLAGS);
-    printf("Made window\n");
-
-    SDL_SetWindowTitle(window,filename);
-    printf("Window Title Set\n");
-    context = SDL_GL_CreateContext(window);
-    if (!context) {
-        SDL_Log("Failed to create OpenGL context: %s", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+    window = new EmuWindow(std::string(filename),WINDOW_INIT[0],WINDOW_INIT[1]);
+    if (!window->window_created) {
         return 1;
     }
-    glewExperimental = GL_TRUE;
-    glewInit();
+
     glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
     //SDL_GL_SetSwapInterval(0);
     if (os == 0) { // Mac
@@ -831,8 +831,9 @@ int main(int argc, char ** argv) {
     #ifndef __EMSCRIPTEN__
         ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     #endif
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
     io = ImGui::GetIO();
-    ImGui_ImplSDL2_InitForOpenGL(window,context);
+    ImGui_ImplSDL2_InitForOpenGL(window->GetSDLWin(),window->GetGLContext());
     #ifdef __EMSCRIPTEN__
         ImGui_ImplOpenGL3_Init("#version 100");
     #else
@@ -965,8 +966,6 @@ int main(int argc, char ** argv) {
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
 
-    SDL_GL_DeleteContext(context);
-    SDL_DestroyWindow(window);
     SDL_CloseAudioDevice(audio_device);
     SDL_Quit();
     free(filtered);
@@ -977,6 +976,7 @@ int main(int argc, char ** argv) {
     delete cont2;
     delete ppu_ptr;
     delete cpu_ptr;
+    delete window;
     printf("Quit successfully.\n");
     //tCPU.join();
     //tPPU.join();

@@ -1,6 +1,0 @@
-recursive-include ..\..\include\win32
-recursive-include ..\..\include\unix
-recursive-include ..\ntsc-filter
-recursive-include ..\..\include\universal
-recursive-include ..\imgui
-recursive-include ..\imgui\backends
