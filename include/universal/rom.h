@@ -5,7 +5,7 @@
 #include <cstdio>
 
 enum NT_MIRROR { HORIZONTAL, VERTICAL, FOURSCREEN, SINGLESCREEN };
-
+ 
 class ROM {
     public:
         ROM();
