@@ -67,14 +67,14 @@ void EmuWindow::ImGuiInit() {
     #endif
 }
 
-void EmuWindow::drawPauseMenu() {
+void EmuWindow::drawPauseMenu(BaseSystem* saveSystem) {
     //render gui
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(GetSDLWin());
     ImGui::NewFrame();
     if (paused) {
         SDL_Delay(1000/desired_fps);
-        pause_menu();
+        pause_menu(saveSystem);
     } else {
         changing_keybind = -1;
     }

@@ -10,6 +10,7 @@
 
 class CPU;
 class Controller;
+class BaseSystem;
 
 extern unsigned char out_img[184320]; //output image
 
@@ -31,7 +32,7 @@ extern int current_device;
 extern GLfloat vertices[16];
 
 //settings/pause menu
-extern void pause_menu();
+extern void pause_menu(BaseSystem* saveSystem);
 extern bool paused_window;
 extern bool paused;
 

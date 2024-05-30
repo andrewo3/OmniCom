@@ -7,6 +7,9 @@
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
+#include "nes_sys.h"
+
+class BaseSystem;
 
 class EmuWindow {
     public:
@@ -16,7 +19,7 @@ class EmuWindow {
         void ImGuiInit();
         void setupAudio();
         void Close();
-        void drawPauseMenu();
+        void drawPauseMenu(BaseSystem* saveSystem);
         bool window_created;
         int desired_fps = 60;
         SDL_AudioDeviceID audio_device;

@@ -1,6 +1,7 @@
 //global desktop emulator stuff
 
 #include "util.h"
+#include "nes_sys.h"
 #include "SDL2/SDL.h"
 #include "math.h"
 #include "imgui.h"
@@ -138,7 +139,7 @@ void setGLViewport(int width, int height, float aspect_ratio) {
     delete[] viewport;
 }
 
-void pause_menu() {
+void pause_menu(BaseSystem* system) {
     ImGuiViewport* main_viewport = ImGui::GetMainViewport();
     ImVec2 size = main_viewport->WorkSize;
     ImGui::SetNextWindowPos(main_viewport->WorkPos);
@@ -176,9 +177,10 @@ void pause_menu() {
                     printf("load game\n");
                     std::string load_dir = config_dir+sep+std::string("state");
                     if (std::filesystem::exists(load_dir)) {
-                        /*FILE* save_file = fopen(load_dir.c_str(),"rb");
-                        cpu->load_state(save_file);
-                        fclose(save_file);*/
+                        FILE* save_file = fopen(load_dir.c_str(),"rb");
+                        system->Load(save_file);
+                        //cpu->load_state(save_file);
+                        fclose(save_file);
                     } else {
                         printf("Nothing to load at: %s\n",load_dir.c_str());
                     }
@@ -188,9 +190,10 @@ void pause_menu() {
                 if (ImGui::Button("Save")) {
                     std::string load_dir = config_dir+sep+std::string("state");
                     printf("save game at: %s\n",load_dir.c_str());
-                    /*FILE* save_file = fopen(load_dir.c_str(),"wb");
-                    cpu->save_state(save_file);
-                    fclose(save_file);*/
+                    FILE* save_file = fopen(load_dir.c_str(),"wb");
+                    system->Save(save_file);
+                    //cpu->save_state(save_file);
+                    fclose(save_file);
                 }
             }
             

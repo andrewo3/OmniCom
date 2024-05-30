@@ -67,8 +67,17 @@ void System::Cycle() {
     cpu->clock();
 }
 
-void System::Save() {
+void System::Save(FILE* save_file) {
+    cpu->save_state(save_file);
+}
+
+void System::Load(FILE* load_file) {
+    cpu->load_state(load_file);
+}
+
+void System::saveRAM() {
     if (rom->battery_backed) {
+        printf("save ram\n");
         std::FILE* ram_save = fopen((config_dir+sep+std::string("ram")).c_str(),"wb");
         cpu->save_ram(ram_save);
         fclose(ram_save);
@@ -98,6 +107,7 @@ void System::Stop() {
     running = false;
     int clock_speed = cpu->emulated_clock_speed(epoch_nano()-start_time-paused_time);
     printf("Cycles: %lli, Emulated Clock Speed: %i - Target: (approx.) 1789773 - %.02f%% similarity\n",cpu->cycles,clock_speed,clock_speed/1789773.0*100);
+    saveRAM();
     audio_thread.join();
     loop_thread.join();
     glDetachShader(shaderProgram,vertexShader);

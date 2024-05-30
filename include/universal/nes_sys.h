@@ -8,6 +8,7 @@
 #include <thread>
 #include <vector>
 
+class EmuWindow;
 
 class BaseSystem {
     public:
@@ -15,7 +16,8 @@ class BaseSystem {
         virtual void AudioLoop() = 0;
         virtual void Start() = 0;
         virtual void Cycle() = 0;
-        virtual void Save() = 0;
+        virtual void Save(FILE* save_file) = 0;
+        virtual void Load(FILE* load_file) = 0;
         virtual void Stop() = 0;
         virtual bool Render() = 0;
         virtual void Update() = 0;
@@ -43,7 +45,9 @@ class System: public BaseSystem {
         void AudioLoop();
         void Start();
         void Cycle();
-        void Save();
+        void Save(FILE* save_file);
+        void Load(FILE* load_file);
+        void saveRAM();
         void Stop();
         bool Render();
         void Update();

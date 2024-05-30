@@ -180,4 +180,18 @@ class CPU {
 
 }
 
+namespace SNES {
+
+class CPU {
+    public:
+        uint16_t X;
+        uint16_t Y;
+        uint16_t A;
+        uint16_t S;
+        uint16_t PC;
+        
+        
+};
+
+}
 #endif

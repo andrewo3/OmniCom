@@ -33,10 +33,6 @@
 
 #include "nes_sys.h"
 #include "rom_data.h"
-#include "rom.h"
-#include "cpu.h"
-#include "ppu.h"
-#include "apu.h"
 #include "util.h"
 #include "window/window.h"
 #include "controller.h"
@@ -121,9 +117,7 @@ void quit(int signal) {
     /*std::FILE* memory_dump = fopen("dump","w");
     fwrite(&cpu_ptr->memory[0x6004],sizeof(uint8_t),strlen((char*)(&cpu_ptr->memory[0x6004])),memory_dump);
     fclose(memory_dump);*/
-    if (!web) {
-        emuSystem->Save();
-    }
+    emuSystem->Stop();
     emuSystem->running = 0;
     if (signal==SIGSEGV) {
         printf("Segfault!\n");
@@ -168,7 +162,7 @@ void mainLoop(void* arg) {
     bool new_frame = emuSystem->Render(); //Execute GL render functions from system
     SDL_ShowCursor(paused);
     if (paused) {
-        window->drawPauseMenu();
+        window->drawPauseMenu(emuSystem);
     }
 
     //update screen
