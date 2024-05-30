@@ -20,7 +20,7 @@ stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output
 if len(sys.argv)>=2:
     nesObj = pyNES.NES(sys.argv[1])
 else:
-    nesObj = pyNES.NES(abspath("../../res/working_roms/Tetris (U) [!].nes"))
+    nesObj = pyNES.NES(abspath("../../../res/working_roms/Tetris (U) [!].nes"))
 #nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
 #nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld2.nes"))
 controller_port1 = pyNES.Controller()

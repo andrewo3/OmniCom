@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cmath>
 
+using namespace NES;
 
 ROM::ROM() { //if no rom specified, make dummy rom
     unsigned char dummy_prg[0x4010] = {0};
@@ -20,12 +21,12 @@ ROM::ROM(const char* src) {
     this->load_file(src);
 
 }
-ROM::ROM(int length, unsigned char* data) {
+ROM::ROM(long length, unsigned char* data) {
     this->load_arr(length,data);
 
 }
 
-void ROM::load_arr(int length, unsigned char* data) {
+void ROM::load_arr(long length, unsigned char* data) {
     int ind = 0;
     for (int i=0; i<16; i++) {
         header[i]=data[ind];

@@ -6,6 +6,9 @@
 #include <mutex>
 #include "rom.h"
 
+
+namespace NES {
+
 class CPU;
 
 class PPU {
@@ -112,5 +115,7 @@ class PPU {
         unsigned char current_img[184320] = {0}; //output full frame
         unsigned char frame_cache[61440] = {0};
 };
+
+}
 
 #endif

@@ -6,6 +6,7 @@
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include "controller.h"
+#include "crt_core.h"
 
 class CPU;
 class Controller;
@@ -30,10 +31,24 @@ extern int current_device;
 extern GLfloat vertices[16];
 
 //settings/pause menu
-extern void pause_menu(void** system);
+extern void pause_menu();
 extern bool paused_window;
+extern bool paused;
 
 extern SDL_Joystick* controller;
         
 int joystickDir(SDL_Joystick* joy);
+
+void setGLViewport(int width, int height, float aspect_ratio);
+
+//ntsc filter options
+static struct CRT crt;
+static struct NTSC_SETTINGS ntsc;
+static int color = 1;
+static int noise = 6;
+static int field = 0;
+static int raw = 0;
+static int hue = 0;
+
+int default_config();
 #endif

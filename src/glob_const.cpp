@@ -4,4 +4,3 @@ const int BUFFER_LEN = 1024;
 std::string config_dir;
 char sep;
 int web;
-double ns_wait = 1;

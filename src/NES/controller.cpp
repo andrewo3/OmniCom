@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 
+using namespace NES;
 
 Controller::Controller(bool* inputs)  {
     update_inputs(inputs);

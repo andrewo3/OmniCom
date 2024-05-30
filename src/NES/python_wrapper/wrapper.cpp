@@ -29,7 +29,6 @@ enum class Button {
     RIGHT = 7
 };
 
-
 namespace py = pybind11;
 
 
@@ -40,8 +39,8 @@ class ROM;
 
 class ControllerWrapper {
     public:
-        Controller cont;
-        ControllerWrapper() {cont = Controller();}
+        NES::Controller cont;
+        ControllerWrapper() {cont = NES::Controller();}
         void updateInputs(py::list inputs);
 };
 
@@ -53,11 +52,11 @@ void ControllerWrapper::updateInputs(py::list inputs) {
     cont.update_inputs(data);
 }
 
-class NES {
+class NESUnit {
     public:
-        NES(char* rom_name);
-        NES();
-        ~NES();
+        NESUnit(char* rom_name);
+        NESUnit();
+        ~NESUnit();
         int mapper;
         long long start_nano;
         long long real_time = 0;
@@ -86,22 +85,22 @@ class NES {
         long long frame_count();
         long long cycle_count();
         std::string state_save_dir;
-        Controller cont1;
-        Controller cont2;
+        NES::Controller cont1;
+        NES::Controller cont2;
 
     private:
-        CPU* cpu;
-        PPU* ppu;
-        APU* apu;
+        NES::CPU* cpu;
+        NES::PPU* ppu;
+        NES::APU* apu;
         void* system[3];
-        ROM* rom;
+        NES::ROM* rom;
         bool running = false;
         volatile bool paused = false;
         long long paused_time = epoch_nano();
         std::thread running_t;
 };
 
-void NES::runFrame() {
+void NESUnit::runFrame() {
     long long start_frame = ppu->frames;
     void* system[3] = {cpu,ppu,apu};
     while (ppu->frames==start_frame) {
@@ -112,7 +111,7 @@ void NES::runFrame() {
         
 }
 
-void NES::single_cycle() {
+void NESUnit::single_cycle() {
     cpu->clock();
 
     while (apu->cycles*2<cpu->cycles) {
@@ -137,22 +136,22 @@ void NES::single_cycle() {
     }
 }
 
-long long NES::cycle_count() {
+long long NESUnit::cycle_count() {
     return cpu->cycles;
 }
 
-long long NES::frame_count() {
+long long NESUnit::frame_count() {
     return ppu->frames;
 }
 
-void NES::set_pause(bool p) {
+void NESUnit::set_pause(bool p) {
     if (!p && paused) {
         paused_time += (epoch_nano()-start_nano)-real_time;
     }
     paused = p;
 }
 
-bool NES::setSaveDir(std::string dir) {
+bool NESUnit::setSaveDir(std::string dir) {
     if (std::filesystem::exists(dir)) {
         state_save_dir = dir;
         return true;
@@ -161,11 +160,11 @@ bool NES::setSaveDir(std::string dir) {
     }
 }
 
-std::string NES::getSaveDir() {
+std::string NESUnit::getSaveDir() {
     return state_save_dir;
 }
 
-void NES::detectOS(char* ROM_NAME) {
+void NESUnit::detectOS(char* ROM_NAME) {
     char* filename = new char[strlen(ROM_NAME)+1];
     char* original_start = filename;
     memcpy(filename,ROM_NAME,strlen(ROM_NAME)+1);
@@ -225,21 +224,21 @@ void NES::detectOS(char* ROM_NAME) {
     }
 }
 
-NES::NES(char* rom_name) {
+NESUnit::NESUnit(char* rom_name) {
     detectOS(rom_name);
-    rom = new ROM(rom_name);
-    cpu = new CPU(false);
-    apu = new APU();
+    rom = new NES::ROM(rom_name);
+    cpu = new NES::CPU(false);
+    apu = new NES::APU();
     apu->setCPU(cpu);
     apu->sample_rate = 44100;
     cpu->apu = apu;
     cpu->loadRom(rom);
-    cont1 = Controller();
-    cont2 = Controller();
+    cont1 = NES::Controller();
+    cont2 = NES::Controller();
     cpu->set_controller(&cont1,0);
     cpu->set_controller(&cont2,1);
     cpu->reset();
-    ppu = new PPU(cpu);
+    ppu = new NES::PPU(cpu);
     system[0] = cpu;
     system[1] = ppu;
     system[2] = apu;
@@ -247,22 +246,22 @@ NES::NES(char* rom_name) {
 
 }
 
-NES::NES() {
+NESUnit::NESUnit() {
     printf("No rom specified.\n");
-    rom = new ROM();
+    rom = new NES::ROM();
     printf("rom created.\n");
-    cpu = new CPU(false);
-    apu = new APU();
+    cpu = new NES::CPU(false);
+    apu = new NES::APU();
     apu->setCPU(cpu);
     apu->sample_rate = 44100;
     cpu->apu = apu;
     cpu->loadRom(rom);
-    cont1 = Controller();
-    cont2 = Controller();
+    cont1 = NES::Controller();
+    cont2 = NES::Controller();
     cpu->set_controller(&cont1,0);
     cpu->set_controller(&cont2,1);
     cpu->reset();
-    ppu = new PPU(cpu);
+    ppu = new NES::PPU(cpu);
     system[0] = cpu;
     system[1] = ppu;
     system[2] = apu;
@@ -270,13 +269,13 @@ NES::NES() {
 
 }
 
-void NES::save(int ind) {
+void NESUnit::save(int ind) {
     FILE* s = fopen((state_save_dir+sep+std::to_string(ind)).c_str(),"wb");
     cpu->save_state(s);
     fclose(s);
 }
 
-bool NES::load(int ind) {
+bool NESUnit::load(int ind) {
     if (std::filesystem::exists(state_save_dir+sep+std::to_string(ind))) {
         FILE* s = fopen((state_save_dir+sep+std::to_string(ind)).c_str(),"rb");
         cpu->load_state(s);
@@ -287,11 +286,11 @@ bool NES::load(int ind) {
     }
 }
 
-void NES::setController(ControllerWrapper& cont, int port) {
+void NESUnit::setController(ControllerWrapper& cont, int port) {
     cpu->set_controller(&(cont.cont),port);
 }
 
-void NES::operation_thread() {
+void NESUnit::operation_thread() {
     
     const double ns_wait = 1e9/cpu->CLOCK_SPEED;
     long long cpu_time;
@@ -314,7 +313,7 @@ void NES::operation_thread() {
     
 }
 
-void NES::start() {
+void NESUnit::start() {
     running = true;
     start_nano = epoch_nano();
     cpu->start = start_nano;
@@ -322,7 +321,7 @@ void NES::start() {
     running_t = std::thread( [this] { this->operation_thread(); } );
 }
 
-void NES::stop() {
+void NESUnit::stop() {
     if (cpu->rom->battery_backed) {
         std::FILE* ram_save = fopen((config_dir+sep+std::string("ram")).c_str(),"wb");
         cpu->save_ram(ram_save);
@@ -332,7 +331,7 @@ void NES::stop() {
     running_t.join();
 }
 
-py::array_t<uint8_t> NES::cpuMem() {
+py::array_t<uint8_t> NESUnit::cpuMem() {
     uint8_t* tmp = (uint8_t*)cpu->memory;
     py::capsule cleanup(tmp, [](void *f){});
     return py::array_t<uint8_t>(
@@ -343,7 +342,7 @@ py::array_t<uint8_t> NES::cpuMem() {
     );
 }
 
-py::array_t<uint8_t> NES::color_lookup() {
+py::array_t<uint8_t> NESUnit::color_lookup() {
     uint8_t* tmp = NTSC_TO_RGB;
     py::capsule cleanup(tmp, [](void *f){});
     return py::array_t<uint8_t>(
@@ -354,7 +353,7 @@ py::array_t<uint8_t> NES::color_lookup() {
     );
 }
 
-py::array_t<uint8_t> NES::ppuMem() {
+py::array_t<uint8_t> NESUnit::ppuMem() {
     uint8_t* tmp = (uint8_t*)ppu->memory;
     py::capsule cleanup(tmp, [](void *f){});
     return py::array_t<uint8_t>(
@@ -365,7 +364,7 @@ py::array_t<uint8_t> NES::ppuMem() {
     );
 }
 
-py::array_t<uint8_t> NES::OAM() {
+py::array_t<uint8_t> NESUnit::OAM() {
     uint8_t* tmp = (uint8_t*)ppu->oam;
     py::capsule cleanup(tmp, [](void *f){});
     return py::array_t<uint8_t>(
@@ -376,7 +375,7 @@ py::array_t<uint8_t> NES::OAM() {
     );
 }
 
-py::array_t<uint8_t> NES::getImg() {
+py::array_t<uint8_t> NESUnit::getImg() {
     uint8_t* tmp = (uint8_t*)ppu->getImg();
     py::capsule cleanup(tmp,[](void *f){});
     return py::array_t<uint8_t>(
@@ -387,7 +386,7 @@ py::array_t<uint8_t> NES::getImg() {
     );
 }
 
-py::bytes NES::getAudio() {
+py::bytes NESUnit::getAudio() {
     if (apu->queue_audio_flag) {
         apu->queue_audio_flag = false;
         return py::bytes((char *)apu->buffer_copy,BUFFER_LEN*sizeof(int16_t));
@@ -396,7 +395,7 @@ py::bytes NES::getAudio() {
     }
 }
 
-NES::~NES() {
+NESUnit::~NESUnit() {
     delete rom;
     delete cpu;
     delete ppu;
@@ -404,25 +403,25 @@ NES::~NES() {
 }
 
 PYBIND11_MODULE(pyNES,m) {
-    py::class_<NES>(m,"NES").def(py::init<char*>()).def(py::init<>())
-    .def("cpuMem",&NES::cpuMem)
-    .def("ppuMem",&NES::ppuMem)
-    .def("OAM",&NES::OAM)
-    .def("getImg",&NES::getImg)
-    .def("colorLookup",&NES::color_lookup)
-    .def("getAudio",&NES::getAudio)
-    .def("start",&NES::start)
-    .def("stop",&NES::stop)
-    .def("saveState",&NES::save)
-    .def("loadState",&NES::load)
-    .def("setPaused",&NES::set_pause)
-    .def("setSaveDir",&NES::setSaveDir)
-    .def("getSaveDir",&NES::getSaveDir)
-    .def("setController",&NES::setController)
-    .def("frameCount",&NES::frame_count)
-    .def("cycleCount",&NES::cycle_count)
-    .def("runFrame",&NES::runFrame)
-    .def("perFrame",&NES::perFrame);
+    py::class_<NESUnit>(m,"NES").def(py::init<char*>()).def(py::init<>())
+    .def("cpuMem",&NESUnit::cpuMem)
+    .def("ppuMem",&NESUnit::ppuMem)
+    .def("OAM",&NESUnit::OAM)
+    .def("getImg",&NESUnit::getImg)
+    .def("colorLookup",&NESUnit::color_lookup)
+    .def("getAudio",&NESUnit::getAudio)
+    .def("start",&NESUnit::start)
+    .def("stop",&NESUnit::stop)
+    .def("saveState",&NESUnit::save)
+    .def("loadState",&NESUnit::load)
+    .def("setPaused",&NESUnit::set_pause)
+    .def("setSaveDir",&NESUnit::setSaveDir)
+    .def("getSaveDir",&NESUnit::getSaveDir)
+    .def("setController",&NESUnit::setController)
+    .def("frameCount",&NESUnit::frame_count)
+    .def("cycleCount",&NESUnit::cycle_count)
+    .def("runFrame",&NESUnit::runFrame)
+    .def("perFrame",&NESUnit::perFrame);
     py::class_<ControllerWrapper>(m,"Controller").def(py::init<>())
     .def("updateInputs",&ControllerWrapper::updateInputs);
 

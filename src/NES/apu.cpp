@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cmath>
 
+using namespace NES;
 
 APU::~APU() {
     delete[] buffer;
@@ -20,7 +21,7 @@ void APU::setCPU(CPU* c_ptr) {
     clock_speed = c_ptr->CLOCK_SPEED/2;
 }
 
-int16_t mix(APU* a_ptr) {
+int16_t NES::mix(APU* a_ptr) {
     //pulse1/60.0+pulse2/60.0+
     //a_ptr->audio_frame++;
     int sr = a_ptr->sample_rate;
@@ -187,7 +188,7 @@ void APU::cycle() { // apu clock (every other cpu cycle)
             queue_audio_flag = true;
             mutex_locked = false;
         }
-        buffer[audio_frame%BUFFER_LEN] = mix(this);
+        buffer[audio_frame%BUFFER_LEN] = NES::mix(this);
         audio_frame++;
     }
 

@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <mutex>
 
+using namespace NES;
+
 PPU::PPU() {
     this->scanline = 0;
     this->set_registers();
@@ -32,10 +34,9 @@ PPU::PPU(CPU* c) {
     cpu = c;
     cpu->ppu = this;
     if (cpu->rom!=nullptr) {
-        this->loadRom(cpu->rom);
-        this->set_registers();
-        
+        this->loadRom(cpu->rom);    
     }
+    this->set_registers();
 }
 
 void PPU::write(int16_t address, int8_t value) { //write ppu memory, taking into account any mirrors or bankswitches

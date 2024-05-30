@@ -13,16 +13,18 @@ if platform == "win32":
 cwd = dirname(realpath(__file__))
 chdir(cwd)
 #sorted(glob("*.cpp")),  # Sort source files for reproducibility
+root = realpath(f"..{file_sep}..{file_sep}..")
+print(root)
 root_src = glob(f"{realpath('..')}"+f"{file_sep}*.cpp")
 files = sorted(root_src)
 files.append("wrapper.cpp")
-files.remove(realpath(f"..{file_sep}main.cpp"))
-files.remove(realpath(f"..{file_sep}util.cpp"))
-lib_path = realpath(f"..{file_sep}..{file_sep}lib")
+files.append(f"{root}{file_sep}src{file_sep}glob_const.cpp")
+lib_path = realpath(f"{root}{file_sep}lib")
 libs = sorted(glob(f"{lib_path}{file_sep}*.*"))
-include_path = f"{realpath(f'../../include/{folder}'.replace('/',file_sep))}\
+include_path = f"{realpath(f'{root}{file_sep}include{file_sep}{folder}')}\
 {sep}\
-{realpath('../../include/universal'.replace('/',file_sep))}"
+{realpath(f'{root}{file_sep}include{file_sep}universal')}"
+
 include_path = include_path.replace("/",file_sep)
 
 library_paths = []

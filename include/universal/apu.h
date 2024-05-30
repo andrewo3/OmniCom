@@ -5,6 +5,8 @@
 #include "glob_const.h"
 #include <mutex>
 
+namespace NES {
+
 class CPU;
 
 class APU {
@@ -129,6 +131,6 @@ class APU {
 
 int16_t mix(APU* a_ptr);
 
-
+}
 
 #endif

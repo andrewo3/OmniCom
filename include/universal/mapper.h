@@ -5,6 +5,9 @@
 #include <cstdio>
 #include <cstring>
 
+
+namespace NES {
+
 class CPU;
 
 class PPU;
@@ -131,5 +134,7 @@ class NTDEC2722: public Mapper {
         uint16_t counter = 4096*3;
         bool enabled = true;
 };
+
+}
 
 #endif

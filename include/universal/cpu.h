@@ -7,6 +7,9 @@
 #include "controller.h"
 #include <cstdint>
 
+
+namespace NES {
+    
 class PPU;
 
 class APU;
@@ -174,5 +177,7 @@ class CPU {
         uint8_t inst_cycles_pagecross[256] = {0};
         char* debug_addr[256] = {0};
 };
+
+}
 
 #endif

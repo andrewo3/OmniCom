@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdio>
 
+using namespace NES;
 
 //--addressing modes--
 

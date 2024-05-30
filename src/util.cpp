@@ -1,3 +1,5 @@
+//global desktop emulator stuff
+
 #include "util.h"
 #include "SDL2/SDL.h"
 #include "math.h"
@@ -41,7 +43,7 @@ int changing_keybind = -1;
 int render_engine = 0;
 int current_device = 0;
 
-
+bool paused = false;
 bool paused_window = false;
 int current_tab = 0;
 static ImGuiWindowFlags paused_flags = ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar;
@@ -94,8 +96,49 @@ void MenuButton(ImVec2 win_size, int number,char* name) {
     }
 }
 
-void pause_menu(void** system) {
-    CPU* cpu = (CPU*)system[0];
+int default_config() {
+    int os = -1;
+    #ifdef __APPLE__
+        config_dir = std::string(std::getenv("HOME"))+"/Library/Containers";
+        sep = '/';
+        printf("MACOS, %s\n", config_dir.c_str());
+        os = 0;
+    #endif
+    #ifdef __WIN32__
+        TCHAR appdata[MAX_PATH] = {0};
+        SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, appdata);
+        config_dir = std::string(appdata);
+        sep = '\\';
+        printf("WINDOWS, %s\n", config_dir.c_str());
+        os = 1;
+    #endif
+    #ifdef __unix__
+        config_dir = std::string(std::getenv("HOME"))+"/.config";
+        sep = '/';
+        printf("LINUX, %s\n", config_dir.c_str());
+        os = 2;
+    #endif
+    return os;
+}
+
+void viewportBox(int** viewport_box,int width, int height, float aspect_ratio) {
+    bool horiz = (float)width/height>aspect_ratio;
+    (*viewport_box)[0] = horiz ? (width-aspect_ratio*height)/2.0 : 0;
+    (*viewport_box)[1] = horiz ? 0 : (height-width/aspect_ratio)/2.0;
+    (*viewport_box)[2] = horiz ? aspect_ratio*height : width;
+    (*viewport_box)[3] = horiz ? height : width/aspect_ratio;
+}
+
+void setGLViewport(int width, int height, float aspect_ratio) {
+    int* viewport = new int[4];
+    viewportBox(&viewport,width,height,aspect_ratio);
+    //printf("Viewport set\n");
+    //printf("%i %i %i %i\n",viewport[0],viewport[1],viewport[2],viewport[3]);
+    glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
+    delete[] viewport;
+}
+
+void pause_menu() {
     ImGuiViewport* main_viewport = ImGui::GetMainViewport();
     ImVec2 size = main_viewport->WorkSize;
     ImGui::SetNextWindowPos(main_viewport->WorkPos);
@@ -133,9 +176,9 @@ void pause_menu(void** system) {
                     printf("load game\n");
                     std::string load_dir = config_dir+sep+std::string("state");
                     if (std::filesystem::exists(load_dir)) {
-                        FILE* save_file = fopen(load_dir.c_str(),"rb");
+                        /*FILE* save_file = fopen(load_dir.c_str(),"rb");
                         cpu->load_state(save_file);
-                        fclose(save_file);
+                        fclose(save_file);*/
                     } else {
                         printf("Nothing to load at: %s\n",load_dir.c_str());
                     }
@@ -145,9 +188,9 @@ void pause_menu(void** system) {
                 if (ImGui::Button("Save")) {
                     std::string load_dir = config_dir+sep+std::string("state");
                     printf("save game at: %s\n",load_dir.c_str());
-                    FILE* save_file = fopen(load_dir.c_str(),"wb");
+                    /*FILE* save_file = fopen(load_dir.c_str(),"wb");
                     cpu->save_state(save_file);
-                    fclose(save_file);
+                    fclose(save_file);*/
                 }
             }
             

@@ -4,14 +4,17 @@
 #include <cstdint>
 #include <cstdio>
 
+
+namespace NES {
+
 enum NT_MIRROR { HORIZONTAL, VERTICAL, FOURSCREEN, SINGLESCREEN };
  
 class ROM {
     public:
         ROM();
         ROM(const char* src);
-        ROM(int length, unsigned char* data);
-        void load_arr(int length, unsigned char* data);
+        ROM(long length, unsigned char* data);
+        void load_arr(long length, unsigned char* data);
         void load_file(const char* src);
         const char* src_filename;
         bool is_valid() { return valid_rom; }
@@ -44,5 +47,7 @@ class ROM {
         int chrsize;
         Mapper* mapper;
 };
+
+}
 
 #endif

@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <cstdbool>
 
+namespace NES {
+
 class Controller {
     public:
         Controller() {}
@@ -20,5 +22,6 @@ class Controller {
         bool Right;
 };
 
+}
 
 #endif

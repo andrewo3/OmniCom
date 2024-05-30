@@ -2,6 +2,7 @@
 #include "cpu.h"
 #include "ppu.h"
 
+using namespace NES;
 
 void MMC3::map_write(void** ptrs, int8_t* address, int8_t *value) {
     int8_t val = *value;
