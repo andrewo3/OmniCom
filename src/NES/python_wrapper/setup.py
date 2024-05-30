@@ -19,6 +19,9 @@ root_src = glob(f"{realpath('..')}"+f"{file_sep}*.cpp")
 files = sorted(root_src)
 files.append("wrapper.cpp")
 files.append(f"{root}{file_sep}src{file_sep}glob_const.cpp")
+files.remove(f"{root}{file_sep}src{file_sep}NES{file_sep}nes_sys.cpp")
+print(files)
+#files.remove(f"{root}{file_sep}src{file_sep}util.cpp")
 lib_path = realpath(f"{root}{file_sep}lib")
 libs = sorted(glob(f"{lib_path}{file_sep}*.*"))
 include_path = f"{realpath(f'{root}{file_sep}include{file_sep}{folder}')}\
@@ -51,7 +54,7 @@ from pybind11.setup_helpers import Pybind11Extension
 
 ext_modules = [
     Pybind11Extension(
-        "pyNES",
+        "omnicom",
         sources = files,
         include_dirs = include_path.split(sep),
         libraries=libraries
@@ -59,7 +62,7 @@ ext_modules = [
 ]
 
 setup(
-    name='pyNES',
-    version='0.0.1',
+    name='omnicom',
+    version='0.3.0',
     ext_modules=ext_modules
 )

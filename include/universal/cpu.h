@@ -189,8 +189,8 @@ class CPU {
         uint16_t A;
         uint16_t S;
         uint16_t PC;
-        
-        
+        int clock_speeds[3] = {1790000,2680000,3580000};
+
 };
 
 }

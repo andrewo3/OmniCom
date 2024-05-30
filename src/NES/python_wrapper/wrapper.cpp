@@ -1,4 +1,3 @@
-#include "util.h"
 #include "glob_const.h"
 #include "rom.h"
 #include "cpu.h"
@@ -402,7 +401,7 @@ NESUnit::~NESUnit() {
     delete apu;
 }
 
-PYBIND11_MODULE(pyNES,m) {
+PYBIND11_MODULE(omnicom,m) {
     py::class_<NESUnit>(m,"NES").def(py::init<char*>()).def(py::init<>())
     .def("cpuMem",&NESUnit::cpuMem)
     .def("ppuMem",&NESUnit::ppuMem)

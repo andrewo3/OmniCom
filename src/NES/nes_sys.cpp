@@ -129,10 +129,10 @@ void System::Loop() {
             Cycle();
 
             //calculate delay
-            time_point<steady_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED)-duration_cast<nanoseconds>(seconds_lost);
-            if ((result_time-now()) < duration<double>(-0.5)) {
+            time_point<steady_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED)+duration_cast<nanoseconds>(seconds_lost);
+            if ((result_time-now()) < duration<double>(-0.1)) {
                 printf("one second lost\n");
-                seconds_lost+=0.5s;
+                seconds_lost+=(now()-result_time);
             }
             std::this_thread::sleep_until(result_time);
         } else {
@@ -154,7 +154,7 @@ bool System::Render() {
     if (!paused) { // must remain inside this if statement so that it doesnt hang if paused
         ppu->image_mutex.lock();
     }
-    if (!ppu->image_drawn) { //if ppu hasnt registered image as being drawn yet
+    if (!ppu->image_drawn || paused) { //if ppu hasnt registered image as being drawn yet
         /*#ifndef __EMSCRIPTEN__
             char * new_title = new char[255];
             sprintf(new_title,"%s - %.02f FPS",filename,1/diff);

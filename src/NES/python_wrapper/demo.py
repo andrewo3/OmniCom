@@ -5,7 +5,7 @@ from os.path import abspath
 sys.path.append(abspath("build/lib.macosx-10.9-universal2-cpython-312"))
 sys.path.append(abspath("build\\lib.win-amd64-cpython-312"))
 sys.path.append(abspath("build/lib.linux-x86_64-cpython-311"))
-import pyNES,pygame
+import omnicom,pygame
 
 pygame.init()
 window_dim = [256,240]
@@ -15,15 +15,15 @@ p = pyaudio.PyAudio()
 
 stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True,frames_per_buffer = 4096)
 
-#nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
-#nesObj = pyNES.NES("C:\\Users\\Andrew Ogundimu\\Desktop\\smb3mix-rev2B-prg1.nes")
+#nesObj = omnicom.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
+#nesObj = omnicom.NES("C:\\Users\\Andrew Ogundimu\\Desktop\\smb3mix-rev2B-prg1.nes")
 if len(sys.argv)>=2:
-    nesObj = pyNES.NES(sys.argv[1])
+    nesObj = omnicom.NES(sys.argv[1])
 else:
-    nesObj = pyNES.NES(abspath("../../../res/working_roms/Tetris (U) [!].nes"))
-#nesObj = pyNES.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
-#nesObj = pyNES.NES(abspath("../../res/working_roms/helloworld2.nes"))
-controller_port1 = pyNES.Controller()
+    nesObj = omnicom.NES(abspath("../../../res/working_roms/Tetris (U) [!].nes"))
+#nesObj = omnicom.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
+#nesObj = omnicom.NES(abspath("../../res/working_roms/helloworld2.nes"))
+controller_port1 = omnicom.Controller()
 nesObj.setController(controller_port1,0)
 cpu_mem = nesObj.cpuMem()
 running = True
