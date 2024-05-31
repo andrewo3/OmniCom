@@ -15,7 +15,7 @@ chdir(cwd)
 #sorted(glob("*.cpp")),  # Sort source files for reproducibility
 root = f"..{file_sep}..{file_sep}.."
 print(root)
-root_src = glob(f"{realpath('..')}"+f"{file_sep}*.cpp")
+root_src = glob(f"..{file_sep}*.cpp")
 files = sorted(root_src)
 files.append("wrapper.cpp")
 files.append(f"{root}{file_sep}src{file_sep}glob_const.cpp")
