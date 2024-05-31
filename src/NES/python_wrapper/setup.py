@@ -9,8 +9,7 @@ if platform == "win32":
     file_sep = "\\"
     sep = ";"
     folder = "win32"
-
-system("pip freeze")
+    
 cwd = dirname(realpath(__file__))
 chdir(cwd)
 #sorted(glob("*.cpp")),  # Sort source files for reproducibility
