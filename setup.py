@@ -61,6 +61,7 @@ else:
 from setuptools import setup
 try:
     from pybind11.setup_helpers import Pybind11Extension
+    print("pybind11 now")
 except ImportError:
     from setuptools import Extension as Pybind11Extension
 
