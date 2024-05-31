@@ -21,9 +21,7 @@ print(cwd,"src files:",root_src)
 files = sorted(root_src)
 files.append(f"{root}{file_sep}src{file_sep}NES{file_sep}python_wrapper{file_sep}wrapper.cpp")
 files.append(f"{root}{file_sep}src{file_sep}glob_const.cpp")
-
-nes_sys = [i for i in files if realpath(i)==realpath(f"{root}{file_sep}src{file_sep}nes_sys.cpp")][0]
-files.remove(nes_sys)
+files.remove(f"{root}{file_sep}src{file_sep}NES{file_sep}nes_sys.cpp")
 print(files)
 #files.remove(f"{root}{file_sep}src{file_sep}util.cpp")
 lib_path = realpath(f"{root}{file_sep}lib")
