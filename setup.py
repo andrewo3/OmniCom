@@ -61,9 +61,10 @@ else:
 from setuptools import setup
 try:
     from pybind11.setup_helpers import Pybind11Extension
-    print("pybind11 now")
+    print("PYBIND11 FOUND")
 except ImportError:
     from setuptools import Extension as Pybind11Extension
+    print("PYBIND11 NOT FOUND")
 
 ext_modules = [
     Pybind11Extension(
