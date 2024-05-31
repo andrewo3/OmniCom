@@ -78,6 +78,7 @@ class NESUnit {
         void save(int ind);
         bool load(int ind);
         void set_pause(bool paused);
+        long long pause_check;
         bool setSaveDir(std::string dir);
         std::string getSaveDir();
         void detectOS(char* ROM_NAME);
@@ -93,7 +94,7 @@ class NESUnit {
         NES::APU* apu;
         void* system[3];
         NES::ROM* rom;
-        bool running = false;
+        volatile bool running = false;
         volatile bool paused = false;
         long long paused_time = epoch_nano();
         std::thread running_t;
@@ -144,7 +145,10 @@ long long NESUnit::frame_count() {
 
 void NESUnit::set_pause(bool p) {
     if (!p && paused) {
-        paused_time += (epoch_nano()-start_nano)-real_time;
+        paused_time += epoch_nano()-pause_check;
+    }
+    else if (p && !paused) {
+        pause_check = epoch_nano();
     }
     paused = p;
 }
@@ -289,22 +293,22 @@ void NESUnit::setController(ControllerWrapper& cont, int port) {
 }
 
 void NESUnit::operation_thread() {
-    
+    using namespace std::chrono;
     const double ns_wait = 1e9/cpu->CLOCK_SPEED;
     long long cpu_time;
-    paused_time = start_nano;
+    paused_time = 0;
+    pause_check = start_nano;
+    time_point<steady_clock> epoch;
+    auto now = steady_clock::now;
     //emulator loop
     while (running) {
         if (!paused) {
             //if (clock_speed<=cpu_ptr->CLOCK_SPEED) { //limit clock speed
             //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
             single_cycle();
-            real_time = epoch_nano()-start_nano;
-            cpu_time = ns_wait*cpu->cycles;
-            int diff = cpu_time-(real_time-paused_time);
-            if (diff > 0) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(diff));
-            }
+
+            time_point<steady_clock> result_time = epoch+nanoseconds(start_nano+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
+            std::this_thread::sleep_until(result_time);
         }
         
     }

@@ -123,17 +123,12 @@ void System::Loop() {
     using namespace std::chrono;
     //emulator loop
     time_point<steady_clock> epoch;
-    duration<double> seconds_lost(0);
     while (running) {
         if (!paused) {
             Cycle();
 
             //calculate delay
             time_point<steady_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED)+duration_cast<nanoseconds>(seconds_lost);
-            if ((result_time-now()) < duration<double>(-0.1)) {
-                printf("one second lost\n");
-                seconds_lost+=(now()-result_time);
-            }
             std::this_thread::sleep_until(result_time);
         } else {
             ppu->image_mutex.unlock();
