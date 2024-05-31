@@ -122,7 +122,6 @@ void NESUnit::single_cycle() {
     while (ppu->cycles<(cpu->cycles*3)) {
         long long last_frame_count = ppu->frames;
         ppu->cycle();
-        cpu->rom->get_mapper()->clock(&system[0]);
         if (ppu->frames != last_frame_count) {
             perframefunc();
         }

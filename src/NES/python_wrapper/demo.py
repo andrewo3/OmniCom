@@ -2,9 +2,6 @@ import sys, random, time, pyaudio, threading
 from copy import deepcopy
 import numpy as np
 from os.path import abspath
-sys.path.append(abspath("build/lib.macosx-10.9-universal2-cpython-312"))
-sys.path.append(abspath("build\\lib.win-amd64-cpython-312"))
-sys.path.append(abspath("build/lib.linux-x86_64-cpython-311"))
 import omnicom,pygame
 
 pygame.init()
