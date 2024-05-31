@@ -1,0 +1,7 @@
+# pyproject.toml
+
+[build-system]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.build_meta]
+project_base = "src/NES/python_wrapper"

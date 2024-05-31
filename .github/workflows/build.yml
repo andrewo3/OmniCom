@@ -32,7 +32,7 @@ jobs:
           python -m pip install setuptools wheel cibuildwheel pybind11
 
       - name: Build wheels
-        run: cibuildwheel --output-dir dist
+        run: cibuildwheel --output-dir dist --config-file src/NES/python_wrapper/pyproject.toml
 
       - name: Upload wheels to PyPI
         if: github.event_name == 'push'
