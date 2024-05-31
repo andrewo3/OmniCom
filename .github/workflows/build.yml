@@ -33,7 +33,7 @@ jobs:
         run: |
           python -m pip install setuptools wheel cibuildwheel pybind11
           pip freeze
-          cibuildwheel --output-dir dist
+          cibuildwheel --output-dir dist --config-dir src/NES/python_wrapper/pyproject.toml
         working-directory: src/NES/python_wrapper
 
       - name: Upload wheels to PyPI
