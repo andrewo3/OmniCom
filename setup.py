@@ -1,5 +1,7 @@
 from glob import glob
 from sys import platform
+import sys
+sys.path.append("pybind11")
 from os import environ, chdir, system, getcwd,listdir
 from os.path import *
 from shutil import rmtree
