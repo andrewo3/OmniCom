@@ -9,3 +9,4 @@ project_base = "src/NES/python_wrapper"
 
 [project]
 name = "omnicom"
+version = "0.3.0"
