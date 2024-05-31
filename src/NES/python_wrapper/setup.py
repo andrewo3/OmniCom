@@ -1,6 +1,6 @@
 from glob import glob
 from sys import platform
-from os import environ, chdir
+from os import environ, chdir, system
 from os.path import *
 file_sep = "/"
 sep = ":"
@@ -10,6 +10,7 @@ if platform == "win32":
     sep = ";"
     folder = "win32"
 
+system("pip freeze")
 cwd = dirname(realpath(__file__))
 chdir(cwd)
 #sorted(glob("*.cpp")),  # Sort source files for reproducibility
