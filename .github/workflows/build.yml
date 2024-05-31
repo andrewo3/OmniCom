@@ -28,7 +28,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel cibuildwheel
           if [ "$RUNNER_OS" == "Linux" ]; then
-            apt-get install python-pybind11
+            sudo apt-get install python-pybind11
           else
             python -m pip install pybind11
           fi
