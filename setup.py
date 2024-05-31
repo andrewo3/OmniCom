@@ -2,6 +2,8 @@ from glob import glob
 from sys import platform
 from os import environ, chdir, system, getcwd,listdir
 from os.path import *
+from shutil import rmtree
+
 file_sep = "/"
 sep = ":"
 folder = "unix"
@@ -9,6 +11,9 @@ if platform == "win32":
     file_sep = "\\"
     sep = ";"
     folder = "win32"
+
+if (exists("dist")):
+    rmtree('dist')
 
 print(getcwd(),listdir(),listdir('..'))  
 cwd = dirname(realpath(__file__))
