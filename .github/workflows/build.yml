@@ -28,11 +28,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install setuptools wheel cibuildwheel pybind11
 
-      - name: Set CIBW_BUILD_VERBOSITY
-        run: export CIBW_BUILD_VERBOSITY=1
-        
       - name: Build wheels
         run: cibuildwheel --output-dir dist
+        working-directory: src/NES/python_wrapper
 
       - name: Upload wheels to PyPI
         if: github.event_name == 'push'
