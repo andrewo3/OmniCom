@@ -57,7 +57,10 @@ else:
     environ["LD_LIBRARY_PATH"] = realpath(f"{root}{file_sep}lib")
 
 from setuptools import setup
-from pybind11.setup_helpers import Pybind11Extension
+try:
+    from pybind11.setup_helpers import Pybind11Extension
+except ImportError:
+    from setuptools import Extension as Pybind11Extension
 
 ext_modules = [
     Pybind11Extension(
