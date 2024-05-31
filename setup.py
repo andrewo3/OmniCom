@@ -14,9 +14,6 @@ if platform == "win32":
     sep = ";"
     folder = "win32"
 
-if (exists("dist")):
-    rmtree('dist')
-
 print(getcwd(),listdir(),listdir('..'))  
 cwd = dirname(realpath(__file__))
 chdir(cwd)
