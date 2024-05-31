@@ -31,7 +31,7 @@ jobs:
 
       - name: Build wheels
         run: |
-            pip install wheel setuptools pip --upgrade
+          pip install wheel setuptools pip --upgrade
           cibuildwheel --output-dir dist
 
       - name: Upload wheels to PyPI
