@@ -1,13 +1,11 @@
-name: OmniCom Build Python Wheel
+name: OmniCom Push Python Wheel
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
+  workflow_run:
+    workflows: ["OmniCom Build Python Wheel"]
+    types:
+      - completed
+      
 jobs:
   build:
     runs-on: ${{ matrix.os }}
