@@ -31,8 +31,7 @@ jobs:
 
       - name: Build wheels
         run: |
-          python -m pip install setuptools wheel cibuildwheel pybind11
-          pip freeze
+            pip install wheel setuptools pip --upgrade
           cibuildwheel --output-dir dist
 
       - name: Upload wheels to PyPI
