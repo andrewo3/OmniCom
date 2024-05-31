@@ -13,7 +13,7 @@ if platform == "win32":
 cwd = dirname(realpath(__file__))
 chdir(cwd)
 #sorted(glob("*.cpp")),  # Sort source files for reproducibility
-root = realpath(f"..{file_sep}..{file_sep}..")
+root = f"..{file_sep}..{file_sep}.."
 print(root)
 root_src = glob(f"{realpath('..')}"+f"{file_sep}*.cpp")
 files = sorted(root_src)
