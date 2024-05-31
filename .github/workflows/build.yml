@@ -30,7 +30,9 @@ jobs:
           pip freeze
 
       - name: Build wheels
-        run: cibuildwheel --output-dir dist
+        run: |
+          pip freeze
+          cibuildwheel --output-dir dist
         working-directory: src/NES/python_wrapper
 
       - name: Upload wheels to PyPI
