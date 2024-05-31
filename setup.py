@@ -1,3 +1,7 @@
 import os
+import sys
 
-os.system("python src/NES/python_wrapper/setup.py")
+print(sys.argv)
+command = f"python src/NES/python_wrapper/{" ".join(sys.argv)}"
+print(command)
+os.system(command)
