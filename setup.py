@@ -76,7 +76,7 @@ ext_modules = [
 
 setup(
     name='omnicom',
-    version='0.3.3',
+    version='0.3.4',
     author="Andrew Ogundimu",
     description="A python module for a multisystem (currently only NES) emulator",
     ext_modules=ext_modules,

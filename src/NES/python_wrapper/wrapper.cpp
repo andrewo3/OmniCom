@@ -12,6 +12,7 @@
 #include <chrono>
 #include <vector>
 #include <filesystem>
+#include <limits.h>
 #ifdef __WIN32__
 #include "Shlobj.h"
 #include "Windows.h"
@@ -53,8 +54,8 @@ void ControllerWrapper::updateInputs(py::list inputs) {
 
 class NESUnit {
     public:
-        NESUnit(char* rom_name);
-        NESUnit();
+        NESUnit(char* rom_name,int CLOCK_SPEED = 1789773);
+        NESUnit(int CLOCK_SPEED = 1789773);
         ~NESUnit();
         int mapper;
         long long start_nano;
@@ -226,10 +227,11 @@ void NESUnit::detectOS(char* ROM_NAME) {
     }
 }
 
-NESUnit::NESUnit(char* rom_name) {
+NESUnit::NESUnit(char* rom_name, int CLOCK_SPEED) {
     detectOS(rom_name);
     rom = new NES::ROM(rom_name);
     cpu = new NES::CPU(false);
+    cpu->CLOCK_SPEED = CLOCK_SPEED > 0 ? CLOCK_SPEED : INT_MAX;
     apu = new NES::APU();
     apu->setCPU(cpu);
     apu->sample_rate = 44100;
@@ -248,11 +250,12 @@ NESUnit::NESUnit(char* rom_name) {
 
 }
 
-NESUnit::NESUnit() {
+NESUnit::NESUnit(int CLOCK_SPEED) {
     printf("No rom specified.\n");
     rom = new NES::ROM();
     printf("rom created.\n");
     cpu = new NES::CPU(false);
+    cpu->CLOCK_SPEED = CLOCK_SPEED > 0 ? CLOCK_SPEED : INT_MAX;
     apu = new NES::APU();
     apu->setCPU(cpu);
     apu->sample_rate = 44100;
@@ -405,7 +408,7 @@ NESUnit::~NESUnit() {
 }
 
 PYBIND11_MODULE(omnicom,m) {
-    py::class_<NESUnit>(m,"NES").def(py::init<char*>()).def(py::init<>())
+    py::class_<NESUnit>(m,"NES").def(py::init<char*, int>(),py::arg("rom_name"),py::arg("CLOCK_SPEED") = 1789773).def(py::init<int>(),py::arg("CLOCK_SPEED") = 1789773)
     .def("cpuMem",&NESUnit::cpuMem)
     .def("ppuMem",&NESUnit::ppuMem)
     .def("OAM",&NESUnit::OAM)

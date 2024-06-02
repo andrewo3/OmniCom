@@ -3,7 +3,6 @@ from datetime import datetime
 from copy import deepcopy
 import numpy as np
 from os.path import abspath
-sys.path.append("/Users/andrewogundimu/code_projects/NES/build/lib.macosx-10.9-universal2-cpython-312")
 import omnicom,pygame
 
 pygame.init()
@@ -12,7 +11,7 @@ window = pygame.display.set_mode(window_dim,pygame.RESIZABLE)
 nes_surf = pygame.Surface((240,256))
 p = pyaudio.PyAudio()
 
-stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True,frames_per_buffer = 4096)
+stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True,frames_per_buffer = 2048)
 
 #nesObj = omnicom.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
 #nesObj = omnicom.NES("C:\\Users\\Andrew Ogundimu\\Desktop\\smb3mix-rev2B-prg1.nes")
@@ -49,7 +48,7 @@ def frameUpdate():
 audio_thread = threading.Thread(target=tAudio)
 audio_thread.start()
 world_num = 0
-nesObj.perFrame(frameUpdate)
+#nesObj.perFrame(frameUpdate)
 
 def set_score(i):
     i//=10
@@ -75,13 +74,13 @@ while running:
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
     #pygame.display.set_caption(str(cpu_mem[0x736]))
-    cpu_mem[0x736] = 99
+    #cpu_mem[0x736] = 99
     t = datetime.now()
     score = int(str(t.hour).zfill(2)+str(t.minute).zfill(2)+str(t.second).zfill(2))*10
-    set_score(score)
+    #set_score(score)
     nesObj.setPaused(state[pygame.K_p])
     controller_port1.updateInputs(keys)
-    #frame = deepcopy(nesObj.getImg())
+    frame = deepcopy(nesObj.getImg())
     pygame.pixelcopy.array_to_surface(nes_surf,frame)
     scaled_ind = int(240/256<window_dim[1]/window_dim[0])
     scale_fac = [window_dim[0]/256,window_dim[1]/240][1-scaled_ind]

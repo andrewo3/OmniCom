@@ -128,7 +128,7 @@ void System::Loop() {
             Cycle();
 
             //calculate delay
-            time_point<steady_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED)+duration_cast<nanoseconds>(seconds_lost);
+            time_point<steady_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
             std::this_thread::sleep_until(result_time);
         } else {
             ppu->image_mutex.unlock();

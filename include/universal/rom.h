@@ -50,4 +50,11 @@ class ROM {
 
 }
 
+
+namespace SNES {
+class ROM {
+    public:
+        bool low_hi;
+};
+}
 #endif
