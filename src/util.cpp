@@ -11,6 +11,10 @@
 #include "imgui_impl_opengl3.h"
 #include "cpu.h"
 #include "controller.h"
+#ifdef __WIN32__
+#include "Shlobj.h"
+#include "Windows.h"
+#endif
 
 GLfloat vertices[16] = {
         -1.0f, 1.0f,0.0f,0.0f,

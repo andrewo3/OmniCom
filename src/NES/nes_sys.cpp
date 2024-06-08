@@ -97,6 +97,7 @@ void System::loadRom(long len, uint8_t* data) {
 void System::Start() {
     running = true;
     start_time = epoch_nano();
+    paused_time = 0;
     loop_thread = std::thread(&System::Loop, this);
     audio_thread = std::thread(&System::AudioLoop,this);
 }
@@ -292,7 +293,9 @@ void System::Update() {
                 }
                 break;
         }
-        ImGui_ImplSDL2_ProcessEvent(&event);
+        if (paused) {
+            ImGui_ImplSDL2_ProcessEvent(&event);
+        }
     }
 }
 

@@ -20,9 +20,9 @@ class EmuWindow {
         void setupAudio();
         void Close();
         void drawPauseMenu(BaseSystem* saveSystem);
-        bool window_created;
+        volatile bool window_created;
         int desired_fps = 60;
-        SDL_AudioDeviceID audio_device;
+        volatile SDL_AudioDeviceID audio_device;
         SDL_Window* win = NULL;
         SDL_GLContext context;
         ImGuiIO io;
@@ -37,7 +37,6 @@ class EmuWindow {
         }
     private:
         SDL_AudioSpec audio_spec;
-        char* audio_device_name;
 };
 
 #endif

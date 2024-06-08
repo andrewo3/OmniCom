@@ -54,10 +54,10 @@ class System: public BaseSystem {
         void GLSetup();
         void SetController(NES::Controller* cont, int port);
         void loadRom(long len, uint8_t* data);
-        CPU* cpu;
-        PPU* ppu;
-        APU* apu;
-        ROM* rom;
+        CPU* cpu = nullptr;
+        PPU* ppu = nullptr;
+        APU* apu = nullptr;
+        ROM* rom = nullptr;
         NES::Controller* cont1;
         NES::Controller* cont2;
         std::thread loop_thread;

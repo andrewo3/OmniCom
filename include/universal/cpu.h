@@ -63,7 +63,7 @@ class CPU {
         }
         long long ins_num = 0;
         int8_t memory[0x10000] ={0};
-        ROM* rom;
+        ROM* rom = nullptr;
         void write(int8_t* address,int8_t value);
         int8_t read(int8_t* address, bool from_cpu = true);
         long long cycles = 0;

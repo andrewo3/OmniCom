@@ -254,7 +254,10 @@ int main(int argc, char ** argv) {
     }
 
     // SDL initialize
-    SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) != 0) {
+        printf("SDL_Init Error: %s\n", SDL_GetError());
+        return 1;
+    }
     //SDL_Vulkan_LoadLibrary(nullptr);
     SDL_ShowCursor(0);
     printf("SDL Initialized\n");
@@ -286,10 +289,10 @@ int main(int argc, char ** argv) {
     printf("GL ES Minor version: 0\n");
     #endif
     window = new EmuWindow((std::string(filename)),WINDOW_INIT[0],WINDOW_INIT[1]);
+    window->setupAudio();
+    window->ImGuiInit();
     emuSystem->setWindow(window);
     emuSystem->GLSetup();
-    window->ImGuiInit();
-    window->setupAudio();
     if (!window->window_created) {
         return 1;
     }
@@ -312,6 +315,8 @@ int main(int argc, char ** argv) {
     last_time = SDL_GetTicks()/1000.0;
     int16_t buffer[BUFFER_LEN*2];
     //main window loop
+    //printf("audio device: %i\n",window->audio_device);
+    //SDL_PauseAudioDevice(window->audio_device,0);
     #ifdef __EMSCRIPTEN__
         int fps = 0;
         emscripten_set_resize_callback(

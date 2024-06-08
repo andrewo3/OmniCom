@@ -26,22 +26,30 @@ EmuWindow::EmuWindow(std::string title,int w, int h) {
 
 void EmuWindow::setupAudio() {
     //audio
+    SDL_zero(audio_spec);
     audio_spec.freq = 44100;
     audio_spec.format = AUDIO_S16SYS;  // 16-bit signed, little-endian
     audio_spec.channels = 1;            // Mono
     audio_spec.samples = BUFFER_LEN;
     audio_spec.size = BUFFER_LEN * sizeof(int16_t) * audio_spec.channels;
     //audio_spec.callback = AudioLoop;
-    audio_device = SDL_OpenAudioDevice(audio_device_name,0,&audio_spec,nullptr,0);
-    if (audio_device != NULL) {
+    SDL_AudioSpec obtained;
+    char* device_name;
+    int success = SDL_GetDefaultAudioInfo(&device_name,&obtained,0);
+    printf("Obtained device: %s\n",device_name);
+    audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
+    if (audio_device != 0) {
+        const char* audio_device_name = SDL_GetAudioDeviceName(audio_device,0);
         printf("Audio Device: %s\n",audio_device_name);
+        SDL_PauseAudioDevice(audio_device,0);
+        SDL_free(device_name);
     } else {
         printf("Audio Device: FAILURE\n");
         SDL_DestroyWindow(win);
         SDL_Quit();
         window_created = false;
     }
-    SDL_PauseAudioDevice(audio_device,0);
+    
 }
 
 void EmuWindow::Close() {
