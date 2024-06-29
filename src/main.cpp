@@ -160,11 +160,15 @@ void changeRom(char* file) {
     #ifdef __EMSCRIPTEN__
         emscripten_pause_main_loop();
     #endif
-    setRomData((std::string(filename)));
+    setRomData((std::string(file)));
     emuSystem->Stop();
     emuSystem->loadRom(rom_len,rom_data);
-    get_filename(&file);
-    window->setTitle(std::string(file));
+    char* game_name = new char[strlen(file)+1];
+    memcpy(game_name,file,strlen(file)+1);
+    printf("new copy.\n");
+    get_filename(&game_name);
+    printf("new game name.\n");
+    window->setTitle(std::string(game_name));
     emuSystem->Start();
     #ifdef __EMSCRIPTEN__
         emscripten_resume_main_loop();
