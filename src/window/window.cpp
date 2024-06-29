@@ -18,6 +18,8 @@ EmuWindow::EmuWindow(std::string title,int w, int h) {
         SDL_DestroyWindow(win);
         SDL_Quit();
         window_created = false;
+    } else {
+        printf("GL Context created successfully.\n");
     }
     glewExperimental = GL_TRUE;
     glewInit();
@@ -35,14 +37,14 @@ void EmuWindow::setupAudio() {
     //audio_spec.callback = AudioLoop;
     SDL_AudioSpec obtained;
     char* device_name;
-    int success = SDL_GetDefaultAudioInfo(&device_name,&obtained,0);
-    printf("Obtained device: %s\n",device_name);
-    audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
+    //int success = SDL_GetDefaultAudioInfo(&device_name,&obtained,0);
+    //printf("Obtained device: %s\n",device_name);
+    audio_device = SDL_OpenAudioDevice(NULL,0,&audio_spec,nullptr,0);
     if (audio_device != 0) {
         const char* audio_device_name = SDL_GetAudioDeviceName(audio_device,0);
         printf("Audio Device: %s\n",audio_device_name);
         SDL_PauseAudioDevice(audio_device,0);
-        SDL_free(device_name);
+        //SDL_free(device_name);
     } else {
         printf("Audio Device: FAILURE\n");
         SDL_DestroyWindow(win);

@@ -1,7 +1,8 @@
 //global desktop emulator stuff
 
 #include "util.h"
-#include "nes_sys.h"
+#include "glob_const.h"
+#include "system.h"
 #include "SDL2/SDL.h"
 #include "math.h"
 #include "imgui.h"
@@ -9,8 +10,6 @@
 #include <filesystem>
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
-#include "cpu.h"
-#include "controller.h"
 #ifdef __WIN32__
 #include "Shlobj.h"
 #include "Windows.h"

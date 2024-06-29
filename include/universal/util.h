@@ -5,7 +5,6 @@
 #include <string>
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include "controller.h"
 #include "crt_core.h"
 
 class CPU;

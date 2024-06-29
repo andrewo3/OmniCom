@@ -95,6 +95,12 @@ void System::loadRom(long len, uint8_t* data) {
 }
 
 void System::Start() {
+    cpu->reset();
+    apu->enabled[0] = false;
+    apu->enabled[1] = false;
+    apu->enabled[2] = false;
+    apu->enabled[3] = false;
+    apu->enabled[4] = false;
     running = true;
     start_time = epoch_nano();
     paused_time = 0;
@@ -111,6 +117,10 @@ void System::Stop() {
     saveRAM();
     audio_thread.join();
     loop_thread.join();
+    
+}
+
+System::~System() {
     glDetachShader(shaderProgram,vertexShader);
     glDetachShader(shaderProgram,fragmentShader);
     glDeleteProgram(shaderProgram);
@@ -242,18 +252,10 @@ void System::Update() {
                         
                         if (state[modifier] && !paused) { //ctrl+r (or cmd+r) - reset shortcut
                             //reset here
-                            running = false;
-                            audio_thread.join();
-                            loop_thread.join();
-                            cpu->reset();
-                            apu->enabled[0] = false;
-                            apu->enabled[1] = false;
-                            apu->enabled[2] = false;
-                            apu->enabled[3] = false;
-                            apu->enabled[4] = false;
-                            running = true;
-                            loop_thread = std::thread(&System::Loop, this);
-                            audio_thread = std::thread(&System::AudioLoop, this);
+                            Stop();
+                            printf("Stopped.\n");
+                            Start();
+                            printf("Restarted.\n");
                         }
                         break;
                         }

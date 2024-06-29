@@ -517,6 +517,10 @@ int CPU::emulated_clock_speed(long long elapsed) {
 }
 
 void CPU::reset() {
+    cycles = 0;
+    ppu->cycles = 0;
+    apu->cycles = 0;
+    apu->audio_frame = 0;
     int8_t * res = &memory[RESET];
     printf("Before: %04x\n",get_addr(res));
     printf("reset loc: %p, memory loc: %p\n",res,memory);
@@ -529,6 +533,9 @@ void CPU::reset() {
 }
 
 void CPU::loadRom(ROM *r,bool use_ram) {
+    for (int i=0; i<0x10000; i++) {
+        memory[i] = 0;
+    }
     rom = r;
     Mapper* m = rom->get_mapper();
     if (rom->battery_backed && use_ram) {

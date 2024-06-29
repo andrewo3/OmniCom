@@ -31,12 +31,10 @@
 #include "SDL2/SDL.h"
 #include "GL/glew.h"
 
-#include "nes_sys.h"
+#include "NES/nes_sys.h"
 #include "rom_data.h"
 #include "util.h"
 #include "window/window.h"
-#include "controller.h"
-#include "shader_data.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -155,6 +153,21 @@ int setRomData(std::string filename) {
     } else {
         return 1;
     }
+}
+
+extern "C" {
+void changeRom(char* filename) {
+    #ifdef __EMSCRIPTEN__
+        emscripten_pause_main_loop();
+    #endif
+    setRomData((std::string(filename)));
+    emuSystem->Stop();
+    emuSystem->loadRom(rom_len,rom_data);
+    emuSystem->Start();
+    #ifdef __EMSCRIPTEN__
+        emscripten_resume_main_loop();
+    #endif
+}
 }
 
 void mainLoop(void* arg) {
