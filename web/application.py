@@ -30,5 +30,5 @@ def process_name():
 
 if __name__ == "__main__":
     print(root)
-    application.run(ssl_context=('cert/cert.pem','cert/key.pem'))
+    application.run(host='0.0.0.0',ssl_context=('cert/cert.pem','cert/key.pem'))
     #application.run()
