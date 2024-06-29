@@ -156,13 +156,15 @@ int setRomData(std::string filename) {
 }
 
 extern "C" {
-void changeRom(char* filename) {
+void changeRom(char* file) {
     #ifdef __EMSCRIPTEN__
         emscripten_pause_main_loop();
     #endif
     setRomData((std::string(filename)));
     emuSystem->Stop();
     emuSystem->loadRom(rom_len,rom_data);
+    get_filename(&file);
+    window->setTitle(std::string(file));
     emuSystem->Start();
     #ifdef __EMSCRIPTEN__
         emscripten_resume_main_loop();
