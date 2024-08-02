@@ -19,7 +19,7 @@ function handleBodyClick(event) {
 }
 
 window.onerror = function() {
-    //location.reload();
+    location.reload();
 }
 
 // Add event listener for click events on the document body
@@ -35,7 +35,7 @@ Module={
         ENV.SDL_EMSCRIPTEN_KEYBOARD_ELEMENT = "#canvas";
     },
     onAbort:function() {
-        //location.reload();
+        location.reload();
     }
 };
 

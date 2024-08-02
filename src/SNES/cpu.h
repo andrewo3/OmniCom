@@ -5,12 +5,17 @@ namespace SNES {
 
 class CPU {
     public:
-        uint16_t X;
-        uint16_t Y;
-        uint16_t A;
-        uint16_t S;
-        uint32_t PC;
-
+        uint16_t X; //X reg
+        uint16_t Y; //Y reg
+        uint16_t A; //Accumulator
+        uint16_t S; //Stack Reg
+        uint16_t PC; //Program Counter
+        uint8_t DBR; //Data Bank Register
+        uint8_t PBR; //Program Bank Register
+        uint16_t D; //Direct Register
+        bool E; // Emulation Flag
+        uint8_t P; //Processor Status
+        uint8_t memory[0x20000];
         //vectors
         //vec[1] = with emulation mode
         //vec[0] = without
