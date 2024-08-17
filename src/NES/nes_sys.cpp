@@ -193,7 +193,19 @@ void System::Update() {
     bool controller1_inputs[8];
     bool controller2_inputs[8];
     for (int i=0; i<8; i++) {
-        controller1_inputs[i] = state[mapped_keys[i]];
+        if (controller==NULL) {
+            controller1_inputs[i] = state[mapped_keys[i]];
+        } else {
+            if (mapped_joy[i]&0x80) {
+                if (joystickDir(controller)!=0) {
+                    controller1_inputs[i] = joystickDir(controller)&mapped_joy[i]&0x7F;
+                } else {
+                    controller1_inputs[i] = SDL_JoystickGetHat(controller,0)&mapped_joy[i]&0x7F;
+                }
+            } else {
+                controller1_inputs[i] = SDL_JoystickGetButton(controller,mapped_joy[i]);
+            }
+        }
         controller2_inputs[i] = false;
     }
     cont1->update_inputs(controller1_inputs);
@@ -288,7 +300,7 @@ void System::Update() {
                 break;
             case SDL_JOYAXISMOTION:
                 if (changing_keybind>-1 && current_device > 0) {
-                    if (joystickDir(controller) != -1) {
+                    if (joystickDir(controller) != 0) {
                         mapped_joy[changing_keybind] = joystickDir(controller)|0x80;
                         changing_keybind = -1;
                     }

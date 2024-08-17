@@ -64,7 +64,7 @@ int joystickDir(SDL_Joystick* joy) {
     } else if (x<y && y>sqrt(2)/2) {
         return SDL_HAT_DOWN; //down
     }
-    return -1;
+    return 0;
 }
 
 static std::string labelPrefix(const char* const label)
