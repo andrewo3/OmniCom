@@ -32,7 +32,9 @@ lib_path = realpath(f"{root}{file_sep}lib")
 libs = sorted(glob(f"{lib_path}{file_sep}*.*"))
 include_path = f"{realpath(f'{root}{file_sep}include{file_sep}{folder}')}\
 {sep}\
-{realpath(f'{root}{file_sep}include{file_sep}universal')}"
+{realpath(f'{root}{file_sep}include{file_sep}universal')}\
+{sep}\
+{realpath(f'{root}{file_sep}src{file_sep}NES')}"
 
 include_path = include_path.replace("/",file_sep)
 
