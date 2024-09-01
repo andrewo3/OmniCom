@@ -72,7 +72,8 @@ ext_modules = [
         "omnicom",
         sources = files,
         include_dirs = include_path.split(sep),
-        libraries=libraries
+        libraries=libraries,
+        extra_compile_args=['-std=c++17']
     )
 ]
 

@@ -3,6 +3,7 @@ from datetime import datetime
 from copy import deepcopy
 import numpy as np
 from os.path import abspath
+sys.path.append(r"D:\Projects\Visual Studio Code\Nes2Execv2\build\lib.win-amd64-cpython-312")
 import omnicom,pygame
 
 pygame.init()
@@ -12,13 +13,12 @@ nes_surf = pygame.Surface((240,256))
 p = pyaudio.PyAudio()
 
 stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output=True,frames_per_buffer = 2048)
-
 #nesObj = omnicom.NES(abspath("../../res/working_roms/Super Mario Bros. 3 (U) (PRG1) [!].nes"))
 #nesObj = omnicom.NES("C:\\Users\\Andrew Ogundimu\\Desktop\\smb3mix-rev2B-prg1.nes")
 if len(sys.argv)>=2:
     nesObj = omnicom.NES(sys.argv[1])
 else:
-    nesObj = omnicom.NES(abspath("../../../res/working_roms/Tetris (U) [!].nes"))
+    nesObj = omnicom.NES(open(abspath("../../../res/working_roms/Tetris (U) [!].nes"),"rb"))
 #nesObj = omnicom.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
 #nesObj = omnicom.NES(abspath("../../res/working_roms/helloworld2.nes"))
 controller_port1 = omnicom.Controller()

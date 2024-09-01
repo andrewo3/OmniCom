@@ -528,6 +528,7 @@ void CPU::reset() {
     printf("After: %04x\n",get_addr(res));
     printf("%02x %02x\n",*res,*(res+1));
     pc = abs(res);
+    printf("%04x\n",get_addr(pc));
     //for test purposes: remove this later.
     //pc = &memory[0xc000];
 }

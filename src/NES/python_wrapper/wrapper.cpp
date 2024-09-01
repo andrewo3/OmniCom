@@ -56,6 +56,7 @@ class NESUnit {
     public:
         NESUnit(char* rom_name,int CLOCK_SPEED = 1789773);
         NESUnit(int CLOCK_SPEED = 1789773);
+        NESUnit(py::object rom_file, int CLOCK_SPEED = 1789773);
         ~NESUnit();
         int mapper;
         long long start_nano;
@@ -229,25 +230,56 @@ void NESUnit::detectOS(char* ROM_NAME) {
 
 NESUnit::NESUnit(char* rom_name, int CLOCK_SPEED) {
     detectOS(rom_name);
-    rom = new NES::ROM(rom_name);
     cpu = new NES::CPU(false);
+    ppu = new NES::PPU(cpu);
     cpu->CLOCK_SPEED = CLOCK_SPEED > 0 ? CLOCK_SPEED : INT_MAX;
     apu = new NES::APU();
+    cpu->apu = apu;
     apu->setCPU(cpu);
     apu->sample_rate = 44100;
-    cpu->apu = apu;
-    cpu->loadRom(rom);
     cont1 = NES::Controller();
     cont2 = NES::Controller();
     cpu->set_controller(&cont1,0);
     cpu->set_controller(&cont2,1);
+    
+    rom = new NES::ROM(rom_name);
+    cpu->loadRom(rom);
+    ppu->loadRom(rom);
     cpu->reset();
-    ppu = new NES::PPU(cpu);
+    
     system[0] = cpu;
     system[1] = ppu;
     system[2] = apu;
 
 
+}
+
+NESUnit::NESUnit(py::object rom_file, int CLOCK_SPEED) {
+    cpu = new NES::CPU(false);
+    ppu = new NES::PPU(cpu);
+    cpu->CLOCK_SPEED = CLOCK_SPEED > 0 ? CLOCK_SPEED : INT_MAX;
+    apu = new NES::APU();
+    cpu->apu = apu;
+    apu->setCPU(cpu);
+    apu->sample_rate = 44100;
+    cont1 = NES::Controller();
+    cont2 = NES::Controller();
+    cpu->set_controller(&cont1,0);
+    cpu->set_controller(&cont2,1);
+
+    std::string rom_name = rom_file.attr("name").cast<std::string>();
+    detectOS((char*)rom_name.c_str());
+    std::string data = rom_file.attr("read")().cast<std::string>();
+    long len = data.length();
+    rom = new NES::ROM(len,(unsigned char*)data.c_str());
+    cpu->loadRom(rom);
+    ppu->loadRom(rom);
+    cpu->reset();
+    
+    system[0] = cpu;
+    system[1] = ppu;
+    system[2] = apu;
+    
 }
 
 NESUnit::NESUnit(int CLOCK_SPEED) {
@@ -408,7 +440,10 @@ NESUnit::~NESUnit() {
 }
 
 PYBIND11_MODULE(omnicom,m) {
-    py::class_<NESUnit>(m,"NES").def(py::init<char*, int>(),py::arg("rom_name"),py::arg("CLOCK_SPEED") = 1789773).def(py::init<int>(),py::arg("CLOCK_SPEED") = 1789773)
+    py::class_<NESUnit>(m,"NES")
+    .def(py::init<char*, int>(),py::arg("rom_name"),py::arg("CLOCK_SPEED") = 1789773)
+    .def(py::init<int>(),py::arg("CLOCK_SPEED") = 1789773)
+    .def(py::init<py::object,int>(),py::arg("rom_file"),py::arg("CLOCK_SPEED") = 1789773)
     .def("cpuMem",&NESUnit::cpuMem)
     .def("ppuMem",&NESUnit::ppuMem)
     .def("OAM",&NESUnit::OAM)
