@@ -76,9 +76,8 @@ ext_modules = [
 
 setup(
     name='omnicom',
-    version='0.3.4',
+    version='0.3.5',
     author="Andrew Ogundimu",
     description="A python module for a multisystem (currently only NES) emulator",
-    ext_modules=ext_modules,
-    install_requires=["pybind11>=2.6.0"]
+    ext_modules=ext_modules
 )
