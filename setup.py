@@ -82,5 +82,6 @@ setup(
     version='0.3.5',
     author="Andrew Ogundimu",
     description="A python module for a multisystem (currently only NES) emulator",
-    ext_modules=ext_modules
+    ext_modules=ext_modules,
+    requires=['pybind11']
 )
