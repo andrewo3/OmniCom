@@ -38,13 +38,6 @@ jobs:
           python -m pip install --upgrade setuptools wheel cibuildwheel
           python -m pip install pybind11
           pip freeze
-      - if: matrix.os == 'macos-latest'
-        name: Install build dependencies for Mac
-        run: |
-          brew install llvm
-          echo 'export PATH="/opt/homebrew/opt/llvm/bin:$PATH"' >> ~/.zshrc
-          source ~/.zshrc
-          clang --version  # Verify installation
 
       - name: Build wheels
         run: |

@@ -5,6 +5,7 @@ sys.path.append("pybind11")
 from os import environ, chdir, system, getcwd,listdir
 from os.path import *
 from shutil import rmtree
+from setuptools.command.build_ext import build_ext
 
 file_sep = "/"
 sep = ":"
@@ -60,6 +61,16 @@ else:
     environ["LD_LIBRARY_PATH"] = realpath(f"{root}{file_sep}lib")
 
 from setuptools import setup
+
+
+class CustomBuildExt(build_ext):
+    def build_extensions(self):
+        if platform == "darwin":
+            self.compiler.compiler_so = ["clang", "-Wno-deprecated-register"]
+            self.compiler.compiler_cxx = ["clang++"]
+            self.compiler.linker_so = ["clang++", "-bundle"]
+        super().build_extensions()
+
 try:
     from pybind11.setup_helpers import Pybind11Extension
     print("PYBIND11 FOUND")
@@ -82,5 +93,6 @@ setup(
     version='0.3.5',
     author="Andrew Ogundimu",
     description="A python module for a multisystem (currently only NES) emulator",
-    ext_modules=ext_modules
+    ext_modules=ext_modules,
+    cmdclass={'build_ext': CustomBuildExt}  # Add this line
 )
