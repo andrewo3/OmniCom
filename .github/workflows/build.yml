@@ -28,6 +28,7 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         name: Install build dependencies Linux
         run: |
+          echo "LDCXXSHARED=c++ -shared -Wl,-O1 -Wl,-Bsymbolic-functions" >> $GITHUB_ENV
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools==70.0.0 wheel cibuildwheel==2.18.1
           sudo apt-get install python3-pybind11
@@ -36,6 +37,7 @@ jobs:
       - if: matrix.os != 'Linux'
         name: Install build dependencies not Linux
         run: |
+          echo "LDCXXSHARED=c++ -shared -Wl,-O1 -Wl,-Bsymbolic-functions" >> $GITHUB_ENV
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools==70.0.0 wheel cibuildwheel==2.18.1
           python -m pip install pybind11
