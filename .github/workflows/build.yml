@@ -39,20 +39,10 @@ jobs:
           python -m pip install --upgrade setuptools==70.0.0 wheel cibuildwheel
           python -m pip install pybind11
           pip freeze
-
-      - name: Build wheels on Bash-compatible systems
-        if: matrix.os != 'windows-latest'
+    
+      - name: Build wheels
         run: |
-          pip install wheel pip --upgrade
-          cibuildwheel --output-dir dist
-        env:
-          CIBW_BEFORE_BUILD: |
-            if [[ "$CIBW_BUILD" == *"pypy"* ]]; then pip install setuptools==70.0.0; fi
-
-      - name: Build wheels on Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          pip install wheel pip --upgrade
+          pip install wheel pip setuptools==70.0.0
           cibuildwheel --output-dir dist
 
       - name: Upload wheels to PyPI
