@@ -37,7 +37,6 @@ jobs:
       - if: matrix.os != 'Linux'
         name: Install build dependencies not Linux
         run: |
-          brew install gcc
           echo "LDCXXSHARED=c++ -shared -Wl,-O1" >> $GITHUB_ENV
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools==70.0.0 wheel cibuildwheel==2.18.1
