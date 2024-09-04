@@ -39,7 +39,7 @@ jobs:
           python -m pip install pybind11
           pip freeze
       - name: Set PyPy-specific compiler and linker
-        if: matrix.os == 'macos-latest' && matrix.python-version == 'pypy-3.8'
+        if: matrix.os == 'macos-latest'
         run: |
           export CC=clang
           export CXX=clang++
