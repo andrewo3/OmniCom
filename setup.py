@@ -6,7 +6,7 @@ from os import environ, chdir, system, getcwd,listdir
 from os.path import *
 from shutil import rmtree
 import importlib.metadata
-print(importlib.metadata.version('setuptools'))
+print("Setuptools version:",importlib.metadata.version('setuptools'))
 
 file_sep = "/"
 sep = ":"
