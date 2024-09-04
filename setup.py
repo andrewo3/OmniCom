@@ -5,8 +5,6 @@ sys.path.append("pybind11")
 from os import environ, chdir, system, getcwd,listdir
 from os.path import *
 from shutil import rmtree
-import importlib.metadata
-print("Setuptools version:",importlib.metadata.version('setuptools'))
 
 file_sep = "/"
 sep = ":"

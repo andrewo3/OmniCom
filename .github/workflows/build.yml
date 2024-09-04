@@ -43,7 +43,7 @@ jobs:
       - name: Build wheels on Bash-compatible systems
         if: matrix.os != 'windows-latest'
         run: |
-          pip install wheel setuptools pip --upgrade
+          pip install wheel pip --upgrade
           cibuildwheel --output-dir dist
         env:
           CIBW_BEFORE_BUILD: |
@@ -52,7 +52,7 @@ jobs:
       - name: Build wheels on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          pip install wheel setuptools pip --upgrade
+          pip install wheel pip --upgrade
           cibuildwheel --output-dir dist
 
       - name: Upload wheels to PyPI
