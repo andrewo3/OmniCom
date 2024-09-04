@@ -43,10 +43,8 @@ library_paths.append(lib_path)
 libraries = []
 
 environ["CFLAGS"] = "-std=c++17"
-environ["LDFLAGS"] = ""
 if platform == "darwin":
     environ["CFLAGS"]+=" -mmacosx-version-min=10.15"
-    environ["LDFLAGS"] += "-L/usr/local/lib"
 if platform == "win32":
     environ["CL"] = "/std:c++17"
     #environ["INCLUDE"] = include_path
