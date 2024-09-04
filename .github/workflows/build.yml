@@ -38,13 +38,6 @@ jobs:
           python -m pip install --upgrade setuptools==70.0.0 wheel cibuildwheel
           python -m pip install pybind11
           pip freeze
-      - name: Set PyPy-specific compiler and linker
-        if: matrix.os == 'macos-latest'
-        run: |
-          export CC=clang
-          export CXX=clang++
-          export LDSHARED="clang -bundle -undefined dynamic_lookup"
-          python setup.py build_ext --inplace
 
       - name: Build wheels
         run: |
