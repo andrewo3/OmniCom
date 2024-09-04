@@ -42,7 +42,7 @@ jobs:
     
       - name: Build wheels
         run: |
-          pip install wheel pip setuptools==70.0.0
+          pip install wheel pip setuptools==70.0.0 cibuildwheel==2.18.1
           cibuildwheel --output-dir dist
 
       - name: Upload wheels to PyPI
