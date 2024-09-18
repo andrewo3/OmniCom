@@ -2,8 +2,8 @@ import sys, random, time, pyaudio, threading
 from datetime import datetime
 from copy import deepcopy
 import numpy as np
-from os.path import abspath
-sys.path.append(r"D:\Projects\Visual Studio Code\Nes2Execv2\build\lib.win-amd64-cpython-312")
+from io import BytesIO
+from requests import get
 import omnicom,pygame
 
 pygame.init()
@@ -18,7 +18,11 @@ stream = p.open(format = p.get_format_from_width(2),channels=1,rate=44100,output
 if len(sys.argv)>=2:
     nesObj = omnicom.NES(sys.argv[1])
 else:
-    nesObj = omnicom.NES(open(abspath("../../../res/working_roms/Tetris (U) [!].nes"),"rb"))
+    url ="https://archive.org/download/pacman_nes_2/pacman.nes"
+
+    rom = BytesIO(get(url).content)
+    rom.name = url.split("/")[-1]
+    nesObj = omnicom.NES(rom)
 #nesObj = omnicom.NES(abspath("../../res/working_roms/Super Mario Bros. (JU) [!].nes"))
 #nesObj = omnicom.NES(abspath("../../res/working_roms/helloworld2.nes"))
 controller_port1 = omnicom.Controller()
@@ -73,6 +77,10 @@ while running:
             state[pygame.K_DOWN],
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
+    score_str = ""
+    for i in [112,113,114,115,116][::-1]:
+        score_str+=str(cpu_mem[i])
+    score_str+="0"
     #pygame.display.set_caption(str(cpu_mem[0x736]))
     #cpu_mem[0x736] = 99
     t = datetime.now()

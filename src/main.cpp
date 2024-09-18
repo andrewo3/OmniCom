@@ -32,6 +32,7 @@
 #include "GL/glew.h"
 
 #include "NES/nes_sys.h"
+#include "SNES/snes_sys.h"
 #include "rom_data.h"
 #include "util.h"
 #include "window/window.h"
@@ -212,7 +213,7 @@ void mainLoop(void* arg) {
 }
 
 int main(int argc, char ** argv) {
-    emuSystem = new NES::System();
+    emuSystem = new SNES::System();
     std::signal(SIGINT,quit);
     std::signal(SIGSEGV,quit);
     web = WEB;

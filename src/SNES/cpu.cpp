@@ -7,5 +7,5 @@ CPU::CPU() {
 }
 
 void CPU::clock() {
-    
+    memory[PC];
 }
