@@ -77,10 +77,7 @@ while running:
             state[pygame.K_DOWN],
             state[pygame.K_LEFT],
             state[pygame.K_RIGHT]]
-    score_str = ""
-    for i in [112,113,114,115,116][::-1]:
-        score_str+=str(cpu_mem[i])
-    score_str+="0"
+    
     #pygame.display.set_caption(str(cpu_mem[0x736]))
     #cpu_mem[0x736] = 99
     t = datetime.now()

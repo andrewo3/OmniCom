@@ -102,12 +102,12 @@ SDL_Event event;
 
 
 int usage_error() {
-    printf("Usage: main rom_filename\n");
+    fprintf(stderr,"Usage: main rom_filename\n");
     return -1;
 }
 
 int invalid_error() {
-    printf("Invalid NES rom!\n");
+    fprintf(stderr,"Invalid NES rom!\n");
     return -1;
 }
 
