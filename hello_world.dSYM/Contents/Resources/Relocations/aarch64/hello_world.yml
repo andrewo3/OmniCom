@@ -1,0 +1,10 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     hello_world
+relocations:
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: __Z6memcpyPvS_i, symObjAddr: 0x0, symBinAddr: 0x100003B80, symSize: 0x7C }
+  - { offsetInCU: 0x6F, offset: 0x6F, size: 0x8, addend: 0x0, symName: __Z6memcpyPvS_i, symObjAddr: 0x0, symBinAddr: 0x100003B80, symSize: 0x7C }
+  - { offsetInCU: 0xEB, offset: 0xEB, size: 0x8, addend: 0x0, symName: __Z9movEncodehmPvi, symObjAddr: 0x7C, symBinAddr: 0x100003BFC, symSize: 0x128 }
+  - { offsetInCU: 0x1A3, offset: 0x1A3, size: 0x8, addend: 0x0, symName: __Z6strlenPKc, symObjAddr: 0x1A4, symBinAddr: 0x100003D24, symSize: 0x5C }
+  - { offsetInCU: 0x1CF, offset: 0x1CF, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x200, symBinAddr: 0x100003D80, symSize: 0x1EC }
+...

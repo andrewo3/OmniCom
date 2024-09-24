@@ -213,7 +213,6 @@ void mainLoop(void* arg) {
 }
 
 int main(int argc, char ** argv) {
-    emuSystem = new SNES::System();
     std::signal(SIGINT,quit);
     std::signal(SIGSEGV,quit);
     web = WEB;
@@ -271,6 +270,15 @@ int main(int argc, char ** argv) {
         }
     } else {
         printf("OS not detected. No save folder created.\n");
+    }
+
+    std::filesystem::path extension = std::filesystem::path(ROM_NAME).extension();
+    if (extension == ".nes") {
+        emuSystem = new NES::System();
+    } else if (extension == ".sfc" || extension == ".smc") {
+        emuSystem = new SNES::System();
+    } else {
+        emuSystem = new SNES::System(); //placeholder for null system
     }
 
     // SDL initialize
