@@ -134,13 +134,17 @@ void System::Loop() {
     using namespace std::chrono;
     //emulator loop
     time_point<steady_clock> epoch;
+    long long frame_count = 0;
     while (running) {
         if (!paused) {
             Cycle();
 
             //calculate delay
-            time_point<steady_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
-            std::this_thread::sleep_until(result_time);
+            if (ppu->frames>frame_count) { //only sleep on frame change
+                frame_count = ppu->frames;
+                time_point<steady_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
+                std::this_thread::sleep_until(result_time);
+            }
         } else {
             ppu->image_mutex.unlock();
         }
