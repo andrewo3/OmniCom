@@ -54,7 +54,7 @@ function loadNewRom(data,name) {
         callMain(["/home/web_user/".concat(name)]);
     } else {
         console.log("new rom");
-        let utf8str = allocateUTF8("/home/web_user/".concat(name));
+        let utf8str = stringToNewUTF8("/home/web_user/".concat(name));
         _changeRom(utf8str);
     }
     romChoices+=1;
