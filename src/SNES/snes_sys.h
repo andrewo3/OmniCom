@@ -32,52 +32,18 @@ class CPU;
 
 class System: public BaseSystem {
     public:
-        System() {
-            printf("Constructor\n");
-        }
-        void Loop() {
-            printf("Loop\n");
-        }
-        void AudioLoop() {
-            printf("Audio Loop\n");
-        }
-        void Cycle() {
-            printf("Cycle\n");
-        }
-        void Save(FILE* save_file) {
-            printf("Save State\n");
-        }
-        void Load(FILE* load_file) {
-            printf("Load State\n");
-        }
-        bool Render() {
-            printf("Render frame\n");
-            return true;
-        }
-        void Update() {
-            printf("Update: Process Events\n");
-            SDL_Event event;
-            while(SDL_PollEvent(&event) && running) {
-                switch(event.type) {
-                    case SDL_QUIT:
-                        running = false;
-                        break;
-                }
-            }
-        }
-        void Stop() {
-            printf("Stop Emulation\n");
-        }
-        void GLSetup() {
-            printf("OpenGL Setup\n");
-        }
-        void Start() {
-            printf("start\n");
-            running = true;
-        }
-        void loadRom(long len, uint8_t* data) {
-            printf("load rom\n");
-        }
+        System();
+        void Loop();
+        void AudioLoop();
+        void Cycle();
+        void Save(FILE* save_file);
+        void Load(FILE* load_file);
+        bool Render();
+        void Update();
+        void Stop();
+        void GLSetup();
+        void Start();
+        void loadRom(long len, uint8_t* data);
 };
 
 }

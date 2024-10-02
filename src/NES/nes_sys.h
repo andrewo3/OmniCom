@@ -6,6 +6,7 @@
 #include "apu.h"
 #include "window/window.h"
 #include "system.h"
+#include <cstdint>
 #include <thread>
 #include <vector>
 

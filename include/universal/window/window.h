@@ -1,7 +1,11 @@
 #ifndef window_h
 #define window_h
 #include "SDL2/SDL.h"
+#ifndef WEB
 #include "GL/glew.h"
+#else
+#include <GLES3/gl3.h>
+#endif
 #include <string>
 #include <stdbool.h>
 #include "imgui.h"

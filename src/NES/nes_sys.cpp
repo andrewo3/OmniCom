@@ -1,5 +1,9 @@
 #include "nes_sys.h"
+#ifndef WEB
 #include "GL/glew.h"
+#else
+#include <GLES3/gl3.h>
+#endif
 #include "util.h"
 #include "glob_const.h"
 #include "shader_data.h"

@@ -4,7 +4,11 @@
 #include <chrono>
 #include <string>
 #include <SDL2/SDL.h>
+#ifndef WEB
 #include <GL/glew.h>
+#else
+#include <GLES3/gl3.h>
+#endif
 #include "crt_core.h"
 
 class CPU;

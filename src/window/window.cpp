@@ -1,5 +1,9 @@
 #include "window/window.h"
+#ifndef WEB
 #include "GL/glew.h"
+#else
+#include <GLES3/gl3.h>
+#endif
 #include "util.h"
 #include "glob_const.h"
 #include <string>
@@ -21,8 +25,10 @@ EmuWindow::EmuWindow(std::string title,int w, int h) {
     } else {
         printf("GL Context created successfully.\n");
     }
+    #ifndef WEB
     glewExperimental = GL_TRUE;
     glewInit();
+    #endif
     window_created = true;
 }
 

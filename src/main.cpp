@@ -10,9 +10,6 @@
 #ifndef DATALENGTH
     #define DATALENGTH 0
 #endif
-#ifndef WEB
-    #define WEB 0
-#endif
 #ifndef ROMCONSOLE
     #define ROMCONSOLE CONSOLE::NES_rom
 #endif
@@ -29,7 +26,11 @@
 #endif
 
 #include "SDL2/SDL.h"
+#ifndef WEB
 #include "GL/glew.h"
+#else
+#include <GLES3/gl3.h>
+#endif
 
 #include "NES/nes_sys.h"
 #include "SNES/snes_sys.h"
@@ -215,7 +216,11 @@ void mainLoop(void* arg) {
 int main(int argc, char ** argv) {
     std::signal(SIGINT,quit);
     std::signal(SIGSEGV,quit);
-    web = WEB;
+    #ifndef WEB
+    web = 0;
+    #else
+    web = 1;
+    #endif
 
     //set "config_dir" to system directory, and set os variable accordingly
     int os = default_config();

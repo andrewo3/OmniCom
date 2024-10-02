@@ -1,10 +1,13 @@
 #ifndef SNES_CPU_H
 #define SNES_CPU_H
+#include <cstdint>
 
 namespace SNES {
 
 class CPU {
     public:
+        //Constructor
+        CPU();
         //Registers
         uint16_t X; //X reg
         uint16_t Y; //Y reg
@@ -18,13 +21,13 @@ class CPU {
         //Flags
         bool B; //break flag
         bool C; //carry flag
-        bool D; //Decimal flag
+        bool FLAG_D; //Decimal flag
         bool E; //Emulation Flag
         bool I; //Interrupt flag
         bool M; //Accumulator & Mem width flag
         bool N; //Negative flag
         bool V; //Overflow flag
-        bool X; //index reg width flag
+        bool FLAG_X; //index reg width flag
         bool Z; //zero flag 
         uint8_t memory[0x20000];
         //vectors
