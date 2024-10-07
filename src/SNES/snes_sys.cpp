@@ -64,6 +64,7 @@ void System::loadRom(long len, uint8_t* data) {
         checksum+=data[b];
     }
     int type = -1;
+    int rom_speed = 0;
     printf("Checksum: %04x - Header possibilities:\n",checksum);
     for (int h=0; h<3; h++) {
         uint16_t head_check = *(uint16_t*)(data+header_locs[h]+30);
@@ -73,15 +74,20 @@ void System::loadRom(long len, uint8_t* data) {
         }
         printf("\n");
         if (head_check == checksum) {
-            type = h;
+            type = data[header_locs[h]+21]&0xf;
+            if (type==5) {
+                type == 2;
+            }
+            rom_speed = data[header_locs[h]+21]&0x10;
             break;
         }
     }
-    if (type!=-1) {
-        memcpy(name,&data[header_locs[type]],21);
-        printf("Type: %s, ROM Internal Name: %s\n",types[type].c_str(),name);
-    } else {
-        printf("No valid checksum found.\n");
+    if (type == -1) {
+        printf("No valid checksum found - defaulting to LoROM\n");
+        type = data[header_locs[0]+21]&0xf;
+        rom_speed = data[header_locs[0]+21]&0x10;
     }
+    memcpy(name,&data[header_locs[type]],21);
+    printf("Type: %s, Speed: %s, ROM Internal Name: %s\n",types[type].c_str(),rom_speed?"Fast":"Slow",name);
 
 }

@@ -149,8 +149,6 @@ void System::Loop() {
                 time_point<steady_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
                 std::this_thread::sleep_until(result_time);
             }
-        } else {
-            ppu->image_mutex.unlock();
         }
         
     }
@@ -165,9 +163,6 @@ bool System::Render() {
     SDL_GetWindowSize(window->GetSDLWin(),&w,&h);
     setGLViewport(w,h,(float)video_dim[0]/video_dim[1]);
 
-    if (!paused) { // must remain inside this if statement so that it doesnt hang if paused
-        ppu->image_mutex.lock();
-    }
     if (!ppu->image_drawn || paused) { //if ppu hasnt registered image as being drawn yet
         /*#ifndef __EMSCRIPTEN__
             char * new_title = new char[255];
@@ -188,7 +183,6 @@ bool System::Render() {
         glDrawArrays(GL_TRIANGLE_FAN,0,4);
         glBindVertexArray(0);
         glUseProgram(0);
-        ppu->image_mutex.unlock();
         ppu->image_drawn = true;
         return 1;
     }

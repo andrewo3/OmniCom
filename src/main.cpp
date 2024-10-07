@@ -10,9 +10,6 @@
 #ifndef DATALENGTH
     #define DATALENGTH 0
 #endif
-#ifndef ROMCONSOLE
-    #define ROMCONSOLE CONSOLE::NES_rom
-#endif
 
 #define SDL_MAIN_HANDLED
 #ifdef __WIN32__
