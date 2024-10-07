@@ -1,6 +1,7 @@
 #include "snes_sys.h"
 #include <cstdio>
 #include <cstdbool>
+#include <string>
 #include "SDL2/SDL.h"
 
 using namespace SNES;
@@ -55,17 +56,32 @@ void System::loadRom(long len, uint8_t* data) {
 
     //determine type of ROM by verifying where the header is.
     uint32_t header_locs[3] = {0x007FC0,0x00FFC0,0x40FFC0}; //Lo, Hi, ExHi
+    std::string types[3] = {"Lo","Hi","ExHi"};
+    char name[21];
     uint8_t header_size = 0x20;
     uint16_t checksum = 0;
-    for (uint8_t b=0; b<len; b++) {
+    for (long b=0; b<len; b++) {
         checksum+=data[b];
     }
+    int type = -1;
     printf("Checksum: %04x - Header possibilities:\n",checksum);
     for (int h=0; h<3; h++) {
+        uint16_t head_check = *(uint16_t*)(data+header_locs[h]+30);
+        printf("Header defined checksum: %04x\n",head_check);
         for (int i=0; i<header_size; i++) {
             printf("%02x ",data[header_locs[h]+i]);
         }
         printf("\n");
+        if (head_check == checksum) {
+            type = h;
+            break;
+        }
+    }
+    if (type!=-1) {
+        memcpy(name,&data[header_locs[type]],21);
+        printf("Type: %s, ROM Internal Name: %s\n",types[type].c_str(),name);
+    } else {
+        printf("No valid checksum found.\n");
     }
 
 }
