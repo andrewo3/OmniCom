@@ -339,8 +339,6 @@ int main(int argc, char ** argv) {
     //Enter NES logic loop alongside window loop
     emuSystem->Start();
     printf("Emulator system started - running: %i\n",emuSystem->running);
-
-    printf("x,y\n");
     t_time = SDL_GetTicks()/1000.0;
     last_time = SDL_GetTicks()/1000.0;
     int16_t buffer[BUFFER_LEN*2];
