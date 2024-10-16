@@ -3,6 +3,21 @@ let romChoices = 0;
 let romNameForm = document.getElementById("romnameform");
 let romNameText = document.getElementById("newrom");
 let canvas = document.getElementById('canvas');
+let gameselector = document.getElementsByClassName("gameselector")[0];
+let choices = document.getElementsByClassName("choices")[0];
+let bg_color = "#30323d";
+let fg_color = "#e8c547";
+
+document.body.style.backgroundColor = bg_color;
+gameselector.style.backgroundColor = bg_color;
+gameselector.style.color = fg_color;
+gameselector.style.borderColor = fg_color;
+choices.style.color = fg_color;
+choices.style.borderColor = fg_color;
+const style = document.createElement("style");
+style.innerHTML = ".gameselector::placeholder { color: "+fg_color+" !important;}"
+document.head.appendChild(style);
+console.log(style.innerHTML);
 
 var canvasClicked = false;
 

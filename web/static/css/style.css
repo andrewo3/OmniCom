@@ -6,7 +6,6 @@ html, body {
     width:  100%;
     height: 100%;
     margin: 0;
-    background-color: #000000
 }
 .game, .dropbox {
     width: 100%;
@@ -14,28 +13,34 @@ html, body {
     overflow: hidden;
 }
 .gamecanvas {
-    width: 100%;
-    height: 80%;
+    width: 85.33vh;
+    height: 80vh;
+    display: block;
+    margin: auto;
+    margin-top: 5vh;
+    border-radius: 10px;
 }
 .sel_container {
     display: flex;
-    text-align: center;
-    place-content: center;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
+    position: relative;
+    margin-top: -5vh;
     width: 100%;
     height: 20%;
 }
 .gameselector {
-    display:inline;
-    width: 80%;
-    height: 25%;
-    background-color: #000000;
+    position: absolute;
+    top: 50%;
+    left: 37.5%;
+    width: 25%;
     border-radius: 15px;
-    border-color: #ffffff;
     border-width: medium;
-    color: #ffffff;
+    border-style:solid;
     font-family: "0xProto";
     font-size: 15pt;
+    text-align: center;
 
 }
 
@@ -47,6 +52,15 @@ html, body {
     outline-width: 0;
 }
 
-.gameselector::placeholder {
-    color: #666666;
+.gameselector:hover {
+    border-color: #00007f;
+}
+
+.choices {
+    border-width: 1px;
+    border-style: solid;
+    display: none;
+    margin: auto;
+
+
 }
