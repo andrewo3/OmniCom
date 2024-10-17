@@ -8,6 +8,7 @@ let choices = document.getElementsByClassName("choices")[0];
 let bg_color = "#30323d";
 let fg_color = "#e8c547";
 
+canvas_opacity = 0;
 document.body.style.backgroundColor = bg_color;
 gameselector.style.backgroundColor = bg_color;
 gameselector.style.color = fg_color;
@@ -72,6 +73,17 @@ function loadNewRom(data,name) {
         let utf8str = stringToNewUTF8("/home/web_user/".concat(name));
         _changeRom(utf8str);
     }
+    let timer = setInterval(function() {
+        console.log(canvas.style.opacity);
+        if (canvas_opacity>=1) {
+            canvas.style.opacity = "1";
+            clearInterval(timer);
+        } else {
+            canvas_opacity+=0.1;
+            canvas.style.opacity = canvas_opacity.toString();
+        }
+    },20);
+    
     romChoices+=1;
 }
 

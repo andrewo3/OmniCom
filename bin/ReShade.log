@@ -1,0 +1,155 @@
+18:06:02:470 [32860] | INFO  | Initializing crosire's ReShade version '6.3.1.1914' (64-bit) loaded from 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\OPENGL32.dll' into 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\main.exe' (0xCE9803C8) ...
+18:06:02:470 [32860] | INFO  | Registering hooks for 'user32.dll' ...
+18:06:02:470 [32860] | INFO  | > Libraries loaded.
+18:06:02:471 [32860] | INFO  | > Found 14 match(es). Installing ...
+18:06:02:508 [32860] | INFO  | Registering hooks for 'C:\windows\system32\dinput.dll' ...
+18:06:02:508 [32860] | INFO  | > Delayed.
+18:06:02:508 [32860] | INFO  | Registering hooks for 'ws2_32.dll' ...
+18:06:02:508 [32860] | INFO  | > Delayed.
+18:06:02:508 [32860] | INFO  | Registering hooks for 'C:\windows\system32\opengl32.dll' ...
+18:06:02:508 [32860] | INFO  | > Delayed until first call to an exported function.
+18:06:02:509 [32860] | INFO  | Registering hooks for 'vrclient_x64.dll' ...
+18:06:02:509 [32860] | INFO  | > Delayed.
+18:06:02:509 [32860] | INFO  | Initialized.
+18:06:02:516 [32860] | INFO  | Redirecting RegisterClassW(lpWndClass = 000000E409BFF460 { "SDLHelperWindowInputCatcher", style = 0 }) ...
+18:06:02:528 [32860] | INFO  | Redirecting RegisterClassExW(lpWndClassEx = 000000E409BFF3A0 { "SDL_app", style = 0x1020 }) ...
+18:06:02:548 [32860] | INFO  | Redirecting RegisterClassExA(lpWndClassEx = 00007FF771538AF8 { "SDL_HIDAPI_DEVICE_DETECTION", style = 0 }) ...
+18:06:02:552 [19592] | INFO  | Installing delayed hooks for 'ws2_32.dll' (Just loaded via LoadLibrary('C:\windows\System32\WS2_32.dll')) ...
+18:06:02:552 [19592] | INFO  | > Found 8 match(es). Installing ...
+18:06:02:654 [32860] | INFO  | Redirecting RegisterClassExW(lpWndClassEx = 00007FF7715394C8 { "Message", style = 0 }) ...
+18:06:02:662 [32860] | INFO  | Redirecting wglChoosePixelFormat(hdc = 0000000016011B38, ppfd = 000000E409BFF310) ...
+18:06:02:662 [32860] | INFO  | > Dumping pixel format descriptor:
+18:06:02:662 [32860] | INFO  |   +-----------------------------------------+-----------------------------------------+
+18:06:02:662 [32860] | INFO  |   | Name                                    | Value                                   |
+18:06:02:662 [32860] | INFO  |   +-----------------------------------------+-----------------------------------------+
+18:06:02:662 [32860] | INFO  |   | Flags                                   | 0x25                                    |
+18:06:02:662 [32860] | INFO  |   | ColorBits                               | 8                                       |
+18:06:02:662 [32860] | INFO  |   | DepthBits                               | 16                                      |
+18:06:02:662 [32860] | INFO  |   | StencilBits                             | 0                                       |
+18:06:02:662 [32860] | INFO  |   +-----------------------------------------+-----------------------------------------+
+18:06:02:663 [32860] | INFO  | Installing export hooks for 'C:\windows\system32\opengl32.dll' ...
+18:06:02:663 [32860] | INFO  | > Found 360 match(es). Installing ...
+18:06:02:737 [32860] | INFO  | Returning pixel format: 9
+18:06:02:737 [32860] | INFO  | Redirecting wglSetPixelFormat(hdc = 0000000016011B38, iPixelFormat = 9, ppfd = 000000E409BFF310) ...
+18:06:02:737 [32860] | INFO  | Searching for add-ons (*.addon, *.addon64) in 'D:\Projects\Visual Studio Code\Nes2Execv2\bin' ...
+18:06:02:738 [32860] | INFO  | Redirecting wglCreateContext(hdc = 0000000016011B38) ...
+18:06:02:738 [32860] | INFO  | > Passing on to wglCreateLayerContext:
+18:06:02:738 [32860] | INFO  | Redirecting wglCreateLayerContext(hdc = 0000000016011B38, iLayerPlane = 0) ...
+18:06:02:817 [32860] | INFO  | Searching for add-ons (*.addon, *.addon64) in 'D:\Projects\Visual Studio Code\Nes2Execv2\bin' ...
+18:06:02:818 [32860] | INFO  | Redirecting wglDeleteContext(hglrc = 0000000000010000) ...
+18:06:02:830 [32860] | INFO  | Redirecting wglChoosePixelFormat(hdc = 0000000043013C64, ppfd = 000000E409BFF080) ...
+18:06:02:830 [32860] | INFO  | > Dumping pixel format descriptor:
+18:06:02:831 [32860] | INFO  |   +-----------------------------------------+-----------------------------------------+
+18:06:02:831 [32860] | INFO  |   | Name                                    | Value                                   |
+18:06:02:831 [32860] | INFO  |   +-----------------------------------------+-----------------------------------------+
+18:06:02:831 [32860] | INFO  |   | Flags                                   | 0x25                                    |
+18:06:02:831 [32860] | INFO  |   | ColorBits                               | 8                                       |
+18:06:02:831 [32860] | INFO  |   | DepthBits                               | 16                                      |
+18:06:02:831 [32860] | INFO  |   | StencilBits                             | 0                                       |
+18:06:02:831 [32860] | INFO  |   +-----------------------------------------+-----------------------------------------+
+18:06:02:836 [32860] | INFO  | Returning pixel format: 9
+18:06:02:836 [32860] | INFO  | Redirecting wglSetPixelFormat(hdc = 0000000043013C64, iPixelFormat = 9, ppfd = 000000E409BFF080) ...
+18:06:02:836 [32860] | INFO  | Searching for add-ons (*.addon, *.addon64) in 'D:\Projects\Visual Studio Code\Nes2Execv2\bin' ...
+18:06:02:837 [32860] | INFO  | Redirecting wglCreateContext(hdc = 0000000043013C64) ...
+18:06:02:837 [32860] | INFO  | > Passing on to wglCreateLayerContext:
+18:06:02:837 [32860] | INFO  | Redirecting wglCreateLayerContext(hdc = 0000000043013C64, iLayerPlane = 0) ...
+18:06:02:840 [32860] | INFO  | Searching for add-ons (*.addon, *.addon64) in 'D:\Projects\Visual Studio Code\Nes2Execv2\bin' ...
+18:06:02:840 [32860] | INFO  | Redirecting wglChoosePixelFormatARB(hdc = 0000000043013C64, piAttribIList = 000000E409BFF1B0, pfAttribFList = 000000E409BFF14C, nMaxFormats = 1, piFormats = 000000E409BFF070, nNumFormats = 000000E409BFF074) ...
+18:06:02:840 [32860] | INFO  | > Dumping attributes:
+18:06:02:840 [32860] | INFO  |   +-----------------------------------------+-----------------------------------------+
+18:06:02:840 [32860] | INFO  |   | Attribute                               | Value                                   |
+18:06:02:840 [32860] | INFO  |   +-----------------------------------------+-----------------------------------------+
+18:06:02:840 [32860] | INFO  |   | WGL_DRAW_TO_WINDOW_ARB                  | TRUE                                    |
+18:06:02:840 [32860] | INFO  |   | WGL_RED_BITS_ARB                        | 3                                       |
+18:06:02:841 [32860] | INFO  |   | WGL_GREEN_BITS_ARB                      | 3                                       |
+18:06:02:841 [32860] | INFO  |   | WGL_BLUE_BITS_ARB                       | 2                                       |
+18:06:02:841 [32860] | INFO  |   | WGL_DOUBLE_BUFFER_ARB                   | TRUE                                    |
+18:06:02:841 [32860] | INFO  |   | WGL_DEPTH_BITS_ARB                      | 16                                      |
+18:06:02:841 [32860] | INFO  |   | WGL_ACCELERATION_ARB                    | 0x2027                                  |
+18:06:02:841 [32860] | INFO  |   +-----------------------------------------+-----------------------------------------+
+18:06:02:856 [32860] | INFO  | Returning pixel format(s): 9
+18:06:02:856 [32860] | INFO  | Redirecting wglDeleteContext(hglrc = 0000000000020000) ...
+18:06:02:860 [32860] | INFO  | Redirecting wglSetPixelFormat(hdc = FFFFFFFFB2011B38, iPixelFormat = 9, ppfd = 000000E409BFF150) ...
+18:06:02:861 [32860] | INFO  | Searching for add-ons (*.addon, *.addon64) in 'D:\Projects\Visual Studio Code\Nes2Execv2\bin' ...
+18:06:02:877 [32860] | INFO  | Redirecting wglCreateContext(hdc = FFFFFFFFB2011B38) ...
+18:06:02:878 [32860] | INFO  | > Passing on to wglCreateLayerContext:
+18:06:02:878 [32860] | INFO  | Redirecting wglCreateLayerContext(hdc = FFFFFFFFB2011B38, iLayerPlane = 0) ...
+18:06:02:881 [32860] | INFO  | Searching for add-ons (*.addon, *.addon64) in 'D:\Projects\Visual Studio Code\Nes2Execv2\bin' ...
+18:06:02:882 [32860] | INFO  | Redirecting wglCreateContextAttribsARB(hdc = FFFFFFFFB2011B38, hShareContext = 0000000000000000, piAttribList = 000000E409BFF410) ...
+18:06:02:882 [32860] | INFO  | > Requesting core OpenGL context for version 3.2.
+18:06:02:882 [32860] | INFO  | > Replacing requested version with 4.3.
+18:06:02:882 [32860] | INFO  | Redirecting wglCreateLayerContext(hdc = FFFFFFFFB2011B38, iLayerPlane = 0) ...
+18:06:02:883 [32860] | INFO  | Redirecting wglDeleteContext(hglrc = 0000000000030000) ...
+18:06:02:885 [32860] | INFO  | Searching for add-ons (*.addon, *.addon64) in 'D:\Projects\Visual Studio Code\Nes2Execv2\bin' ...
+18:06:02:993 [32860] | INFO  | Running on NVIDIA GeForce RTX 3080/PCIe/SSE2.
+18:06:03:158 [32860] | INFO  | Recreated runtime environment on runtime 000002744D0E2930 ('D:\Projects\Visual Studio Code\Nes2Execv2\bin\ReShade.ini').
+18:06:03:169 [22728] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\LiftGammaGain.fx' in 0.008000 s.
+18:06:03:169 [25888] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\ColorMatrix.fx' in 0.008000 s.
+18:06:03:169 [22084] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Vibrance.fx' in 0.008000 s.
+18:06:03:169 [15584] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Technicolor.fx' in 0.009000 s.
+18:06:03:169 [33892] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Tonemap.fx' in 0.008000 s.
+18:06:03:169 [23992] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Daltonize.fx' in 0.009000 s.
+18:06:03:169 [27752] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\LUT.fx' in 0.008000 s.
+18:06:03:169 [15992] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\FakeHDR.fx' in 0.009000 s.
+18:06:03:170 [29136] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\CAS.fx' in 0.009000 s.
+18:06:03:170 [26904] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\CRT.fx' in 0.009000 s.
+18:06:03:170 [31232] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\DisplayDepth.fx' in 0.010000 s.
+18:06:03:170 [ 2192] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\ASCII.fx' in 0.010000 s.
+18:06:03:171 [32900] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\FXAA.fx' in 0.010000 s.
+18:06:03:171 [13212] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Nostalgia.fx' in 0.010000 s.
+18:06:03:173 [36400] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\SMAA.fx' in 0.012000 s.
+18:06:03:176 [22084] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Vignette.fx' in 0.006000 s.
+18:06:03:176 [33892] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\UIMask.fx' in 0.005000 s.
+18:06:03:176 [22728] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\LumaSharpen.fx' in 0.006000 s.
+18:06:03:176 [29136] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\ChromaticAberration.fx' in 0.006000 s.
+18:06:03:176 [27752] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Monochrome.fx' in 0.006000 s.
+18:06:03:177 [23992] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Deband.fx' in 0.006000 s.
+18:06:03:177 [15992] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\FilmGrain.fx' in 0.006000 s.
+18:06:03:178 [15584] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Technicolor2.fx' in 0.007000 s.
+18:06:03:178 [32900] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Layer.fx' in 0.006000 s.
+18:06:03:178 [26904] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Curves.fx' in 0.007000 s.
+18:06:03:178 [13212] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Sepia.fx' in 0.006000 s.
+18:06:03:178 [ 2192] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Border.fx' in 0.007000 s.
+18:06:03:180 [36400] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Splitscreen.fx' in 0.005000 s.
+18:06:03:181 [31232] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\DPX.fx' in 0.007000 s.
+18:06:03:182 [32900] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Levels.fx' in 0.004000 s.
+18:06:03:182 [ 2192] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Cartoon.fx' in 0.004000 s.
+18:06:03:216 [25888] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\CRT-Royale\crt-royale.fx' in 0.046000 s.
+18:06:07:454 [32860] | INFO  | Resizing device context FFFFFFFFB2011B38 to 2560x1377 ...
+18:06:07:461 [32860] | INFO  | Destroyed runtime environment on runtime 000002744D0E2930 ('D:\Projects\Visual Studio Code\Nes2Execv2\bin\ReShade.ini').
+18:06:07:462 [32860] | INFO  | Recreated runtime environment on runtime 000002744D0E2930 ('D:\Projects\Visual Studio Code\Nes2Execv2\bin\ReShade.ini').
+18:06:07:475 [ 6140] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\ColorMatrix.fx' in 0.007000 s.
+18:06:07:475 [20008] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\LUT.fx' in 0.006000 s.
+18:06:07:475 [35872] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Technicolor.fx' in 0.006000 s.
+18:06:07:475 [19360] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Vibrance.fx' in 0.006000 s.
+18:06:07:475 [36396] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\FakeHDR.fx' in 0.007000 s.
+18:06:07:475 [ 4900] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Daltonize.fx' in 0.007000 s.
+18:06:07:475 [35620] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\DisplayDepth.fx' in 0.007000 s.
+18:06:07:475 [34516] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\CRT.fx' in 0.007000 s.
+18:06:07:475 [13348] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\ASCII.fx' in 0.008000 s.
+18:06:07:476 [35128] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Nostalgia.fx' in 0.007000 s.
+18:06:07:476 [11628] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\LiftGammaGain.fx' in 0.008000 s.
+18:06:07:476 [33604] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\CAS.fx' in 0.009000 s.
+18:06:07:478 [36564] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\FXAA.fx' in 0.010000 s.
+18:06:07:479 [23396] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Tonemap.fx' in 0.010000 s.
+18:06:07:480 [34792] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\SMAA.fx' in 0.011000 s.
+18:06:07:481 [35872] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Technicolor2.fx' in 0.005000 s.
+18:06:07:481 [20008] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Monochrome.fx' in 0.005000 s.
+18:06:07:481 [36396] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\FilmGrain.fx' in 0.005000 s.
+18:06:07:481 [35620] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\DPX.fx' in 0.005000 s.
+18:06:07:481 [13348] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Border.fx' in 0.005000 s.
+18:06:07:481 [35128] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Sepia.fx' in 0.005000 s.
+18:06:07:481 [34516] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Curves.fx' in 0.005000 s.
+18:06:07:482 [11628] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\LumaSharpen.fx' in 0.005000 s.
+18:06:07:482 [19360] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Vignette.fx' in 0.006000 s.
+18:06:07:482 [ 4900] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Deband.fx' in 0.006000 s.
+18:06:07:482 [33604] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\ChromaticAberration.fx' in 0.005000 s.
+18:06:07:484 [36564] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Layer.fx' in 0.004000 s.
+18:06:07:485 [23396] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\UIMask.fx' in 0.005000 s.
+18:06:07:485 [34792] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Splitscreen.fx' in 0.005000 s.
+18:06:07:486 [13348] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Cartoon.fx' in 0.004000 s.
+18:06:07:488 [36564] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\Levels.fx' in 0.003000 s.
+18:06:07:533 [ 6140] | INFO  | Successfully compiled 'D:\Projects\Visual Studio Code\Nes2Execv2\bin\reshade-shaders\Shaders\CRT-Royale\crt-royale.fx' in 0.058000 s.
+18:06:10:875 [32860] | INFO  | Exiting ...
+18:06:10:879 [32860] | INFO  | Uninstalling 554 hook(s) ...
+18:06:11:908 [32860] | INFO  | Finished exiting.

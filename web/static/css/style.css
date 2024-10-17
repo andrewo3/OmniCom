@@ -18,7 +18,8 @@ html, body {
     display: block;
     margin: auto;
     margin-top: 5vh;
-    border-radius: 10px;
+    border-radius: 10%;
+    opacity: 0;
 }
 .sel_container {
     display: flex;
@@ -41,19 +42,27 @@ html, body {
     font-family: "0xProto";
     font-size: 15pt;
     text-align: center;
-
+    transition: transform 0.2s;
+    transition-timing-function: ease-in-out;
 }
 
 .gameselector:focus {
     outline-width: 0;
 }
 
-.gamecanvas:focus {
-    outline-width: 0;
-}
 
 .gameselector:hover {
-    border-color: #00007f;
+    transform:scale(1.1);
+    transition: transform 0.1s;
+    transition-timing-function: ease-in-out;
+}
+
+
+.gameselector:focus {
+    outline: none;
+    transform:scale(1.1);
+    transition: transform 0.1s;
+    transition-timing-function: ease-in-out;
 }
 
 .choices {
