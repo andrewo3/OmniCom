@@ -5,8 +5,20 @@ let romNameText = document.getElementById("newrom");
 let canvas = document.getElementById('canvas');
 let gameselector = document.getElementsByClassName("gameselector")[0];
 let choices = document.getElementsByClassName("choices")[0];
+let game_choices = Array.from(document.getElementsByClassName("game_choice"));
+
+function hexToRgba(hex,alpha) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? "rgba("+parseInt(result[1], 16).toString()+","+parseInt(result[2], 16).toString()+","
+        +parseInt(result[3], 16).toString()+","+alpha.toString()+")" : null;
+}
+
 let bg_color = "#30323d";
 let fg_color = "#e8c547";
+const anim_timeout = 20;
+
+let bg_translucent = hexToRgba(bg_color,0.8);
+let fg_translucent = hexToRgba(fg_color,0.3);
 
 canvas_opacity = 0;
 document.body.style.backgroundColor = bg_color;
@@ -14,11 +26,17 @@ gameselector.style.backgroundColor = bg_color;
 gameselector.style.color = fg_color;
 gameselector.style.borderColor = fg_color;
 choices.style.color = fg_color;
+choices.style.backgroundColor = bg_translucent;
 choices.style.borderColor = fg_color;
 const style = document.createElement("style");
-style.innerHTML = ".gameselector::placeholder { color: "+fg_color+" !important;}"
+style.innerHTML = ".gameselector::placeholder { color: "+fg_color+" !important; } \
+.choices hr { color: "+fg_color+";}\
+ .choices p:hover {background-color:"+fg_translucent+";}"
 document.head.appendChild(style);
-console.log(style.innerHTML);
+
+let choices_style = document.createElement("style");
+choices_style.innerHTML = ".choices { top: 3px; border-style: none; height: 0px;}"
+document.head.appendChild(choices_style);
 
 var canvasClicked = false;
 
@@ -35,7 +53,7 @@ function handleBodyClick(event) {
 }
 
 window.onerror = function() {
-    location.reload();
+    //location.reload();
 }
 
 // Add event listener for click events on the document body
@@ -74,7 +92,6 @@ function loadNewRom(data,name) {
         _changeRom(utf8str);
     }
     let timer = setInterval(function() {
-        console.log(canvas.style.opacity);
         if (canvas_opacity>=1) {
             canvas.style.opacity = "1";
             clearInterval(timer);
@@ -82,10 +99,11 @@ function loadNewRom(data,name) {
             canvas_opacity+=0.1;
             canvas.style.opacity = canvas_opacity.toString();
         }
-    },20);
+    },anim_timeout);
     
     romChoices+=1;
 }
+
 
 //--drag rom into window--
 function module_init() {
@@ -122,7 +140,71 @@ function module_init() {
 
 //--type game name--
 
+search_timeout = null;
+
 $(document).ready(function () {
+    $("newrom").on("blur",function() {
+        num_sel(0);
+    });
+    $("#newrom").on('input propertychange paste',function() {
+        num_sel(0);
+        if (search_timeout) {
+            window.clearTimeout(search_timeout);
+        }
+        search_timeout = window.setTimeout(function() {
+            let formData = {"text":$("#newrom").val()};
+            if (formData.text!="") {
+                let req = new XMLHttpRequest();
+                req.open("POST", "/matches", true);
+                req.responseType = "json";
+                req.onload = function(e) {
+                    roms = req.response;
+                    console.log(roms);
+                    while (choices.firstChild) {
+                        choices.removeChild(choices.firstChild);
+                    }
+                    game_choices = [];
+                    for (const rom of roms) {
+                        let newP = document.createElement("p");
+                        let line = document.createElement("hr");
+                        newP.innerHTML = rom.substring(0,rom.length-4);
+                        game_choices.push(newP);
+                        choices.appendChild(newP);
+                        choices.appendChild(line);
+                    }
+                    //setup click events
+                    game_choices.forEach(element => {
+                        element.addEventListener("click",() => {
+                            let formData = {"text":element.innerHTML+".nes"};
+                            console.log(formData);
+                            let req = new XMLHttpRequest();
+                            req.open("POST", "/process_name", true);
+                            req.responseType = "arraybuffer";
+                    
+                            req.onload = function(e) {
+                                let arrayBuffer = req.response;
+                                // if you want to access the bytes:
+                                let data = new Uint8Array(arrayBuffer);
+                                const spl = data.indexOf(10); //10 is a newline character
+                                filename = new TextDecoder().decode(data.subarray(0,spl));
+                                console.log(filename);
+                                rom = data.subarray(spl+1);
+                                loadNewRom(rom,filename);
+                    
+                            };
+                            req.setRequestHeader("Content-Type", "application/json");
+                            req.send(JSON.stringify(formData));
+                        })
+                    });
+
+                    num_sel(roms.length);
+                }
+                req.setRequestHeader("Content-Type", "application/json");
+                req.send(JSON.stringify(formData));
+                search_timeout = null;
+            }
+        },1000);
+    });
     $("#romnameform").submit(function (e) {
         e.preventDefault();
         let formData = {"text":$("#newrom").val()};
@@ -147,3 +229,182 @@ $(document).ready(function () {
         
     });
 });
+
+
+//choice box animations above the game name textbox
+animations = [];
+
+function animate_borderless(on) {
+    function stylize(r) {
+        new_style = document.createElement("style");
+        new_style.id = "borderless";
+        new_style.innerHTML = ".gameselector {border-top-left-radius: "+r.toString()+"px !important; border-top-right-radius: "+r.toString()+"px !important;}";
+        if (document.getElementById("borderless")==null) {
+            document.head.appendChild(new_style);
+        } else {
+            new_style = document.getElementById("borderless");
+        }
+        return new_style;
+    }
+
+    //clear all previous animations
+    for (let i = 0; i<animations.length; i++) {
+        clearInterval(animations[i]);
+    }
+    animations = [];
+    function interp(secs) {
+        return 1-(1-secs)**5;
+    }
+    if (on) {
+        
+        let radius = 15;
+        let new_style = stylize(radius);
+        let iters = 0;
+        let timer = setInterval(function() {
+            if (radius<=0) {
+                radius = 0;
+                new_style.innerHTML = ".gameselector {border-top-left-radius: 0px !important; border-top-right-radius: 0px !important;}";
+                clearInterval(timer);
+            } else {
+                radius = 15*(1-interp(iters*anim_timeout/1000));
+                new_style.innerHTML = ".gameselector {border-top-left-radius: "+radius.toString()+"px !important; border-top-right-radius: "+radius.toString()+"px !important;}";
+            }
+            iters+=1;
+        },anim_timeout);
+        animations.push(timer);
+    } else {
+        let radius = 0;
+        let new_style = stylize(radius);
+        let iters = 0;
+        let timer = setInterval(function() {
+            if (radius>=15) {
+                document.getElementById("borderless").remove();
+                clearInterval(timer);
+            } else {
+                radius = 15*interp(iters*anim_timeout/1000);
+                new_style.innerHTML = ".gameselector {border-top-left-radius: "+radius.toString()+"px !important; border-top-right-radius: "+radius.toString()+"px !important;}";
+            }
+            iters+=1;
+        },anim_timeout);
+        animations.push(timer);
+    }
+}
+
+let choices_y = 3;
+let choices_h = 0;
+let box_anims = [];
+function box_appear() {
+    choices_y = 3;
+    for (let i = 0; i<box_anims.length; i++) {
+        clearInterval(box_anims[i]);
+    }
+    box_anims = [];
+    let = iters = 0;
+    choices = document.getElementsByClassName("choices")[0];
+    let h = 0;
+    choices_style.innerHTML = ".choices { top: "+choices_y.toString()+"px; height: 0px}"
+    function interp(secs) {
+        return 1-(1-secs)**5;
+    }
+    let timer = setInterval(function() {
+        let elapsed = iters*anim_timeout;
+        if (elapsed<500) {
+            //first half
+            choices_y = 3-13*interp(elapsed/500);
+            choices_style.innerHTML = ".choices { top: "+choices_y.toString()+"px; height: 0px;}"
+        } else {
+            choices_style.innerHTML = ".choices { top: 10px; height: 0px;}"
+            clearInterval(timer);
+        }
+        iters+=1;
+    },anim_timeout);
+    box_anims.push(timer);
+}
+
+function box_disappear() {
+    choices_y = -10;
+    for (let i = 0; i<box_anims.length; i++) {
+        clearInterval(box_anims[i]);
+    }
+    box_anims = [];
+    let = iters = 0;
+    choices = document.getElementsByClassName("choices")[0];
+    let h = 0;
+    choices_style.innerHTML = ".choices { top: "+choices_y.toString()+"px; height: 0px}"
+    function interp(secs) {
+        return 1-(1-secs)**5;
+    }
+    let timer = setInterval(function() {
+        let elapsed = iters*anim_timeout;
+        if (elapsed<500) {
+            //first half
+            choices_y = -10+13*interp(elapsed/500);
+            choices_style.innerHTML = ".choices { top: "+choices_y.toString()+"px; height: 0px;}"
+        } else {
+            choices_style.innerHTML = ".choices { top: 0px; border-style: none; height: 0px;}"
+            clearInterval(timer);
+        }
+        iters+=1;
+    },anim_timeout);
+    box_anims.push(timer);
+}
+
+const element_h = 30;
+function box_expand(choices,start) {
+    const target_h = choices*(element_h+1);
+    const start_h = start;
+    const diff = target_h-start_h;
+
+    for (let i = 0; i<box_anims.length; i++) {
+        clearInterval(box_anims[i]);
+    }
+    box_anims = [];
+    iters = 0;
+    function interp(secs) {
+        return 1-(1-secs)**5;
+    }
+    let timer = setInterval(function() {
+        let elapsed = iters*anim_timeout;
+        if (elapsed<500) {
+            let new_h = start_h+diff*interp(elapsed/500);
+            choices_style.innerHTML = ".choices { border-width: medium;top: "+choices_y.toString()+"px; height: "+new_h.toString()+"px;}"
+        } else {
+            choices_style.innerHTML = ".choices { border-width: medium; top: "+choices_y.toString()+"px; height: "+target_h+"px;}"
+            clearInterval(timer);
+        }
+        iters+=1;
+    },anim_timeout);
+    box_anims.push(timer);
+    return target_h;
+}
+
+
+let new_box = false;
+async function num_sel(num_choices) {
+    //let num_choices = document.getElementById("num_choice").value;
+    //console.log(choices_size);
+    if (num_choices>10) {
+        num_choices = 10;
+    }
+    if (num_choices>0 && !new_box) {
+        new_box = true
+        //animate_borderless(true);
+        box_appear();
+        choices_h = num_choices*(element_h+1);
+        await new Promise(r => setTimeout(r,500));
+        if (choices_h==num_choices*(element_h+1)) {
+            box_expand(num_choices,0);
+        }
+        
+    } else if (num_choices==0 && new_box) {
+        new_box = false;
+        //animate_borderless(false);
+        choices_h = box_expand(num_choices,choices_h);
+        await new Promise(r => setTimeout(r,500));
+        choices_style.innerHTML = ".choices { border-width: 1.5px;}"
+        box_disappear();
+    } else if (num_choices > 0) {
+        choices_h = box_expand(num_choices,choices_h);
+    }
+    
+}

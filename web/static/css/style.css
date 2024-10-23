@@ -1,6 +1,6 @@
 @font-face {
     font-family: "0xProto";
-    src: url("../fonts/0xProtoNerdFont-Regular.ttf") format('truetype');
+    src: url("../fonts/0xProto-Regular.ttf") format('truetype');
 }
 html, body {
     width:  100%;
@@ -20,7 +20,9 @@ html, body {
     margin-top: 5vh;
     border-radius: 10%;
     opacity: 0;
+    outline: none;
 }
+
 .sel_container {
     display: flex;
     flex-direction: column;
@@ -32,12 +34,10 @@ html, body {
     height: 20%;
 }
 .gameselector {
-    position: absolute;
-    top: 50%;
-    left: 37.5%;
+    display: inline;
     width: 25%;
     border-radius: 15px;
-    border-width: medium;
+    border-width: 3px;
     border-style:solid;
     font-family: "0xProto";
     font-size: 15pt;
@@ -50,26 +50,62 @@ html, body {
     outline-width: 0;
 }
 
-
-.gameselector:hover {
-    transform:scale(1.1);
-    transition: transform 0.1s;
-    transition-timing-function: ease-in-out;
-}
-
-
 .gameselector:focus {
     outline: none;
-    transform:scale(1.1);
-    transition: transform 0.1s;
-    transition-timing-function: ease-in-out;
+}
+
+.sel_container {
+    display:inline-block;
+    position: relative;
+    top: 20px;
+    text-align: center;
+}
+
+#choice_num {
+    display:inline;
+    margin-right: 20px;
+}
+
+#romnameform {
+    display: inline;
 }
 
 .choices {
-    border-width: 1px;
+    border-width: 1.5px;
+    border-radius: 15px;
     border-style: solid;
-    display: none;
-    margin: auto;
+    display: block;
+    margin-top: -100%;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    overflow: scroll;
+    width: 25%;
+    height: 20px;
+    transform-origin: 50% 100%;
 
 
+}
+
+.choices p {
+    display: flex;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    align-items: center;
+    justify-content: center;
+    font-family: "0xProto";
+    font-size: 10px;
+    height: 30px;
+    transition: background-color 0.2s;
+    transition-timing-function: ease-in-out;
+}
+
+.choices p:hover {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    transition-timing-function: ease-in-out;
+}
+
+.choices hr {
+    margin: 0px;
 }

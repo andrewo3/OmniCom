@@ -22,8 +22,10 @@ def calc_ratio(file,s):
     token_sort = fuzz.token_sort_ratio(file,s)
     token_set = fuzz.token_set_ratio(file,s)
     w_ratio = fuzz.WRatio(file,s)
-    return (normal+partial+token_sort+token_set+w_ratio)/5
+    final_ratio = (normal+partial+token_sort+token_set+w_ratio)/5
+    return final_ratio
 def proc(s):
-    return max(os.listdir('roms'),key=lambda f: (calc_ratio(fixed_names[f],s),calc_ratio(f,s)))
+    keyval = [(calc_ratio(fixed_names[f],s),calc_ratio(f,s),f) for f in os.listdir('roms')]
+    return [j[2] for j in sorted([i for i in keyval if i[0]>=60],key=lambda v: (v[:2]))]
 
 fixed()
