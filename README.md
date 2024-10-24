@@ -33,6 +33,6 @@ From the pause menu, you can see a 'Save' and a 'Load' button. This allows you t
 
 ## Python Extension
 
-You can also use this project with Python as an extension. navigate to ```src/python_wrapper``` and run ```python setup.py build```. This requires ```pybind11``` so make sure you have that installed with Python. That will save a shared library in one of  the library folders located in the ```build``` directory. At that point you can use it locally, importing it as ```pyNES```.
+You can also use this project with Python as an extension. It is available on PyPi as ```omnicom``` and you can install it with ```pip install omnicom```.
 
-```pyNES``` doesnt actually create window contexts or use your audio devices. You have to do that yourself, hence, the extension is best used alongside libraries like ```pygame``` and ```pyaudio```, in order to actually be able to play the games in realtime.
+```omnicom``` doesnt actually create window contexts or use your audio devices. You have to do that yourself, hence, the extension is best used alongside libraries like ```pygame``` and ```pyaudio```, in order to actually be able to play the games in realtime.
