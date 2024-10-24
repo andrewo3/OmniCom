@@ -17,7 +17,7 @@ let bg_color = "#30323d";
 let fg_color = "#e8c547";
 const anim_timeout = 20;
 
-let bg_translucent = hexToRgba(bg_color,0.8);
+let bg_translucent = hexToRgba(bg_color,1.0);
 let fg_translucent = hexToRgba(fg_color,0.3);
 
 canvas_opacity = 0;
@@ -143,9 +143,6 @@ function module_init() {
 search_timeout = null;
 
 $(document).ready(function () {
-    $("newrom").on("blur",function() {
-        num_sel(0);
-    });
     $("#newrom").on('input propertychange paste',function() {
         num_sel(0);
         if (search_timeout) {
@@ -190,14 +187,16 @@ $(document).ready(function () {
                                 console.log(filename);
                                 rom = data.subarray(spl+1);
                                 loadNewRom(rom,filename);
+                                num_sel(0);
                     
                             };
                             req.setRequestHeader("Content-Type", "application/json");
                             req.send(JSON.stringify(formData));
                         })
                     });
-
-                    num_sel(roms.length);
+                    if (text_sel) {
+                        num_sel(roms.length);
+                    }
                 }
                 req.setRequestHeader("Content-Type", "application/json");
                 req.send(JSON.stringify(formData));
@@ -222,12 +221,47 @@ $(document).ready(function () {
             console.log(filename);
             rom = data.subarray(spl+1);
             loadNewRom(rom,filename);
+            num_sel(0);
+            $("#newrom").blur();
+            //window.clearTimeout(search_timeout);
 
         };
         req.setRequestHeader("Content-Type", "application/json");
         req.send(JSON.stringify(formData));
         
     });
+});
+
+choice_sel = false;
+text_sel = false;
+
+choices.addEventListener("focus",function(){
+    choice_sel = true;
+    num_sel(choices.children.length/2);
+});
+choices.addEventListener("blur",function(event){
+    choice_sel = false;
+    if (!choice_sel && !text_sel && !choices.contains(event.explicitOriginalTarget)) {
+        num_sel(0);
+    }
+});
+
+gameselector.addEventListener("focus",function(){
+    text_sel = true;
+    console.log(choices.children.length/2);
+    num_sel(choices.children.length/2);
+});
+
+gameselector.addEventListener("blur",function(event){
+    console.log(event);
+    text_sel = false;
+    console.log(text_sel);
+    console.log(choice_sel);
+    console.log(event.explicitOriginalTarget);
+    console.log(choices.contains(event.explicitOriginalTarget));
+    if (!choice_sel && !text_sel && !choices.contains(event.explicitOriginalTarget)) {
+        num_sel(0);
+    }
 });
 
 
@@ -349,9 +383,9 @@ function box_disappear() {
     box_anims.push(timer);
 }
 
-const element_h = 30;
+const element_h = 5.3;
 function box_expand(choices,start) {
-    const target_h = choices*(element_h+1);
+    const target_h = choices*(element_h);
     const start_h = start;
     const diff = target_h-start_h;
 
@@ -367,9 +401,9 @@ function box_expand(choices,start) {
         let elapsed = iters*anim_timeout;
         if (elapsed<500) {
             let new_h = start_h+diff*interp(elapsed/500);
-            choices_style.innerHTML = ".choices { border-width: medium;top: "+choices_y.toString()+"px; height: "+new_h.toString()+"px;}"
+            choices_style.innerHTML = ".choices { border-width: medium;top: "+choices_y.toString()+"px; height: "+new_h.toString()+"vh;}"
         } else {
-            choices_style.innerHTML = ".choices { border-width: medium; top: "+choices_y.toString()+"px; height: "+target_h+"px;}"
+            choices_style.innerHTML = ".choices { border-width: medium; top: "+choices_y.toString()+"px; height: "+target_h+"vh;}"
             clearInterval(timer);
         }
         iters+=1;
@@ -390,9 +424,9 @@ async function num_sel(num_choices) {
         new_box = true
         //animate_borderless(true);
         box_appear();
-        choices_h = num_choices*(element_h+1);
+        choices_h = num_choices*(element_h);
         await new Promise(r => setTimeout(r,500));
-        if (choices_h==num_choices*(element_h+1)) {
+        if (choices_h==num_choices*(element_h)) {
             box_expand(num_choices,0);
         }
         

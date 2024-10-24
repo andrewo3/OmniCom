@@ -10,14 +10,8 @@
     <body>
         <div id="dropbox" class="game">
             <canvas class="gamecanvas" id=canvas oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
-            <div class="sel_container">            
+            <div class="sel_container" onblur="num_sel(0)">            
                 <div class="choices">
-                    <p class="game_choice">Test 1</p>
-                    <hr>
-                    <p class="game_choice">Test 2</p>
-                    <hr>
-                    <p class="game_choice">Test 3</p>
-                    <hr>
                 </div>
                 <!--<input id="num_choice" type="number" min="0" max="10" value="0" onchange="return num_sel(this.value)">-->
                 <form id="romnameform" method="post">

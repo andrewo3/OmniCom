@@ -280,7 +280,7 @@ int main(int argc, char ** argv) {
     } else if (extension == ".sfc" || extension == ".smc") {
         emuSystem = new SNES::System();
     } else {
-        emuSystem = new SNES::System(); //placeholder for null system
+        emuSystem = new NES::System(); //placeholder for null system
     }
 
     // SDL initialize
