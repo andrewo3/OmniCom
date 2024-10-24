@@ -163,6 +163,7 @@ $(document).ready(function () {
                     game_choices = [];
                     for (const rom of roms) {
                         let newP = document.createElement("p");
+                        newP.tabIndex=0;
                         let line = document.createElement("hr");
                         newP.innerHTML = rom.substring(0,rom.length-4);
                         game_choices.push(newP);
@@ -170,6 +171,7 @@ $(document).ready(function () {
                         choices.appendChild(line);
                     }
                     //setup click events
+                    console.log("click events");
                     game_choices.forEach(element => {
                         element.addEventListener("click",() => {
                             let formData = {"text":element.innerHTML+".nes"};
@@ -257,9 +259,9 @@ gameselector.addEventListener("blur",function(event){
     text_sel = false;
     console.log(text_sel);
     console.log(choice_sel);
-    console.log(event.explicitOriginalTarget);
-    console.log(choices.contains(event.explicitOriginalTarget));
-    if (!choice_sel && !text_sel && !choices.contains(event.explicitOriginalTarget)) {
+    console.log(event.relatedTarget);
+    console.log(choices.contains(event.relatedTarget));
+    if (!choice_sel && !text_sel && !choices.contains(event.relatedTarget)) {
         num_sel(0);
     }
 });
