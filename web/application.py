@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, redirect, send_file
 from flask_cors import CORS
 import os
 from io import BytesIO

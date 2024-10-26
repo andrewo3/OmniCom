@@ -1,3 +1,7 @@
+if ( window.history.replaceState ) {
+    window.history.replaceState( null, null, window.location.href );
+  }
+
 let reader = new FileReader();
 let romChoices = 0;
 let romNameForm = document.getElementById("romnameform");
@@ -19,6 +23,7 @@ const anim_timeout = 20;
 
 let bg_translucent = hexToRgba(bg_color,1.0);
 let fg_translucent = hexToRgba(fg_color,0.3);
+let fg_placeholder = hexToRgba(fg_color,0.5);
 
 canvas_opacity = 0;
 document.body.style.backgroundColor = bg_color;
@@ -29,10 +34,48 @@ choices.style.color = fg_color;
 choices.style.backgroundColor = bg_translucent;
 choices.style.borderColor = fg_color;
 const style = document.createElement("style");
-style.innerHTML = ".gameselector::placeholder { color: "+fg_color+" !important; } \
+style.innerHTML = ".gameselector::placeholder { color: "+fg_placeholder+" !important; } \
 .choices hr { color: "+fg_color+";}\
  .choices p:hover {background-color:"+fg_translucent+";}"
 document.head.appendChild(style);
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+  }
+
+let text_iter = 0;
+let placeholder_text = "<rom title>";
+let text_choices = ["<rom title>","super mario bros","tetris","legend of zelda","pac-man"];
+let change_text = 0;
+let change_choice = 0;
+window.setInterval(function() {
+    out_text = placeholder_text;
+    if (Math.floor((text_iter/anim_timeout)/2)%2==0 && change_text == 0) {
+        out_text+="_";
+    }
+    if (Math.floor(text_iter/anim_timeout)==10 && change_text==0) {
+        change_text = 1;
+        if (change_choice == 0) {
+            change_choice = getRandomInt(text_choices.length-1)+1;
+        } else {
+            change_choice = 0;
+        }
+    }
+    else if (change_text == 1 && text_iter%2==0 && placeholder_text.length>0) {
+        placeholder_text = placeholder_text.slice(0,-1);
+        if (placeholder_text.length==0) {
+            change_text = 2;
+        }
+    } else if (change_text == 2 && text_iter%2==0 && placeholder_text!=text_choices[change_choice]) {
+        placeholder_text = text_choices[change_choice].slice(0,placeholder_text.length+1);
+        if (placeholder_text==text_choices[change_choice]) {
+            change_text = 0;
+            text_iter = 0;
+        }
+    }
+    gameselector.placeholder = out_text;
+    text_iter+=1;
+},anim_timeout);
 
 let choices_style = document.createElement("style");
 choices_style.innerHTML = ".choices { top: 3px; border-style: none; height: 0px;}"
@@ -85,6 +128,20 @@ function loadNewRom(data,name) {
     FS.writeFile('/home/web_user/'.concat(name),data);
     if (romChoices == 0) {
         console.log("started");
+        function interp(secs) {
+            return 1-(1-secs)**5;
+        }
+        let move_iter = 0;
+        let timer = setInterval(function() {
+            let i = (move_iter/anim_timeout)/1.5;
+            if (i>1) {
+                canvas.style.marginBottom = "3vh";
+                clearInterval(timer);
+            } else {
+                canvas.style.marginBottom = (-20+23*interp(i)).toString()+"vh";
+            }
+            move_iter+=1;
+        },anim_timeout);
         callMain(["/home/web_user/".concat(name)]);
     } else {
         console.log("new rom");
@@ -140,73 +197,82 @@ function module_init() {
 
 //--type game name--
 
+function get_results() {
+    let formData = {"text":$("#newrom").val()};
+    if (formData.text!="") {
+        let req = new XMLHttpRequest();
+        req.open("POST", "/matches", true);
+        req.responseType = "json";
+        req.onload = function(e) {
+            roms = req.response;
+            console.log(roms);
+            while (choices.firstChild) {
+                choices.removeChild(choices.firstChild);
+            }
+            game_choices = [];
+            for (const rom of roms) {
+                let newP = document.createElement("p");
+                newP.tabIndex=0;
+                let line = document.createElement("hr");
+                newP.innerHTML = rom.substring(0,rom.length-4);
+                game_choices.push(newP);
+                choices.appendChild(newP);
+                choices.appendChild(line);
+            }
+            //setup click events
+            console.log("click events");
+            game_choices.forEach(element => {
+                element.addEventListener("click",() => {
+                    let formData = {"text":element.innerHTML+".nes"};
+                    console.log(formData);
+                    let req = new XMLHttpRequest();
+                    req.open("POST", "/process_name", true);
+                    req.responseType = "arraybuffer";
+            
+                    req.onload = function(e) {
+                        let arrayBuffer = req.response;
+                        // if you want to access the bytes:
+                        let data = new Uint8Array(arrayBuffer);
+                        const spl = data.indexOf(10); //10 is a newline character
+                        filename = new TextDecoder().decode(data.subarray(0,spl));
+                        console.log(filename);
+                        rom = data.subarray(spl+1);
+                        loadNewRom(rom,filename);
+                        num_sel(0);
+            
+                    };
+                    req.setRequestHeader("Content-Type", "application/json");
+                    req.send(JSON.stringify(formData));
+                })
+            });
+            if (text_sel) {
+                num_sel(roms.length);
+            }
+        }
+        req.setRequestHeader("Content-Type", "application/json");
+        req.send(JSON.stringify(formData));
+        search_timeout = null;
+    }
+}
+
 search_timeout = null;
 
 $(document).ready(function () {
     $("#newrom").on('input propertychange paste',function() {
+        change_choice = 0;
+        change_text = 2;
+        placeholder_text = "";
         num_sel(0);
         if (search_timeout) {
             window.clearTimeout(search_timeout);
         }
-        search_timeout = window.setTimeout(function() {
-            let formData = {"text":$("#newrom").val()};
-            if (formData.text!="") {
-                let req = new XMLHttpRequest();
-                req.open("POST", "/matches", true);
-                req.responseType = "json";
-                req.onload = function(e) {
-                    roms = req.response;
-                    console.log(roms);
-                    while (choices.firstChild) {
-                        choices.removeChild(choices.firstChild);
-                    }
-                    game_choices = [];
-                    for (const rom of roms) {
-                        let newP = document.createElement("p");
-                        newP.tabIndex=0;
-                        let line = document.createElement("hr");
-                        newP.innerHTML = rom.substring(0,rom.length-4);
-                        game_choices.push(newP);
-                        choices.appendChild(newP);
-                        choices.appendChild(line);
-                    }
-                    //setup click events
-                    console.log("click events");
-                    game_choices.forEach(element => {
-                        element.addEventListener("click",() => {
-                            let formData = {"text":element.innerHTML+".nes"};
-                            console.log(formData);
-                            let req = new XMLHttpRequest();
-                            req.open("POST", "/process_name", true);
-                            req.responseType = "arraybuffer";
-                    
-                            req.onload = function(e) {
-                                let arrayBuffer = req.response;
-                                // if you want to access the bytes:
-                                let data = new Uint8Array(arrayBuffer);
-                                const spl = data.indexOf(10); //10 is a newline character
-                                filename = new TextDecoder().decode(data.subarray(0,spl));
-                                console.log(filename);
-                                rom = data.subarray(spl+1);
-                                loadNewRom(rom,filename);
-                                num_sel(0);
-                    
-                            };
-                            req.setRequestHeader("Content-Type", "application/json");
-                            req.send(JSON.stringify(formData));
-                        })
-                    });
-                    if (text_sel) {
-                        num_sel(roms.length);
-                    }
-                }
-                req.setRequestHeader("Content-Type", "application/json");
-                req.send(JSON.stringify(formData));
-                search_timeout = null;
-            }
-        },1000);
+        search_timeout = window.setTimeout(get_results,1000);
     });
     $("#romnameform").submit(function (e) {
+        e.preventDefault();
+        get_results();
+    });
+    /*$("#romnameform").submit(function (e) {
         e.preventDefault();
         let formData = {"text":$("#newrom").val()};
 
@@ -231,7 +297,7 @@ $(document).ready(function () {
         req.setRequestHeader("Content-Type", "application/json");
         req.send(JSON.stringify(formData));
         
-    });
+    });*/
 });
 
 choice_sel = false;
