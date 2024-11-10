@@ -10,7 +10,7 @@
 #include <thread>
 #include <vector>
 
-auto now = std::chrono::high_resolution_clock::now;
+auto now = std::chrono::system_clock::now;
 
 using namespace NES;
 
@@ -137,7 +137,8 @@ System::~System() {
 void System::Loop() {
     using namespace std::chrono;
     //emulator loop
-    time_point<steady_clock> epoch;
+    std::chrono::time_point<std::chrono::system_clock> epoch;
+    printf("EPOCH: %i\n",epoch);
     long long frame_count = 0;
     while (running) {
         if (!paused) {
@@ -146,7 +147,7 @@ void System::Loop() {
             //calculate delay
             if (ppu->frames>frame_count) { //only sleep on frame change
                 frame_count = ppu->frames;
-                time_point<high_resolution_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
+                time_point<system_clock> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
                 if (result_time<now()) { 
                     //if its far behind (consider system sleep), fake a pause for the whole duration
                     paused_time = epoch_nano()-start_time-(cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED;

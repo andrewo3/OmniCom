@@ -16,14 +16,14 @@ extern int web;
 
 // get time in milliseconds since epoch
 inline long long epoch() {
-    auto currentTimePoint = std::chrono::steady_clock::now();
+    auto currentTimePoint = std::chrono::system_clock::now();
     auto durationSinceEpoch = currentTimePoint.time_since_epoch();
     auto millisecondsSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(durationSinceEpoch);
     return millisecondsSinceEpoch.count();
 }
 
 inline long long epoch_nano() {  //1*10^9
-    auto currentTimePoint = std::chrono::steady_clock::now();
+    auto currentTimePoint = std::chrono::system_clock::now();
     auto durationSinceEpoch = currentTimePoint.time_since_epoch();
     auto nanosecondsSinceEpoch = std::chrono::duration_cast<std::chrono::nanoseconds>(durationSinceEpoch);
     return nanosecondsSinceEpoch.count();
