@@ -2,6 +2,7 @@
 #define SNES_SYS_H
 
 #include "system.h"
+#include "rom.h"
 
 /* for reference
 ==============================
@@ -44,6 +45,7 @@ class System: public BaseSystem {
         void GLSetup();
         void Start();
         void loadRom(long len, uint8_t* data);
+        ROM* rom;
 };
 
 }

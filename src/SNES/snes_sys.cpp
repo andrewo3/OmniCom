@@ -1,4 +1,5 @@
 #include "snes_sys.h"
+#include "rom.h"
 #include <cstdio>
 #include <cstdbool>
 #include <string>
@@ -50,6 +51,7 @@ void System::Start() {
     running = true;
 }
 void System::loadRom(long len, uint8_t* data) {
+    rom = new ROM();
     printf("load rom, length: %li\n",len);
     data += len%1024; //only consider data following copier header (if it exists)
     printf("Header present: %i\n",len%1024==512);
@@ -57,7 +59,6 @@ void System::loadRom(long len, uint8_t* data) {
     //determine type of ROM by verifying where the header is.
     uint32_t header_locs[3] = {0x007FC0,0x00FFC0,0x40FFC0}; //Lo, Hi, ExHi
     std::string types[3] = {"Lo","Hi","ExHi"};
-    char name[21];
     uint8_t header_size = 0x20;
     uint16_t checksum = 0;
     for (long b=0; b<len; b++) {
@@ -87,7 +88,13 @@ void System::loadRom(long len, uint8_t* data) {
         type = data[header_locs[0]+21]&0xf;
         rom_speed = data[header_locs[0]+21]&0x10;
     }
-    memcpy(name,&data[header_locs[type]],21);
-    printf("Type: %s, Speed: %s, ROM Internal Name: %s\n",types[type].c_str(),rom_speed?"Fast":"Slow",name);
+    memcpy(rom->name,&data[header_locs[type]],21);
+    rom->type = type;
+    rom->chipset = data[header_locs[type]+22];
+    rom->rom_size_kb = 1<<data[header_locs[type]+23];
+    rom->ram_size_kb = 1<<data[header_locs[type]+24];
+    rom->country = data[header_locs[type]+25];
+    rom->place_header(data);
+    printf("Type: %s, Speed: %s, ROM Internal Name: %s\n",types[type].c_str(),rom_speed?"Fast":"Slow",rom->name);
 
 }
