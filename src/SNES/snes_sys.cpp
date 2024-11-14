@@ -66,9 +66,11 @@ void System::Start() {
 }
 void System::loadRom(long len, uint8_t* data) {
     printf("load rom, length: %li\n",len);
-    data += len%1024; //only consider data following copier header (if it exists)
-    len -= len%1024;
-    printf("Header present: %i\n",len%1024==512);
+    int mod = len%1024;
+    data += mod; //only consider data following copier header (if it exists)
+    len -= mod;
+    
+    printf("Header present: %i\n",mod==512);
     rom->mem = new uint8_t[len];
     memcpy(rom->mem,data,len);
     //determine type of ROM by verifying where the header is.
@@ -77,10 +79,11 @@ void System::loadRom(long len, uint8_t* data) {
     uint8_t header_size = 0x20;
     uint16_t checksum = 0;
     for (long b=0; b<len; b++) {
-        checksum+=data[b];
+        checksum+=data[b+mod];
     }
     int type = -1;
     int rom_speed = 0;
+    bool ascii[3] = {true,true,true};
     printf("Checksum: %04x - Header possibilities:\n",checksum);
     for (int h=0; h<3; h++) {
         uint16_t head_check = *(uint16_t*)(data+header_locs[h]+30);
@@ -97,13 +100,30 @@ void System::loadRom(long len, uint8_t* data) {
             rom_speed = data[header_locs[h]+21]&0x10;
             break;
         }
+        for (int i=0; i<21; i++) {
+            char c = data[header_locs[h]+i];
+            if (c&0x80) { //check if rom name only has ascii characters
+                printf("Type: %s, no ascii.\n",types[h].c_str());
+                ascii[h] = false;
+                break;
+            }
+        }
     }
     if (type == -1) {
-        printf("No valid checksum found - defaulting to LoROM\n");
-        type = data[header_locs[0]+21]&0xf;
-        rom_speed = data[header_locs[0]+21]&0x10;
+        printf("No valid checksum found - checking ascii characters...\n");
+        uint8_t asc_ind = 0;
+        for (int i=0; i<3; i++) {
+            if (ascii[i]==true) { //find first rom with only ascii characters in internal name
+                asc_ind = i;
+                break;
+            }
+        }
+        //use first rom if none have ascii characters
+        type = data[header_locs[asc_ind]+21]&0xf;
+        rom_speed = data[header_locs[asc_ind]+21]&0x10;
     }
     memcpy(rom->name,&data[header_locs[type]],21);
+    rom->name[21] = 0;
     rom->type = type;
     rom->chipset = data[header_locs[type]+22];
     rom->rom_size_kb = 1<<data[header_locs[type]+23];

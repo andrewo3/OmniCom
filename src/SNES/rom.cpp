@@ -17,10 +17,8 @@ uint32_t ROM::map(uint32_t address) {
             address&=0x7fff;
             address|=bank>>1;
             return address;}
-        case HIROM: //TODO
-            printf("unimplemented HiROM\n");
-            exit(1);
-            break;
+        case HIROM:
+            return address&0x3fffff;
         case EXHIROM: //TODO
             printf("unimplemented ExHiROM\n");
             exit(1);

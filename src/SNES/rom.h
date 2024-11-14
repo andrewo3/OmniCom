@@ -8,7 +8,7 @@ class ROM {
         ROM();
         enum types {LOROM,HIROM,EXHIROM};
         bool low_hi;
-        char name[21];
+        char name[22];
         uint8_t type;
         uint8_t chipset;
         long long rom_size_kb;
