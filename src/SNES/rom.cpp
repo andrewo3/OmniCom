@@ -8,23 +8,23 @@ ROM::ROM() {
 
 }
 
-void ROM::map(uint32_t &address) {
+
+//map address from CPU memory space to ROM memory space based on mapping mode
+uint32_t ROM::map(uint32_t address) {
     switch (type) {
         case LOROM:
-            address |= 0x808000;
-            break;
-        case HIROM:
+            {uint32_t bank = address&0x7f0000;
+            address&=0x7fff;
+            address|=bank>>1;
+            return address;}
+        case HIROM: //TODO
             printf("unimplemented HiROM\n");
-            address |= 0xc00000;
             exit(1);
             break;
-        case EXHIROM:
+        case EXHIROM: //TODO
             printf("unimplemented ExHiROM\n");
             exit(1);
             break;
     }
-}
-
-void ROM::place_header(uint8_t* data) {
-    //TODO
+    return 0; //should never get here
 }

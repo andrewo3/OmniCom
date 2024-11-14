@@ -14,8 +14,8 @@ class ROM {
         long long rom_size_kb;
         long long ram_size_kb;
         uint8_t country;
-        void map(uint32_t &address);
-        void place_header(uint8_t* data);
+        uint8_t* mem;
+        uint32_t map(uint32_t address);
 };
 }
 
