@@ -3,15 +3,22 @@
 #include <cstdio>
 #include <cstdbool>
 #include <string>
+#include <thread>
 #include "SDL2/SDL.h"
 
 using namespace SNES;
 
 System::System() {
+    cpu = new CPU();
+    rom = new ROM();
+    cpu->rom = rom;
     printf("Constructor\n");
 }
 void System::Loop() {
     printf("Loop\n");
+    while (running) {
+        cpu->clock();
+    }
 }
 void System::AudioLoop() {
     printf("Audio Loop\n");
@@ -41,21 +48,29 @@ void System::Update() {
     }
 }
 void System::Stop() {
+    delete cpu;
+    delete rom->mem;
+    delete rom;
     printf("Stop Emulation\n");
+    running = false;
 }
 void System::GLSetup() {
     printf("OpenGL Setup\n");
 }
 void System::Start() {
     printf("start\n");
+    cpu->rom = rom;
+    cpu->reset();
+    loop_thread = std::thread(&System::Loop, this);
     running = true;
 }
 void System::loadRom(long len, uint8_t* data) {
-    rom = new ROM();
     printf("load rom, length: %li\n",len);
     data += len%1024; //only consider data following copier header (if it exists)
+    len -= len%1024;
     printf("Header present: %i\n",len%1024==512);
-
+    rom->mem = new uint8_t[len];
+    memcpy(rom->mem,data,len);
     //determine type of ROM by verifying where the header is.
     uint32_t header_locs[3] = {0x007FC0,0x00FFC0,0x40FFC0}; //Lo, Hi, ExHi
     std::string types[3] = {"Lo","Hi","ExHi"};
@@ -94,7 +109,6 @@ void System::loadRom(long len, uint8_t* data) {
     rom->rom_size_kb = 1<<data[header_locs[type]+23];
     rom->ram_size_kb = 1<<data[header_locs[type]+24];
     rom->country = data[header_locs[type]+25];
-    rom->place_header(data);
     printf("Type: %s, Speed: %s, ROM Internal Name: %s\n",types[type].c_str(),rom_speed?"Fast":"Slow",rom->name);
 
 }
