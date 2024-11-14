@@ -17,7 +17,10 @@ System::System() {
 void System::Loop() {
     printf("Loop\n");
     while (running) {
-        cpu->clock();
+        if (!stop) {
+            cpu->clock();
+            stop = true;
+        }
     }
 }
 void System::AudioLoop() {
@@ -43,6 +46,12 @@ void System::Update() {
         switch(event.type) {
             case SDL_QUIT:
                 running = false;
+                break;
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_SPACE) {
+                    stop = false;
+                    printf("go\n");
+                }
                 break;
         }
     }

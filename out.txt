@@ -1,0 +1,14 @@
+MACOS, /Users/andrewogundimu/Library/Containers
+Web: 0
+/Users/andrewogundimu/Library/Containers/Nes2Exec/CPUAND
+Folder already exists. Checking for save...
+Constructor
+SDL Initialized
+SDL audio set up.
+GL attributes
+GL Major version: 3
+GL Minor version: 2
+Made window: 0x13e60be00
+GL Context created successfully.
+Stop Emulation
+Interrupted.

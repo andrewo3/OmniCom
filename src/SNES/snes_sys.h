@@ -50,6 +50,7 @@ class System: public BaseSystem {
         ROM* rom;
         CPU* cpu;
         std::thread loop_thread;
+        volatile bool stop = true; //for debugging - remove later
 };
 
 }
