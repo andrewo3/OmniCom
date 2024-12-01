@@ -47,7 +47,7 @@ int changing_keybind = -1;
 int render_engine = 0;
 int current_device = 0;
 
-bool paused = false;
+volatile bool paused = false;
 bool paused_window = false;
 int current_tab = 0;
 static ImGuiWindowFlags paused_flags = ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar;

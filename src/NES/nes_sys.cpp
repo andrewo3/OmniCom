@@ -152,6 +152,7 @@ void System::Loop() {
                     //if its far behind (consider system sleep), fake a pause for the whole duration
                     paused_time = epoch_nano()-start_time-(cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED;
                 }
+                //printf("wait time: %lli\n",result_time);
                 std::this_thread::sleep_until(result_time);
             }
         }
