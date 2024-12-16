@@ -208,6 +208,7 @@ void mainLoop(void* arg) {
     #endif
     //process events
     emuSystem->Update();
+    SDL_Delay(1000/60);
 }
 
 int main(int argc, char ** argv) {

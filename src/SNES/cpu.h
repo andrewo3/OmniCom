@@ -24,6 +24,7 @@ class CPU {
         //vec[0] = without
         bool new_func;
         typedef void (*func_branch)();
+        typedef uint8_t* (*addrmode)(uint8_t*);
         std::map<uint32_t,func_branch> func_cache; 
         ROM* rom;
         void clock();
@@ -32,6 +33,7 @@ class CPU {
     private:
         uint8_t* PC_rel_long(uint8_t* arg);
         uint8_t* stack_rel(uint8_t* arg);
+        uint8_t* implied(uint8_t* arg);
 };
 
 

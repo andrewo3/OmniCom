@@ -9,6 +9,7 @@
 #include "shader_data.h"
 #include <thread>
 #include <vector>
+#include <condition_variable>
 
 auto now = std::chrono::system_clock::now;
 
@@ -140,6 +141,7 @@ void System::Loop() {
     time_point<system_clock, nanoseconds> epoch;
     printf("EPOCH: %i\n",epoch);
     long long frame_count = 0;
+    
     while (running) {
         if (!paused) {
             Cycle();
@@ -155,6 +157,9 @@ void System::Loop() {
                 //printf("wait time: %lli\n",result_time);
                 std::this_thread::sleep_until(result_time);
             }
+        } else {
+            pause_cv.wait(pause_mut);
+            pause_mut.unlock();
         }
         
     }
@@ -286,6 +291,12 @@ void System::Update() {
                             pause_start = epoch_nano();
                         }
                         paused = paused ? false : true;
+                        if (paused) {
+                            pause_mut.lock();
+                        } else {
+                            pause_mut.unlock();
+                            pause_cv.notify_all();
+                        }
                         paused_window = true;
                         cpu->last = epoch_nano(); // reset timing
                         break;
