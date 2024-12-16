@@ -149,6 +149,7 @@ void System::Loop() {
             //calculate delay
             if (ppu->frames>frame_count) { //only sleep on frame change
                 frame_count = ppu->frames;
+                draw_cv.notify_all();
                 time_point<system_clock, nanoseconds> result_time = epoch+nanoseconds(start_time+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
                 if (result_time<now()) { 
                     //if its far behind (consider system sleep), fake a pause for the whole duration
@@ -173,7 +174,9 @@ bool System::Render() {
     int h;
     SDL_GetWindowSize(window->GetSDLWin(),&w,&h);
     setGLViewport(w,h,(float)video_dim[0]/video_dim[1]);
-
+    if (!paused) {
+        draw_cv.wait(draw_mut);
+    }
     if (!ppu->image_drawn || paused) { //if ppu hasnt registered image as being drawn yet
         /*#ifndef __EMSCRIPTEN__
             char * new_title = new char[255];
@@ -197,6 +200,7 @@ bool System::Render() {
         ppu->image_drawn = true;
         return 1;
     }
+    draw_mut.unlock();
     return 0;
 }
 
