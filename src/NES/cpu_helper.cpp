@@ -901,7 +901,7 @@ void CPU::define_opcodes() {
 }
 
 void CPU::define_timings() {
-    char *edit_str = 
+    char const* edit_str = 
     "7608335532224466"
     "0508446624274477"
     "6608335542224466"

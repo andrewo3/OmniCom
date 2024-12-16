@@ -72,7 +72,7 @@ static std::string labelPrefix(const char* const label)
 	float width = ImGui::CalcItemWidth();
 
 	float x = ImGui::GetCursorPosX();
-	ImGui::Text(label); 
+	ImGui::Text("%s",label); 
 	ImGui::SameLine(); 
 	//ImGui::SetCursorPosX(x + width * 0.5f + ImGui::GetStyle().ItemInnerSpacing.x);
 	//ImGui::SetNextItemWidth(-1);
@@ -86,7 +86,7 @@ static std::string labelPrefix(const char* const label)
 int tab_offset = 10;
 int menu_buttons = 5;
 
-void MenuButton(ImVec2 win_size, int number,char* name) {
+void MenuButton(ImVec2 win_size, int number,const char* name) {
     bool active = false;
     if (current_tab==number) {
         ImGui::PushStyleColor(ImGuiCol_Button,ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive));
@@ -162,7 +162,7 @@ void pause_menu(BaseSystem* system) {
     ImGui::SameLine(0,0);
     MenuButton(size,4,"Audio");
     ImGui::SetCursorPosY(size.y/4);
-    char * button_names[8] = {
+    const char * button_names[8] = {
         "A",
         "B",
         "Select",
@@ -236,7 +236,7 @@ void pause_menu(BaseSystem* system) {
             }
 
             for (int i=0; i<8; i++) {
-                ImGui::Text(button_names[i]);
+                ImGui::Text("%s",button_names[i]);
                 ImGui::SameLine(0);
                 ImGui::SetCursorPosX(size.x*(i%2)/2+50);
                 bool active = false;

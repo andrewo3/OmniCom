@@ -139,7 +139,6 @@ void System::Loop() {
     using namespace std::chrono;
     //emulator loop
     time_point<system_clock, nanoseconds> epoch;
-    printf("EPOCH: %i\n",epoch);
     long long frame_count = 0;
     
     while (running) {

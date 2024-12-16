@@ -104,7 +104,7 @@ void System::loadRom(long len, uint8_t* data) {
         if (head_check == checksum) {
             type = data[header_locs[h]+21]&0xf;
             if (type==5) {
-                type == 2;
+                type = 2;
             }
             rom_speed = data[header_locs[h]+21]&0x10;
             break;

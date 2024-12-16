@@ -10,7 +10,7 @@ uint8_t* CPU::PC_rel_long(uint8_t* arg) {
 }
 
 uint8_t* CPU::stack_rel(uint8_t* arg) {
-    return memory + *(int8_t*)arg[0]+SP;
+    return memory + ((int8_t)arg[0]+SP);
 }
 
 uint8_t* CPU::implied(uint8_t* arg) {

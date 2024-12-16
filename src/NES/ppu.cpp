@@ -219,10 +219,8 @@ void PPU::cycle() {
             bool sprite_pix = false;
             if (bg_pattern) {
                 if (sprite_pattern) {
-                    switch(sprite_priority) {
-                        case 0:
-                            sprite_pix = true;
-                            break;
+                    if (!sprite_priority) {
+                        sprite_pix = true;
                     }
                 }
             } else {
@@ -388,6 +386,8 @@ void PPU::map_memory(int16_t &location) {
                 break;
             case SINGLESCREEN:
                 location = 0x2000|(location&0x3ff);
+                break;
+            default:
                 break;
 
             //fourtable has nothing because four table is no mirroring at all

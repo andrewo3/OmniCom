@@ -20,6 +20,7 @@ class Mapper {
         virtual void clock(void** system) = 0;
         virtual void serialize(void** system, char* out) = 0;
         virtual void deserialize(void** system, char* in) = 0;
+        virtual ~Mapper() = default;
 };
 
 class DEFAULT_MAPPER: public Mapper {

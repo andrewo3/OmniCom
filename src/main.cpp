@@ -1,10 +1,12 @@
 #define ARGS 1
 #ifndef ROM_NAME
     #define ROM_NAME argv[1]
+    #undef ARGS
     #define ARGS 2
 #endif
 #ifndef DATAROM
     #define DATAROM placeholder
+    #undef ARGS
     #define ARGS 2
 #endif
 #ifndef DATALENGTH

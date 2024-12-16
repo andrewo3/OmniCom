@@ -75,7 +75,7 @@ void ROM::load_arr(long length, unsigned char* data) {
         mirrormode = (header[6]&0x1) ? VERTICAL : HORIZONTAL;
     }
     if (nes2) {
-        int8_t msb = header[9]&0x0F;
+        uint8_t msb = header[9]&0x0F;
         if (msb == 0x0F) { //use exponent notation
             prgsize = pow(2,(header[4]&0xFC)>>2)*((header[4]&0x3)*2+1);
         } else {
