@@ -7,6 +7,14 @@ root = os.path.abspath('.')
 application = Flask(__name__)
 CORS(application)
 
+#uncomment on server with cloudflare tunnel
+@application.before_request
+def ensure_https():
+    # Check if the request was forwarded as HTTPS
+    if request.headers.get('X-Forwarded-Proto') != 'https':
+        # Redirect to the HTTPS version if it wasn't
+        return redirect(request.url.replace("http://", "https://", 1), code=301)
+    
 @application.after_request
 def set_headers(response):
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
@@ -46,5 +54,6 @@ def matches():
 
 if __name__ == "__main__":
     print(root)
-    application.run(host='0.0.0.0',ssl_context=('cert/cert.pem','cert/key.pem'))
+    application.run(host='0.0.0.0',port=25565)
+    #application.run(host='0.0.0.0',ssl_context=('cert/cert.pem','cert/key.pem'))
     #application.run()

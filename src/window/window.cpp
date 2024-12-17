@@ -47,12 +47,16 @@ void EmuWindow::setupAudio() {
     SDL_AudioSpec obtained;
     char* device_name;
     int success = SDL_GetDefaultAudioInfo(&device_name,&obtained,0);
+    #ifndef __EMSCRIPTEN__
     if (success!=0) {
-        printf("error %i: %s\n",success,SDL_GetError());
+        printf("Audo device find error %i: %s\n",success,SDL_GetError()); 
         SDL_Quit();
         window_created = false;
         return;
     }
+    #else
+    device_name = NULL;
+    #endif
     //int success = SDL_GetDefaultAudioInfo(&device_name,&obtained,0);
     //printf("Obtained device: %s\n",device_name);
     audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
@@ -61,7 +65,7 @@ void EmuWindow::setupAudio() {
         SDL_PauseAudioDevice(audio_device,0);
         //SDL_free(device_name);
     } else {
-        printf("Audio Device: FAILURE\n");
+        printf("Audio Device Failure: %s\n",SDL_GetError());
         SDL_DestroyWindow(win);
         SDL_Quit();
         window_created = false;
