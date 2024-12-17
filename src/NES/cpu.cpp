@@ -61,10 +61,6 @@ void CPU::start_irq() {
 void CPU::write(int8_t* address, int8_t value) {
     map_memory(&address);
     long long mem = get_addr(address); 
-
-    if (debug) {
-        printf("%04x=>%02x\n",mem,value&0xff);
-    }
     switch(mem) {
         //write to OAMADDR (0x2001) is handled implicitly
         //write to OAMADDR (0x2003) is handled implicitly
@@ -100,9 +96,6 @@ void CPU::write(int8_t* address, int8_t value) {
             //printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             break;
         case 0x2006: //write to PPUADDR
-            if (debug) {
-                printf("(Before) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
-            }
             if (!ppu->w) {
                 ppu->t &= ~0x3F00;
                 ppu->t |= (value&0x3f)<<8;
@@ -114,9 +107,6 @@ void CPU::write(int8_t* address, int8_t value) {
                 ppu->v = ppu->t;
                 ppu->address_bus = ppu->v;
                 ppu->w = 0;
-            }
-            if (debug) {
-                printf("(After) Write %02x->0x%04x: v=%04x,t=%04x,w=%i,x=%02x\n",value&0xff,mem,ppu->v,ppu->t,ppu->w,ppu->x);
             }
             break;
         case 0x2007: // write to PPUDATA
@@ -349,9 +339,9 @@ int8_t CPU::read(int8_t* address, bool from_cpu) {
     return value;
 }
 
-void CPU::ins_str(char * write,uint8_t opcode) {
+void CPU::ins_str(char * write,int buf_size,uint8_t opcode) {
     if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
-        sprintf(write,"0x%02x: %s, %s, PC=$%04x - A=%u - X=%u - Y=%u",
+        snprintf(write,buf_size,"0x%02x: %s, %s, PC=$%04llx - A=%u - X=%u - Y=%u",
         opcode,
         this->debug_opcodes[opcode],
         this->debug_addr[opcode],
@@ -360,11 +350,11 @@ void CPU::ins_str(char * write,uint8_t opcode) {
         x,
         y);
     } else {
-        sprintf(write,"0x%02x: ---",opcode);
+        snprintf(write,buf_size,"0x%02x: ---",opcode);
     }
 }
 
-void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
+void CPU::ins_str_mem(char * write,int buf_size,uint8_t* mem,int8_t* arg_ptr) {
     map_memory((int8_t**)&mem);
     map_memory(&arg_ptr);
     uint8_t opcode = mem[0];
@@ -375,7 +365,7 @@ void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
         a = mem[1];
     }
     if (debug_opcodes[opcode]!=nullptr && debug_addr[opcode]!=nullptr) {
-        sprintf(write,"Cycles: %li, 0x%02x: %s, %s $%04x->%04x=%02x, PC=$%04x - A=%02x - X=%02x - Y=%02x - P=%02x",
+        snprintf(write,buf_size,"Cycles: %lli, 0x%02x: %s, %s $%04x->%04llx=%02x, PC=$%04llx - A=%02x - X=%02x - Y=%02x - P=%02x",
         cycles,
         opcode,
         this->debug_opcodes[opcode],
@@ -389,7 +379,7 @@ void CPU::ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr) {
         (uint8_t)y,
         flags);
     } else {
-        sprintf(write,"0x%02x: ---",opcode);
+        snprintf(write,buf_size,"0x%02x: ---",opcode);
     }
 }
 
@@ -478,8 +468,9 @@ void CPU::clock() {
     }*/
     //map_memory(&arg); // update banks and registers as needed
     if (debug) { //print instruction
-        char w[256] = {0};
-        ins_str_mem(w,(uint8_t*)ins,arg);
+        const int buf_size = 256;
+        char w[buf_size] = {0};
+        ins_str_mem(w,buf_size,(uint8_t*)ins,arg);
         printf("%s ",w);
         //print stack
         printf("SP: %02x [",sp);
@@ -522,13 +513,8 @@ void CPU::reset() {
     apu->cycles = 0;
     apu->audio_frame = 0;
     int8_t * res = &memory[RESET];
-    printf("Before: %04x\n",get_addr(res));
-    printf("reset loc: %p, memory loc: %p\n",res,memory);
     map_memory(&res);
-    printf("After: %04x\n",get_addr(res));
-    printf("%02x %02x\n",*res,*(res+1));
     pc = abs(res);
-    printf("%04x\n",get_addr(pc));
     //for test purposes: remove this later.
     //pc = &memory[0xc000];
 }

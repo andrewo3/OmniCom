@@ -338,4 +338,5 @@ uint8_t APU::length_lookup(uint8_t in) {
                 return low4 ? 32 : 26;
         }
     }
+    return 0;
 }

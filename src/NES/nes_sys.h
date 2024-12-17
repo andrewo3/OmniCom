@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <thread>
 #include <vector>
+#include <condition_variable>
 
 namespace NES {
 
@@ -55,6 +56,10 @@ class System: public BaseSystem {
         GLuint shaderProgram;
         GLuint vertexShader;
         GLuint fragmentShader;
+        std::condition_variable_any pause_cv;
+        std::mutex pause_mut;
+        std::mutex draw_mut;
+        std::condition_variable_any draw_cv;
         void initShaders();   
 
 };

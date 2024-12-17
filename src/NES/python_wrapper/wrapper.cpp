@@ -3,7 +3,7 @@
 #include "cpu.h"
 #include "ppu.h"
 #include "mapper.h"
-#include "apu.h"
+#include "apu.hpp"
 #include "pybind11/functional.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"

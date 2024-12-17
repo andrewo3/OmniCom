@@ -48,8 +48,8 @@ class CPU {
         typedef void (CPU::*instruction) (int8_t*);
         addressing_mode addrmodes[256];
         instruction opcodes[256];
-        void ins_str(char * write,uint8_t opcode);
-        void ins_str_mem(char * write,uint8_t* mem,int8_t* arg_ptr);
+        void ins_str(char * write,int buf_size,uint8_t opcode);
+        void ins_str_mem(char * write,int buf_size,uint8_t* mem,int8_t* arg_ptr);
         void loadRom(ROM *r,bool ram = true);
         void init_vals() {
             for (int i=0; i<=0xffff; i++) {
@@ -172,10 +172,10 @@ class CPU {
         void stack_push(int8_t val);
         uint8_t stack_pull(void);
         void map_memory(int8_t** address); //designate mirrors and important registers, and anything necessary for bank switching and the like according to the set mapper number.
-        char* debug_opcodes[256] = {0};
+        char const* debug_opcodes[256] = {0};
         uint8_t inst_cycles[256] = {0};
         uint8_t inst_cycles_pagecross[256] = {0};
-        char* debug_addr[256] = {0};
+        char const* debug_addr[256] = {0};
 };
 
 }

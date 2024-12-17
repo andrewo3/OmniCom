@@ -2,6 +2,9 @@
 #define SNES_SYS_H
 
 #include "system.h"
+#include "rom.h"
+#include "cpu.h"
+#include <thread>
 
 /* for reference
 ==============================
@@ -44,6 +47,10 @@ class System: public BaseSystem {
         void GLSetup();
         void Start();
         void loadRom(long len, uint8_t* data);
+        ROM* rom;
+        CPU* cpu;
+        std::thread loop_thread;
+        volatile bool stop = true; //for debugging - remove later
 };
 
 }

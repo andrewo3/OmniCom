@@ -1,10 +1,12 @@
 #define ARGS 1
 #ifndef ROM_NAME
     #define ROM_NAME argv[1]
+    #undef ARGS
     #define ARGS 2
 #endif
 #ifndef DATAROM
     #define DATAROM placeholder
+    #undef ARGS
     #define ARGS 2
 #endif
 #ifndef DATALENGTH
@@ -208,6 +210,7 @@ void mainLoop(void* arg) {
     #endif
     //process events
     emuSystem->Update();
+    //SDL_Delay(1000/60);
 }
 
 int main(int argc, char ** argv) {

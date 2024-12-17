@@ -37,7 +37,7 @@ extern GLfloat vertices[16];
 //settings/pause menu
 extern void pause_menu(BaseSystem* saveSystem);
 extern bool paused_window;
-extern bool paused;
+extern volatile bool paused;
 
 extern SDL_Joystick* controller;
         

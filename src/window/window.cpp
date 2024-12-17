@@ -29,6 +29,9 @@ EmuWindow::EmuWindow(std::string title,int w, int h) {
     glewExperimental = GL_TRUE;
     glewInit();
     #endif
+    if (SDL_GL_SetSwapInterval(1) < 0) {
+        printf("Warning: Unable to set VSync! SDL Error: %s\n", SDL_GetError());
+    }
     window_created = true;
 }
 
@@ -43,12 +46,18 @@ void EmuWindow::setupAudio() {
     //audio_spec.callback = AudioLoop;
     SDL_AudioSpec obtained;
     char* device_name;
+    int success = SDL_GetDefaultAudioInfo(&device_name,&obtained,0);
+    if (success!=0) {
+        printf("error %i: %s\n",success,SDL_GetError());
+        SDL_Quit();
+        window_created = false;
+        return;
+    }
     //int success = SDL_GetDefaultAudioInfo(&device_name,&obtained,0);
     //printf("Obtained device: %s\n",device_name);
-    audio_device = SDL_OpenAudioDevice(NULL,0,&audio_spec,nullptr,0);
+    audio_device = SDL_OpenAudioDevice(device_name,0,&audio_spec,nullptr,0);
     if (audio_device != 0) {
-        const char* audio_device_name = SDL_GetAudioDeviceName(audio_device,0);
-        printf("Audio Device: %s\n",audio_device_name);
+        printf("Audio Device: %s\n",device_name);
         SDL_PauseAudioDevice(audio_device,0);
         //SDL_free(device_name);
     } else {
