@@ -96,7 +96,7 @@ function handleBodyClick(event) {
 }
 
 window.onerror = function() {
-    //location.reload();
+    location.reload();
 }
 
 // Add event listener for click events on the document body
