@@ -85,7 +85,7 @@ int frames = 0;
 int desired_fps = 60;
 long long paused_time = 0;
 long long real_time = 0;
-float t_time, last_time;
+uint32_t t_time, last_time;
 
 char* filename;
 unsigned char * filtered;
@@ -179,38 +179,35 @@ void changeRom(char* file) {
 
 void mainLoop(void* arg) {
     //logic is executed in nes thread
-    bool new_frame = emuSystem->Render(); //Execute GL render functions from system
-    SDL_ShowCursor(paused);
-    if (paused) {
-        window->drawPauseMenu(emuSystem);
-    }
+    t_time = SDL_GetTicks();
+    uint32_t elapsed = t_time - last_time; 
+    if (elapsed >= 1000/desired_fps) {
+        bool new_frame = emuSystem->Render(); //Execute GL render functions from system
+        SDL_ShowCursor(paused);
+        if (paused) {
+            window->drawPauseMenu(emuSystem);
+        }
 
-    //update screen
-    if (new_frame || paused) {
+        //update screen
         SDL_GL_SwapWindow(window->GetSDLWin());
+
+        // event loop
+        #ifdef __EMSCRIPTEN__
+        if (display_size_changed)
+        {
+            double w, h;
+            emscripten_get_element_css_size( "#canvas", &w, &h );
+            SDL_SetWindowSize( window->GetSDLWin(), (int)w, (int) h );
+
+            display_size_changed = 0;
+        }
+        #endif
+        //process events
+        emuSystem->Update();
+        last_time = t_time;
+    } else {
+        SDL_Delay(1000/desired_fps-elapsed);
     }
-    /*if (audio_queue.size() >= BUFFER_LEN) {
-        SDL_QueueAudio(audio_device,audio_queue.data(),sizeof(int16_t)*audio_queue.size());
-        audio_queue.clear();
-    }*/
-    
-
-
-    //ppu_ptr->image_mutex.unlock();
-    // event loop
-    #ifdef __EMSCRIPTEN__
-    if (display_size_changed)
-    {
-        double w, h;
-        emscripten_get_element_css_size( "#canvas", &w, &h );
-        SDL_SetWindowSize( window->GetSDLWin(), (int)w, (int) h );
-
-        display_size_changed = 0;
-    }
-    #endif
-    //process events
-    emuSystem->Update();
-    //SDL_Delay(1000/60);
 }
 
 int main(int argc, char ** argv) {
@@ -342,8 +339,8 @@ int main(int argc, char ** argv) {
     //Enter NES logic loop alongside window loop
     emuSystem->Start();
     printf("Emulator system started - running: %i\n",emuSystem->running);
-    t_time = SDL_GetTicks()/1000.0;
-    last_time = SDL_GetTicks()/1000.0;
+    t_time = SDL_GetTicks();
+    last_time = SDL_GetTicks();
     int16_t buffer[BUFFER_LEN*2];
     //main window loop
     //printf("audio device: %i\n",window->audio_device);
