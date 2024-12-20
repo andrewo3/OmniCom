@@ -116,6 +116,8 @@ void System::Start() {
 void System::Stop() {
     paused = false;
     paused_window = false;
+    pause_mut.unlock();
+    pause_cv.notify_all();
     running = false;
     int clock_speed = cpu->emulated_clock_speed(epoch_nano()-start_time-paused_time);
     printf("Cycles: %lli, Emulated Clock Speed: %i - Target: (approx.) 1789773 - %.02f%% similarity\n",cpu->cycles,clock_speed,clock_speed/1789773.0*100);
