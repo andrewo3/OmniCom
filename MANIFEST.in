@@ -1,0 +1,6 @@
+include python_wrapper/omnicom.pyi
+include include/universal/*.h
+include src/NES/*.*
+include python_wrapper/wrapper.cpp
+
+exclude src/NES/nes_sys.*

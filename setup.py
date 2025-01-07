@@ -17,30 +17,18 @@ if platform == "win32":
     sep = ";"
     folder = "win32"
 
-print(getcwd(),listdir(),listdir('..'))  
-cwd = dirname(realpath(__file__))
-chdir(cwd)
 #sorted(glob("*.cpp")),  # Sort source files for reproducibility
 root = f"."
-print(root)
-root_src = glob(f"{root}{file_sep}src{file_sep}NES{file_sep}*.cpp")
-print(cwd,"src files:",root_src)
+print(getcwd(),root)
+root_src = glob(f"src{file_sep}NES{file_sep}*.cpp")
 files = sorted(root_src)
-files.append(f"{root}{file_sep}src{file_sep}NES{file_sep}python_wrapper{file_sep}wrapper.cpp")
-files.append(f"{root}{file_sep}src{file_sep}glob_const.cpp")
-files.remove(f"{root}{file_sep}src{file_sep}NES{file_sep}nes_sys.cpp")
-print(files)
+files.append(f"python_wrapper{file_sep}wrapper.cpp")
+files.append(f"src{file_sep}glob_const.cpp")
+#files.remove(f"{root}{file_sep}src{file_sep}NES{file_sep}nes_sys.cpp")
 #files.remove(f"{root}{file_sep}src{file_sep}util.cpp")
 lib_path = realpath(f"{root}{file_sep}lib")
 libs = sorted(glob(f"{lib_path}{file_sep}*.*"))
-include_path = f"{realpath(f'{root}{file_sep}include{file_sep}{folder}')}\
-{sep}\
-{realpath(f'{root}{file_sep}include{file_sep}universal')}\
-{sep}\
-{realpath(f'{root}{file_sep}src{file_sep}NES')}"
-
-include_path = include_path.replace("/",file_sep)
-
+include_path = [f'{root}{file_sep}include{file_sep}universal',f'{root}{file_sep}src{file_sep}NES']
 library_paths = []
 library_paths.append(lib_path)
 libraries = []
@@ -57,7 +45,7 @@ if platform == "win32":
 else:
     #environ["CFLAGS"]+=f" -F{realpath('../../bin')} -framework SDL2 -rpath {realpath('../../bin')}"
     try:
-        environ["CPLUS_INCLUDE_PATH"] += include_path
+        environ["CPLUS_INCLUDE_PATH"] += f"{sep}".join(include_path)
     except KeyError:
         pass
     environ["LD_LIBRARY_PATH"] = realpath(f"{root}{file_sep}lib")
@@ -74,13 +62,13 @@ ext_modules = [
     Pybind11Extension(
         "omnicom",
         sources = files,
-        include_dirs = include_path.split(sep),
+        include_dirs = include_path,
         libraries=libraries,
         extra_compile_args=['-std=c++17']
     )
 ]
 
-stubs = f"{root}{file_sep}src{file_sep}NES{file_sep}python_wrapper{file_sep}omnicom.pyi"
+stubs = f"python_wrapper{file_sep}omnicom.pyi"
 from setuptools.command.build import build
 
 class CopyStubs(build):
@@ -109,7 +97,5 @@ setup(
     cmdclass = {"build": CopyStubs},
     name='omnicom',
     version='0.3.6',
-    author="Andrew Ogundimu",
-    description="A python module for a multisystem (currently only NES) emulator",
     ext_modules=ext_modules
 )
