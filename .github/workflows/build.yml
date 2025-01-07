@@ -28,12 +28,12 @@ jobs:
       - if: matrix.os == 'ubuntu-latest'
         name: Install build dependencies Linux
         run: |
-          echo "CIBW_SKIP=\"pp*-macosx_arm64 pp*-manylinux_x86_64\"" >> $GITHUB_ENV
+          echo "CIBW_SKIP=pp*" >> $GITHUB_ENV
 
       - if: matrix.os != 'Linux'
         name: Install build dependencies not Linux
         run: |
-          echo "CIBW_SKIP=\"pp*-macosx_arm64 pp*-manylinux_x86_64\"" >> $GITHUB_ENV
+          echo "CIBW_SKIP=pp*" >> $GITHUB_ENV
     
       - name: Build wheels
         run: |
