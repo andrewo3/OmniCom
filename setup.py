@@ -24,7 +24,9 @@ root_src = glob(f"src{file_sep}NES{file_sep}*.cpp")
 files = sorted(root_src)
 files.append(f"python_wrapper{file_sep}wrapper.cpp")
 files.append(f"src{file_sep}glob_const.cpp")
-#files.remove(f"{root}{file_sep}src{file_sep}NES{file_sep}nes_sys.cpp")
+sys_file = f"src{file_sep}NES{file_sep}nes_sys.cpp"
+if sys_file in files:
+    files.remove(sys_file)
 #files.remove(f"{root}{file_sep}src{file_sep}util.cpp")
 lib_path = realpath(f"{root}{file_sep}lib")
 libs = sorted(glob(f"{lib_path}{file_sep}*.*"))
@@ -38,7 +40,7 @@ if platform == "darwin":
     environ["CFLAGS"]+=" -mmacosx-version-min=10.15"
 if platform == "win32":
     environ["CL"] = "/std:c++17"
-    #environ["INCLUDE"] = include_path
+    """#environ["INCLUDE"] = include_path
     environ["LIBPATH"] = realpath(f"{root}{file_sep}lib")
     libraries.append("shell32")
     #environ["CFLAGS"]+=f" -L{realpath("..\\..\\lib")} -rpath {realpath("..\\..\\lib")} -lmingw32 -lSDL2main -lSDL2 -mwindows"
@@ -48,7 +50,7 @@ else:
         environ["CPLUS_INCLUDE_PATH"] += f"{sep}".join(include_path)
     except KeyError:
         pass
-    environ["LD_LIBRARY_PATH"] = realpath(f"{root}{file_sep}lib")
+    environ["LD_LIBRARY_PATH"] = realpath(f"{root}{file_sep}lib")"""
 
 from setuptools import setup
 try:
