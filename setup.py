@@ -69,9 +69,9 @@ ext_modules = [
 ]
 
 stubs = f"python_wrapper{file_sep}omnicom.pyi"
-from setuptools.command.build import build
+from setuptools.command.build_ext import build_ext
 
-class CopyStubs(build):
+class CopyStubs(build_ext):
     def run(self):
         # Run the original build process
         print("Run original build")
@@ -94,7 +94,7 @@ class CopyStubs(build):
             s_copy.write(stubs_text)
 
 setup(
-    cmdclass = {"build": CopyStubs},
+    cmdclass = {"build_ext": CopyStubs},
     name='omnicom',
     version='0.3.6',
     ext_modules=ext_modules
