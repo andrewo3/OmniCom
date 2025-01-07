@@ -6,6 +6,7 @@ from os import environ, chdir, system, getcwd,listdir
 from os.path import *
 from shutil import rmtree
 import setuptools
+
 print("setuptools version:",setuptools.__version__)
 
 file_sep = "/"
@@ -79,9 +80,35 @@ ext_modules = [
     )
 ]
 
+stubs = f"{root}{file_sep}src{file_sep}NES{file_sep}python_wrapper{file_sep}omnicom.pyi"
+from setuptools.command.build import build
+
+class CopyStubs(build):
+    def run(self):
+        # Run the original build process
+        print("Run original build")
+        super().run()
+        print("Finished main build script")
+        # Copy the .pyi file into the build directory
+        self.copy_pyi_file()
+
+    def copy_pyi_file(self):
+        global stubs
+        # Source location of the .pyi file
+        source = stubs
+
+        # Copy the .pyi file
+        target = join(self.build_lib, "omnicom.pyi")
+        print(f"Copying Stubs: {source} to {target}")
+        with open(stubs,'r') as s:
+            stubs_text = s.read()
+        with open(target,'w') as s_copy:
+            s_copy.write(stubs_text)
+
 setup(
+    cmdclass = {"build": CopyStubs},
     name='omnicom',
-    version='0.3.5',
+    version='0.3.6',
     author="Andrew Ogundimu",
     description="A python module for a multisystem (currently only NES) emulator",
     ext_modules=ext_modules

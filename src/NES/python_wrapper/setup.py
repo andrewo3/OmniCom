@@ -63,8 +63,12 @@ ext_modules = [
     )
 ]
 
+
 setup(
     name='omnicom',
     version='0.3.0',
-    ext_modules=ext_modules
+    ext_modules=ext_modules,
+    py_modules=["omnicom"],
+    package_data={"omnicom":["*.pyi"]},
+    include_package_data=True
 )

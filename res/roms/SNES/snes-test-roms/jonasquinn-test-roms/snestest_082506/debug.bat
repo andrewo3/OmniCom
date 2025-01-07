@@ -1,1 +1,0 @@
-zsnes -d test.smc

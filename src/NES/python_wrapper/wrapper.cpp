@@ -1,9 +1,9 @@
 #include "glob_const.h"
-#include "rom.h"
-#include "cpu.h"
-#include "ppu.h"
-#include "mapper.h"
-#include "apu.hpp"
+#include "../rom.h"
+#include "../cpu.h"
+#include "../ppu.h"
+#include "../mapper.h"
+#include "../apu.h"
 #include "pybind11/functional.h"
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -241,16 +241,13 @@ NESUnit::NESUnit(char* rom_name, int CLOCK_SPEED) {
     cont2 = NES::Controller();
     cpu->set_controller(&cont1,0);
     cpu->set_controller(&cont2,1);
-    
     rom = new NES::ROM(rom_name);
     cpu->loadRom(rom);
     ppu->loadRom(rom);
     cpu->reset();
-    
     system[0] = cpu;
     system[1] = ppu;
     system[2] = apu;
-
 
 }
 
@@ -333,8 +330,8 @@ void NESUnit::operation_thread() {
     long long cpu_time;
     paused_time = 0;
     pause_check = start_nano;
-    time_point<steady_clock> epoch;
-    auto now = steady_clock::now;
+    time_point<system_clock, nanoseconds> epoch;
+    auto now = system_clock::now;
     //emulator loop
     while (running) {
         if (!paused) {
@@ -342,7 +339,7 @@ void NESUnit::operation_thread() {
             //printf("clock speed: %i\n",cpu_ptr->emulated_clock_speed());
             single_cycle();
 
-            time_point<steady_clock> result_time = epoch+nanoseconds(start_nano+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
+             time_point<system_clock, nanoseconds> result_time = epoch+nanoseconds(start_nano+paused_time)+nanoseconds((cpu->cycles*(int)1e9)/cpu->CLOCK_SPEED);
             std::this_thread::sleep_until(result_time);
         }
         

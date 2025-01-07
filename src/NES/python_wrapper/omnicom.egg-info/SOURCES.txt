@@ -1,0 +1,15 @@
+MANIFEST.in
+setup.py
+wrapper.cpp
+../apu.cpp
+../controller.cpp
+../cpu.cpp
+../cpu_helper.cpp
+../mapper.cpp
+../ppu.cpp
+../rom.cpp
+../../../src/glob_const.cpp
+omnicom.egg-info/PKG-INFO
+omnicom.egg-info/SOURCES.txt
+omnicom.egg-info/dependency_links.txt
+omnicom.egg-info/top_level.txt

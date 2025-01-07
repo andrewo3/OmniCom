@@ -53,7 +53,6 @@ audio_thread = threading.Thread(target=tAudio)
 audio_thread.start()
 world_num = 0
 #nesObj.perFrame(frameUpdate)
-
 def set_score(i):
     i//=10
     d = 0
