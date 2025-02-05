@@ -1,14 +1,284 @@
-MACOS, /Users/andrewogundimu/Library/Containers
-Web: 0
-/Users/andrewogundimu/Library/Containers/Nes2Exec/CPUAND
-Folder already exists. Checking for save...
-Constructor
-SDL Initialized
-SDL audio set up.
-GL attributes
-GL Major version: 3
-GL Minor version: 2
-Made window: 0x13e60be00
-GL Context created successfully.
-Stop Emulation
-Interrupted.
+
+hello_world:	file format mach-o arm64
+
+Disassembly of section __TEXT,__text:
+
+0000000100003b60 <__Z6memcpyPvS_i>:
+100003b60: d100c3ff    	sub	sp, sp, #48
+100003b64: f90017e0    	str	x0, [sp, #40]
+100003b68: f90013e1    	str	x1, [sp, #32]
+100003b6c: b9001fe2    	str	w2, [sp, #28]
+100003b70: f94017e8    	ldr	x8, [sp, #40]
+100003b74: f9000be8    	str	x8, [sp, #16]
+100003b78: f94013e8    	ldr	x8, [sp, #32]
+100003b7c: f90007e8    	str	x8, [sp, #8]
+100003b80: b90007ff    	str	wzr, [sp, #4]
+100003b84: 14000001    	b	0x100003b88 <__Z6memcpyPvS_i+0x28>
+100003b88: b94007e8    	ldr	w8, [sp, #4]
+100003b8c: b9401fe9    	ldr	w9, [sp, #28]
+100003b90: 6b090108    	subs	w8, w8, w9
+100003b94: 1a9fb7e8    	cset	w8, ge
+100003b98: 370001e8    	tbnz	w8, #0, 0x100003bd4 <__Z6memcpyPvS_i+0x74>
+100003b9c: 14000001    	b	0x100003ba0 <__Z6memcpyPvS_i+0x40>
+100003ba0: f94007e8    	ldr	x8, [sp, #8]
+100003ba4: b98007e9    	ldrsw	x9, [sp, #4]
+100003ba8: 8b090108    	add	x8, x8, x9
+100003bac: 39400108    	ldrb	w8, [x8]
+100003bb0: f9400be9    	ldr	x9, [sp, #16]
+100003bb4: b98007ea    	ldrsw	x10, [sp, #4]
+100003bb8: 8b0a0129    	add	x9, x9, x10
+100003bbc: 39000128    	strb	w8, [x9]
+100003bc0: 14000001    	b	0x100003bc4 <__Z6memcpyPvS_i+0x64>
+100003bc4: b94007e8    	ldr	w8, [sp, #4]
+100003bc8: 11000508    	add	w8, w8, #1
+100003bcc: b90007e8    	str	w8, [sp, #4]
+100003bd0: 17ffffee    	b	0x100003b88 <__Z6memcpyPvS_i+0x28>
+100003bd4: 9100c3ff    	add	sp, sp, #48
+100003bd8: d65f03c0    	ret
+
+0000000100003bdc <__Z9movEncodehmPvi>:
+100003bdc: d10143ff    	sub	sp, sp, #80
+100003be0: a9047bfd    	stp	x29, x30, [sp, #64]
+100003be4: 910103fd    	add	x29, sp, #64
+100003be8: 381ff3a0    	sturb	w0, [x29, #-1]
+100003bec: f81f03a1    	stur	x1, [x29, #-16]
+100003bf0: f81e83a2    	stur	x2, [x29, #-24]
+100003bf4: b81e43a3    	stur	w3, [x29, #-28]
+100003bf8: b90023ff    	str	wzr, [sp, #32]
+100003bfc: 14000001    	b	0x100003c00 <__Z9movEncodehmPvi+0x24>
+100003c00: b94023e8    	ldr	w8, [sp, #32]
+100003c04: 71001108    	subs	w8, w8, #4
+100003c08: 1a9fb7e8    	cset	w8, ge
+100003c0c: 37000748    	tbnz	w8, #0, 0x100003cf4 <__Z9movEncodehmPvi+0x118>
+100003c10: 14000001    	b	0x100003c14 <__Z9movEncodehmPvi+0x38>
+100003c14: b94023e8    	ldr	w8, [sp, #32]
+100003c18: 531c6d08    	lsl	w8, w8, #4
+100003c1c: b9001fe8    	str	w8, [sp, #28]
+100003c20: 385ff3a8    	ldurb	w8, [x29, #-1]
+100003c24: 12001108    	and	w8, w8, #0x1f
+100003c28: b9001be8    	str	w8, [sp, #24]
+100003c2c: b9401fe8    	ldr	w8, [sp, #28]
+100003c30: aa0803e9    	mov	x9, x8
+100003c34: d29fffe8    	mov	x8, #65535
+100003c38: 9ac92108    	lsl	x8, x8, x9
+100003c3c: f9000be8    	str	x8, [sp, #16]
+100003c40: f85f03a8    	ldur	x8, [x29, #-16]
+100003c44: f9400be9    	ldr	x9, [sp, #16]
+100003c48: 8a090108    	and	x8, x8, x9
+100003c4c: f90007e8    	str	x8, [sp, #8]
+100003c50: f94007e8    	ldr	x8, [sp, #8]
+100003c54: f1000108    	subs	x8, x8, #0
+100003c58: 1a9f17e8    	cset	w8, eq
+100003c5c: 37000428    	tbnz	w8, #0, 0x100003ce0 <__Z9movEncodehmPvi+0x104>
+100003c60: 14000001    	b	0x100003c64 <__Z9movEncodehmPvi+0x88>
+100003c64: b9401fe8    	ldr	w8, [sp, #28]
+100003c68: aa0803e9    	mov	x9, x8
+100003c6c: f94007e8    	ldr	x8, [sp, #8]
+100003c70: 9ac92508    	lsr	x8, x8, x9
+100003c74: f90007e8    	str	x8, [sp, #8]
+100003c78: f94007e8    	ldr	x8, [sp, #8]
+100003c7c: d37be908    	lsl	x8, x8, #5
+100003c80: f90007e8    	str	x8, [sp, #8]
+100003c84: f94007e9    	ldr	x9, [sp, #8]
+100003c88: 910063e1    	add	x1, sp, #24
+100003c8c: b9401be8    	ldr	w8, [sp, #24]
+100003c90: aa090108    	orr	x8, x8, x9
+100003c94: b9001be8    	str	w8, [sp, #24]
+100003c98: b94023e8    	ldr	w8, [sp, #32]
+100003c9c: 12000509    	and	w9, w8, #0x3
+100003ca0: b9401be8    	ldr	w8, [sp, #24]
+100003ca4: 2a095508    	orr	w8, w8, w9, lsl #21
+100003ca8: b9001be8    	str	w8, [sp, #24]
+100003cac: b9401be8    	ldr	w8, [sp, #24]
+100003cb0: 52be5009    	mov	w9, #-226492416
+100003cb4: 2a090108    	orr	w8, w8, w9
+100003cb8: b9001be8    	str	w8, [sp, #24]
+100003cbc: f85e83a8    	ldur	x8, [x29, #-24]
+100003cc0: b89e43a9    	ldursw	x9, [x29, #-28]
+100003cc4: 8b090100    	add	x0, x8, x9
+100003cc8: 52800082    	mov	w2, #4
+100003ccc: 97ffffa5    	bl	0x100003b60 <__Z6memcpyPvS_i>
+100003cd0: b85e43a8    	ldur	w8, [x29, #-28]
+100003cd4: 11001108    	add	w8, w8, #4
+100003cd8: b81e43a8    	stur	w8, [x29, #-28]
+100003cdc: 14000001    	b	0x100003ce0 <__Z9movEncodehmPvi+0x104>
+100003ce0: 14000001    	b	0x100003ce4 <__Z9movEncodehmPvi+0x108>
+100003ce4: b94023e8    	ldr	w8, [sp, #32]
+100003ce8: 11000508    	add	w8, w8, #1
+100003cec: b90023e8    	str	w8, [sp, #32]
+100003cf0: 17ffffc4    	b	0x100003c00 <__Z9movEncodehmPvi+0x24>
+100003cf4: b85e43a0    	ldur	w0, [x29, #-28]
+100003cf8: a9447bfd    	ldp	x29, x30, [sp, #64]
+100003cfc: 910143ff    	add	sp, sp, #80
+100003d00: d65f03c0    	ret
+
+0000000100003d04 <__Z6strlenPKc>:
+100003d04: d10083ff    	sub	sp, sp, #32
+100003d08: a9017bfd    	stp	x29, x30, [sp, #16]
+100003d0c: 910043fd    	add	x29, sp, #16
+100003d10: f90007e0    	str	x0, [sp, #8]
+100003d14: f94007e8    	ldr	x8, [sp, #8]
+100003d18: 39400108    	ldrb	w8, [x8]
+100003d1c: 71000108    	subs	w8, w8, #0
+100003d20: 1a9f17e8    	cset	w8, eq
+100003d24: 37000108    	tbnz	w8, #0, 0x100003d44 <__Z6strlenPKc+0x40>
+100003d28: 14000001    	b	0x100003d2c <__Z6strlenPKc+0x28>
+100003d2c: f94007e8    	ldr	x8, [sp, #8]
+100003d30: 91000500    	add	x0, x8, #1
+100003d34: 97fffff4    	bl	0x100003d04 <__Z6strlenPKc>
+100003d38: 11000408    	add	w8, w0, #1
+100003d3c: b90007e8    	str	w8, [sp, #4]
+100003d40: 14000004    	b	0x100003d50 <__Z6strlenPKc+0x4c>
+100003d44: 52800008    	mov	w8, #0
+100003d48: b90007e8    	str	w8, [sp, #4]
+100003d4c: 14000001    	b	0x100003d50 <__Z6strlenPKc+0x4c>
+100003d50: b94007e0    	ldr	w0, [sp, #4]
+100003d54: a9417bfd    	ldp	x29, x30, [sp, #16]
+100003d58: 910083ff    	add	sp, sp, #32
+100003d5c: d65f03c0    	ret
+
+0000000100003d60 <_main>:
+100003d60: d102c3ff    	sub	sp, sp, #176
+100003d64: a90a7bfd    	stp	x29, x30, [sp, #160]
+100003d68: 910283fd    	add	x29, sp, #160
+100003d6c: b81fc3bf    	stur	wzr, [x29, #-4]
+100003d70: 52800068    	mov	w8, #3
+100003d74: b81f83a8    	stur	w8, [x29, #-8]
+100003d78: 52800288    	mov	w8, #20
+100003d7c: b81f43a8    	stur	w8, [x29, #-12]
+100003d80: b0000008    	adrp	x8, 0x100004000 <_main+0x24>
+100003d84: f9400908    	ldr	x8, [x8, #16]
+100003d88: f81e83a8    	stur	x8, [x29, #-24]
+100003d8c: f85e83a8    	ldur	x8, [x29, #-24]
+100003d90: b89f43aa    	ldursw	x10, [x29, #-12]
+100003d94: d2800089    	mov	x9, #4
+100003d98: 9b0a7d2b    	mul	x11, x9, x10
+100003d9c: b85f83a9    	ldur	w9, [x29, #-8]
+100003da0: aa0903ea    	mov	x10, x9
+100003da4: 910003e9    	mov	x9, sp
+100003da8: f900013f    	str	xzr, [x9]
+100003dac: f900052b    	str	x11, [x9, #8]
+100003db0: f900092a    	str	x10, [x9, #16]
+100003db4: d282004a    	mov	x10, #4098
+100003db8: f9000d2a    	str	x10, [x9, #24]
+100003dbc: 9280000a    	mov	x10, #-1
+100003dc0: f900112a    	str	x10, [x9, #32]
+100003dc4: f900153f    	str	xzr, [x9, #40]
+100003dc8: d2800120    	mov	x0, #9
+100003dcc: d63f0100    	blr	x8
+100003dd0: f81e03a0    	stur	x0, [x29, #-32]
+100003dd4: f85e03a8    	ldur	x8, [x29, #-32]
+100003dd8: b1000508    	adds	x8, x8, #1
+100003ddc: 1a9f07e8    	cset	w8, ne
+100003de0: 370000a8    	tbnz	w8, #0, 0x100003df4 <_main+0x94>
+100003de4: 14000001    	b	0x100003de8 <_main+0x88>
+100003de8: 12800008    	mov	w8, #-1
+100003dec: b81fc3a8    	stur	w8, [x29, #-4]
+100003df0: 1400005e    	b	0x100003f68 <_main+0x208>
+100003df4: 90000008    	adrp	x8, 0x100003000 <_main+0x94>
+100003df8: 913e4108    	add	x8, x8, #3984
+100003dfc: f81d83a8    	stur	x8, [x29, #-40]
+100003e00: f85d83a0    	ldur	x0, [x29, #-40]
+100003e04: 97ffffc0    	bl	0x100003d04 <__Z6strlenPKc>
+100003e08: b81d43a0    	stur	w0, [x29, #-44]
+100003e0c: d100c3a8    	sub	x8, x29, #48
+100003e10: f9001fe8    	str	x8, [sp, #56]
+100003e14: 52800028    	mov	w8, #1
+100003e18: 72ba8008    	movk	w8, #54272, lsl #16
+100003e1c: b81d03a8    	stur	w8, [x29, #-48]
+100003e20: d100d3a8    	sub	x8, x29, #52
+100003e24: f90023e8    	str	x8, [sp, #64]
+100003e28: 52807808    	mov	w8, #960
+100003e2c: 72bacbe8    	movk	w8, #54879, lsl #16
+100003e30: b81cc3a8    	stur	w8, [x29, #-52]
+100003e34: b81c83bf    	stur	wzr, [x29, #-56]
+100003e38: f85e03a2    	ldur	x2, [x29, #-32]
+100003e3c: b85c83a3    	ldur	w3, [x29, #-56]
+100003e40: 52800000    	mov	w0, #0
+100003e44: d2800021    	mov	x1, #1
+100003e48: 97ffff65    	bl	0x100003bdc <__Z9movEncodehmPvi>
+100003e4c: b81c83a0    	stur	w0, [x29, #-56]
+100003e50: f85d83a1    	ldur	x1, [x29, #-40]
+100003e54: f85e03a2    	ldur	x2, [x29, #-32]
+100003e58: b85c83a3    	ldur	w3, [x29, #-56]
+100003e5c: 52800020    	mov	w0, #1
+100003e60: 97ffff5f    	bl	0x100003bdc <__Z9movEncodehmPvi>
+100003e64: b81c83a0    	stur	w0, [x29, #-56]
+100003e68: b89d43a1    	ldursw	x1, [x29, #-44]
+100003e6c: f85e03a2    	ldur	x2, [x29, #-32]
+100003e70: b85c83a3    	ldur	w3, [x29, #-56]
+100003e74: 52800040    	mov	w0, #2
+100003e78: 97ffff59    	bl	0x100003bdc <__Z9movEncodehmPvi>
+100003e7c: b81c83a0    	stur	w0, [x29, #-56]
+100003e80: f85e03a2    	ldur	x2, [x29, #-32]
+100003e84: b85c83a3    	ldur	w3, [x29, #-56]
+100003e88: 52800200    	mov	w0, #16
+100003e8c: d2800081    	mov	x1, #4
+100003e90: f90027e1    	str	x1, [sp, #72]
+100003e94: 97ffff52    	bl	0x100003bdc <__Z9movEncodehmPvi>
+100003e98: f9401fe1    	ldr	x1, [sp, #56]
+100003e9c: b81c83a0    	stur	w0, [x29, #-56]
+100003ea0: f85e03a8    	ldur	x8, [x29, #-32]
+100003ea4: b89c83a9    	ldursw	x9, [x29, #-56]
+100003ea8: 8b090100    	add	x0, x8, x9
+100003eac: 52800082    	mov	w2, #4
+100003eb0: b81b43a2    	stur	w2, [x29, #-76]
+100003eb4: 97ffff2b    	bl	0x100003b60 <__Z6memcpyPvS_i>
+100003eb8: f94023e1    	ldr	x1, [sp, #64]
+100003ebc: b85b43a2    	ldur	w2, [x29, #-76]
+100003ec0: b85c83a8    	ldur	w8, [x29, #-56]
+100003ec4: 11001108    	add	w8, w8, #4
+100003ec8: b81c83a8    	stur	w8, [x29, #-56]
+100003ecc: f85e03a8    	ldur	x8, [x29, #-32]
+100003ed0: b89c83a9    	ldursw	x9, [x29, #-56]
+100003ed4: 8b090100    	add	x0, x8, x9
+100003ed8: 97ffff22    	bl	0x100003b60 <__Z6memcpyPvS_i>
+100003edc: f94027e8    	ldr	x8, [sp, #72]
+100003ee0: b85b43a2    	ldur	w2, [x29, #-76]
+100003ee4: f85e03a0    	ldur	x0, [x29, #-32]
+100003ee8: b89f43a9    	ldursw	x9, [x29, #-12]
+100003eec: 9b097d01    	mul	x1, x8, x9
+100003ef0: 94000022    	bl	0x100003f78 <_syscall+0x100003f78>
+100003ef4: 381c73a0    	sturb	w0, [x29, #-57]
+100003ef8: 385c73a8    	ldurb	w8, [x29, #-57]
+100003efc: 71000108    	subs	w8, w8, #0
+100003f00: 1a9f17e8    	cset	w8, eq
+100003f04: 370000a8    	tbnz	w8, #0, 0x100003f18 <_main+0x1b8>
+100003f08: 14000001    	b	0x100003f0c <_main+0x1ac>
+100003f0c: 12800008    	mov	w8, #-1
+100003f10: b81fc3a8    	stur	w8, [x29, #-4]
+100003f14: 14000015    	b	0x100003f68 <_main+0x208>
+100003f18: f85e03a8    	ldur	x8, [x29, #-32]
+100003f1c: f81b83a8    	stur	x8, [x29, #-72]
+100003f20: f85b83a8    	ldur	x8, [x29, #-72]
+100003f24: d63f0100    	blr	x8
+100003f28: f85e03a0    	ldur	x0, [x29, #-32]
+100003f2c: b89f43a9    	ldursw	x9, [x29, #-12]
+100003f30: d2800088    	mov	x8, #4
+100003f34: 9b097d01    	mul	x1, x8, x9
+100003f38: 94000013    	bl	0x100003f84 <_syscall+0x100003f84>
+100003f3c: 381c73a0    	sturb	w0, [x29, #-57]
+100003f40: 385c73a8    	ldurb	w8, [x29, #-57]
+100003f44: 71000108    	subs	w8, w8, #0
+100003f48: 1a9f17e8    	cset	w8, eq
+100003f4c: 370000a8    	tbnz	w8, #0, 0x100003f60 <_main+0x200>
+100003f50: 14000001    	b	0x100003f54 <_main+0x1f4>
+100003f54: 12800008    	mov	w8, #-1
+100003f58: b81fc3a8    	stur	w8, [x29, #-4]
+100003f5c: 14000003    	b	0x100003f68 <_main+0x208>
+100003f60: b81fc3bf    	stur	wzr, [x29, #-4]
+100003f64: 14000001    	b	0x100003f68 <_main+0x208>
+100003f68: b85fc3a0    	ldur	w0, [x29, #-4]
+100003f6c: a94a7bfd    	ldp	x29, x30, [sp, #160]
+100003f70: 9102c3ff    	add	sp, sp, #176
+100003f74: d65f03c0    	ret
+
+Disassembly of section __TEXT,__stubs:
+
+0000000100003f78 <__stubs>:
+100003f78: b0000010    	adrp	x16, 0x100004000 <__stubs+0x4>
+100003f7c: f9400210    	ldr	x16, [x16]
+100003f80: d61f0200    	br	x16
+100003f84: b0000010    	adrp	x16, 0x100004000 <__stubs+0x10>
+100003f88: f9400610    	ldr	x16, [x16, #8]
+100003f8c: d61f0200    	br	x16

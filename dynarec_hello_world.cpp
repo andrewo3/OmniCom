@@ -40,8 +40,10 @@ int strlen(const char* str) {
 int main() {
     int protections = PROT_READ | PROT_WRITE;
     int instructions = 20;
+    //long (*syscall_ptr)(long, ...) = (long (*)(long, ...)) &syscall;
 
     //allocate
+    //void* mem = (void*)syscall_ptr(9, 0L,sizeof(uint32_t)*instructions,protections,MAP_ANONYMOUS | MAP_PRIVATE,-1,0);
     void* mem = mmap(0L,sizeof(uint32_t)*instructions,protections,MAP_ANONYMOUS | MAP_PRIVATE,-1,0);
     
     if (mem==(void*)-1) {
