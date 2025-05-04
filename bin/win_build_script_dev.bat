@@ -1,0 +1,1 @@
+g++ -Iinclude\win32 -Isrc\ntsc-filter -Iinclude -Iinclude\universal -Isrc\imgui -Isrc\imgui\backends src/imgui/backends/*.cpp src/imgui/*.cpp src/ntsc-filter/crt_core.c src/ntsc-filter/crt_ntsc.c src/*.cpp src/NES/*.cpp src/SNES/*.cpp src/window/*.cpp -Llib -lSDL2main -lSDL2 -lglew32 -lopengl32 -o bin/main

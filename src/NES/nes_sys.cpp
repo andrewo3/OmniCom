@@ -115,6 +115,7 @@ void System::Start() {
 
 void System::Stop() {
     paused = false;
+    pause_cv.notify_all();
     paused_window = false;
     running = false;
     int clock_speed = cpu->emulated_clock_speed(epoch_nano()-start_time-paused_time);
