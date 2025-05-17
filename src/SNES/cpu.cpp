@@ -117,7 +117,7 @@ void CPU::set_flag(char flag, bool set) {
 void CPU::clock() {
     printf("CPU CLOCK\n");
     auto located = func_cache.find(PC);
-    printf("Flags before: %02x\n",this->P);
+    printf("Flags before: %02x %01x\n",this->P, this->e);
     if (located==func_cache.end()) { //if function is not in cache,
         //build new function
         std::vector<uint8_t> f_build;
@@ -139,12 +139,12 @@ void CPU::clock() {
             //TODO
         #endif
         located->second = (func_branch)func_out;
-        located->second(this->P);
+        located->second(this->P, this->e);
 
     } else { // execute function from cache
-        located->second(this->P); //pass flags into function byref
+        located->second(this->P, this->e); //pass flags into function
     }
-    printf("Flags after: %02x\n",this->P);
+    printf("Flags after: %02x %01x\n",this->P,this->e);
     printf("val at PC: %06x->%02x\n",PC&0xffffff,read(rom->map(PC)));
     PC++;
 }
@@ -153,6 +153,7 @@ void CPU::reset() {
     printf("CPU RESET\n");
     uint16_t* reset_vec = (uint16_t*)((rom->mem)+rom->map(0xfffc));
     this->PC = *reset_vec;
+    this->P = 0x1;
     this->S = 0x1ff;
     this->K = 0x0;
     printf("RESET: %04x->%04x\n",*reset_vec,rom->map(*reset_vec));

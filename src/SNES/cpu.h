@@ -29,12 +29,12 @@ class CPU {
         P bit 2: i flag
         P bit 1: z flag
         P bit 0: c flag*/
-        uint8_t P = 0x1;
+        uint8_t P;
         bool e; //emulation flag
         //misc
         uint8_t memory[0x10000];
         bool new_func;
-        typedef void (*func_branch)(uint8_t&);
+        typedef void (*func_branch)(uint8_t&, bool&); //pass flags into function
         typedef uint8_t* (*addrmode)(uint8_t*);
         std::map<uint32_t,func_branch> func_cache; 
         ROM* rom;
@@ -49,6 +49,7 @@ class CPU {
         void set_flag(char flag,bool set);
         void SEI(std::vector<uint8_t>& wr);
         void CLC(std::vector<uint8_t>& wr);
+        void XCE(std::vector<uint8_t>& wr);
         void build_function(std::vector<uint8_t>& wr);
 };
 

@@ -57,6 +57,17 @@ void STR(std::vector<uint8_t>& wr, uint8_t Rt, uint8_t Rn, uint16_t offset) {
     }
 }
 
+//exclusive OR between registers (no shift)
+void EOR_reg(std::vector<uint8_t>& wr,uint8_t Rd, uint8_t Rn, uint8_t Rm) {
+    uint32_t ins = 0b01001010000<<21;
+    ins|=(Rm&0x1f)<<16;
+    ins|=(Rn&0x1f)<<5;
+    ins|=Rd&0x1f;
+    for (int i=0; i<4; i++) {
+        wr.push_back(((uint8_t*)&ins)[i]);
+    }
+}
+
 void ORR(std::vector<uint8_t>& wr,uint8_t Rd, uint8_t Rn, uint8_t imms,uint8_t immr) {
    //https://developer.arm.com/documentation/ddi0602/2024-12/Base-Instructions/ORR--immediate---Bitwise-OR--immediate--?lang=en
     uint32_t ins = 0b0011001000<<22; //unconditional flag
