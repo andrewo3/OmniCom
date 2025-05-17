@@ -157,6 +157,25 @@ int setRomData(std::string filename) {
 }
 
 extern "C" {
+const char* saveCurrentRom() {
+    #ifdef __EMSCRIPTEN__
+        emscripten_pause_main_loop();
+    #endif
+    static std::string load_dir = config_dir+sep+std::string("state");
+    FILE* save_file = fopen(load_dir.c_str(),"wb");
+    printf("opened file at %s\n",load_dir.c_str());
+    emuSystem->Save(save_file);
+    printf("saved\n");
+    fclose(save_file);
+    printf("closing savegame at: %s\n",load_dir.c_str());
+    #ifdef __EMSCRIPTEN__
+        emscripten_resume_main_loop();
+    #endif
+    return load_dir.c_str();
+}
+}
+
+extern "C" {
 void changeRom(char* file) {
     #ifdef __EMSCRIPTEN__
         emscripten_pause_main_loop();
@@ -253,7 +272,7 @@ int main(int argc, char ** argv) {
     //make config dir (if it doesnt already exist)
     bool load = false;
     printf("Web: %i\n",web);
-    if (os != -1 && !web) {
+    if (os != -1 || web) {
         config_dir+=sep;
         config_dir+=std::string("Nes2Exec");
         if (!std::filesystem::exists(config_dir)) { //make Nes2Exec appdata folder

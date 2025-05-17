@@ -67,6 +67,10 @@ void CPU::XCE(std::vector<uint8_t>& wr) {
     #endif
 }
 
+void CPU::PHK(std::vector<uint8_t>& wr) {
+
+}
+
 void CPU::build_function(std::vector<uint8_t>& wr) {
     printf("get first val: %02x\n",read(rom->map(PC)));
     uint32_t cycles = 0;

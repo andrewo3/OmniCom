@@ -49,6 +49,7 @@ class CPU {
         void set_flag(char flag,bool set);
         void SEI(std::vector<uint8_t>& wr);
         void CLC(std::vector<uint8_t>& wr);
+        void PHK(std::vector<uint8_t>& wr);
         void XCE(std::vector<uint8_t>& wr);
         void build_function(std::vector<uint8_t>& wr);
 };
