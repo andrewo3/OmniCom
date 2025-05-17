@@ -141,33 +141,6 @@ const EmscriptenUiEvent *event, void *user_data )
 #endif
 
 int setRomData(std::string filename) {
-
-    //reset config dir
-    char* save_name = new char[filename.size()+1];
-    memcpy(save_name,filename.c_str(),filename.size());
-    save_name[filename.size()] = '\0';
-    get_filename(&save_name);
-
-    char removed_spaces[strlen(save_name)+1];
-
-    for (int i=0; i<strlen(save_name); i++) {
-        removed_spaces[i] = save_name[i];
-        if (removed_spaces[i]==' ') {
-            removed_spaces[i] = '_';
-        }
-    }
-    removed_spaces[strlen(save_name)] = '\0';
-
-    default_config();
-    config_dir += sep;
-    config_dir += "Nes2Exec";
-    config_dir+=sep;
-    config_dir+=std::string(removed_spaces);
-    printf("%s\n",(config_dir).c_str());
-    if (!std::filesystem::exists(config_dir)) { //make specific game save folder
-        std::filesystem::create_directory(config_dir);
-    }
-
     FILE* fp = fopen(filename.c_str(),"rb");
     if (fp!=NULL) {
         fseek(fp,0,SEEK_END);
@@ -184,11 +157,11 @@ int setRomData(std::string filename) {
 }
 
 extern "C" {
-const char* saveCurrentRom() {
+void saveCurrentRom() {
     #ifdef __EMSCRIPTEN__
         emscripten_pause_main_loop();
     #endif
-    static std::string load_dir = config_dir+sep+std::string("state");
+    std::string load_dir = config_dir+sep+std::string("state");
     FILE* save_file = fopen(load_dir.c_str(),"wb");
     printf("opened file at %s\n",load_dir.c_str());
     emuSystem->Save(save_file);
@@ -198,7 +171,7 @@ const char* saveCurrentRom() {
     #ifdef __EMSCRIPTEN__
         emscripten_resume_main_loop();
     #endif
-    return load_dir.c_str();
+    return;
 }
 }
 
@@ -207,7 +180,34 @@ void changeRom(char* file) {
     #ifdef __EMSCRIPTEN__
         emscripten_pause_main_loop();
     #endif
+    //reset config dir
+    char* save_name = new char[strlen(file)+1];
+    memcpy(save_name,file,strlen(file));
+    save_name[strlen(file)] = '\0';
+    get_filename(&save_name);
+
+    char removed_spaces[strlen(save_name)];
+
+    for (int i=0; i<strlen(save_name); i++) {
+        removed_spaces[i] = save_name[i];
+        if (removed_spaces[i]==' ') {
+            removed_spaces[i] = '_';
+        }
+    }
+    removed_spaces[strlen(save_name)] = '\0';
+
+    default_config();
+    config_dir += sep;
+    config_dir += "Nes2Exec";
+    config_dir+=sep;
+    config_dir+=std::string(removed_spaces);
+    printf("New rom dir: %s\n",(config_dir).c_str());
+    if (!std::filesystem::exists(config_dir)) { //make specific game save folder
+        std::filesystem::create_directory(config_dir);
+    }
     setRomData((std::string(file)));
+
+    //change rom
     emuSystem->Stop();
     emuSystem->loadRom(rom_len,rom_data);
     char* game_name = new char[strlen(file)+1];
