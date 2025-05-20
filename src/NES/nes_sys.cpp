@@ -73,7 +73,11 @@ void System::Cycle() {
 }
 
 void System::Save(FILE* save_file) {
-    cpu->save_state(save_file);
+    if (save_file != nullptr) {
+        cpu->save_state(save_file);
+    } else {
+        saveRAM();
+    }
 }
 
 void System::Load(FILE* load_file) {

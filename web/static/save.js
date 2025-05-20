@@ -5,7 +5,7 @@ window.addEventListener("beforeunload",(e) => {
 
 let isSaving = false;
 
-const AUTOSAVE_INTERVAL = 30000;
+const AUTOSAVE_INTERVAL = 1000;
 
 setInterval(() => {
     if (!isSaving && romChoices > 0) {
@@ -21,7 +21,7 @@ function syncFileSystem(auto) {
         else {
         console.log("FS synced to IndexedDB");
         if (!auto) {
-            alert("Game saved successfully!"); // optional feedback
+            alert("Game saved successfully!");
         }
         isSaving = false;
         }

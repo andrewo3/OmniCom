@@ -161,13 +161,7 @@ void saveCurrentRom() {
     #ifdef __EMSCRIPTEN__
         emscripten_pause_main_loop();
     #endif
-    std::string load_dir = config_dir+sep+std::string("state");
-    FILE* save_file = fopen(load_dir.c_str(),"wb");
-    printf("opened file at %s\n",load_dir.c_str());
-    emuSystem->Save(save_file);
-    printf("saved\n");
-    fclose(save_file);
-    printf("closing savegame at: %s\n",load_dir.c_str());
+    emuSystem->Save(nullptr);
     #ifdef __EMSCRIPTEN__
         emscripten_resume_main_loop();
     #endif
@@ -209,6 +203,9 @@ void changeRom(char* file) {
 
     //change rom
     emuSystem->Stop();
+    #ifdef __EMSCRIPTEN__
+        emscripten_run_script("syncFileSystem(true);");
+    #endif
     emuSystem->loadRom(rom_len,rom_data);
     char* game_name = new char[strlen(file)+1];
     memcpy(game_name,file,strlen(file)+1);
@@ -216,9 +213,12 @@ void changeRom(char* file) {
     get_filename(&game_name);
     printf("new game name.\n");
     window->setTitle(std::string(game_name));
+
     emuSystem->Start();
+
+    //if web version, start loading from save
     #ifdef __EMSCRIPTEN__
-        emscripten_resume_main_loop();
+    emscripten_resume_main_loop();
     #endif
 }
 }
