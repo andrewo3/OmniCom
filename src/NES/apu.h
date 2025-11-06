@@ -21,7 +21,19 @@ class APU {
         long long timer_reset = 0;
         int sample_adj = 0;
         int16_t* buffer = new int16_t[BUFFER_LEN];
+        int16_t* pulse1_buffer = new int16_t[BUFFER_LEN];
+        int16_t* pulse2_buffer = new int16_t[BUFFER_LEN];
+        int16_t* tri_buffer = new int16_t[BUFFER_LEN];
+        int16_t* noise_buffer = new int16_t[BUFFER_LEN];
+        int16_t* dmc_buffer = new int16_t[BUFFER_LEN];
+
         int16_t* buffer_copy = new int16_t[BUFFER_LEN];
+        int16_t* pulse1_buffer_copy = new int16_t[BUFFER_LEN];
+        int16_t* pulse2_buffer_copy = new int16_t[BUFFER_LEN];
+        int16_t* tri_buffer_copy = new int16_t[BUFFER_LEN];
+        int16_t* noise_buffer_copy = new int16_t[BUFFER_LEN];
+        int16_t* dmc_buffer_copy = new int16_t[BUFFER_LEN];
+
         bool queue_audio_flag = false;
         int clock_speed;
         bool play_audio = false;

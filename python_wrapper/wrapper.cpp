@@ -8,6 +8,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 #include <cstdint>
+#include <cstdbool>
 #include <thread>
 #include <chrono>
 #include <vector>
@@ -66,7 +67,7 @@ class NESUnit {
         py::array_t<uint8_t> OAM();
         py::array_t<uint8_t> getImg();
         py::array_t<uint8_t> color_lookup();
-        py::bytes getAudio();
+        py::list getAudio(bool split_channels);
         void setController(ControllerWrapper& cont,int port);
         void start();
         void runFrame();
@@ -420,13 +421,24 @@ py::array_t<uint8_t> NESUnit::getImg() {
     );
 }
 
-py::bytes NESUnit::getAudio() {
+py::list NESUnit::getAudio(bool split_channels) {
+    py::list result;
     if (apu->queue_audio_flag) {
         apu->queue_audio_flag = false;
-        return py::bytes((char *)apu->buffer_copy,BUFFER_LEN*sizeof(int16_t));
+        if (split_channels) {
+            result.append(py::bytes((char *)apu->buffer_copy,BUFFER_LEN*sizeof(int16_t)));
+            result.append(py::bytes((char *)apu->pulse1_buffer_copy,BUFFER_LEN*sizeof(int16_t)));
+            result.append(py::bytes((char *)apu->pulse2_buffer_copy,BUFFER_LEN*sizeof(int16_t)));
+            result.append(py::bytes((char *)apu->tri_buffer_copy,BUFFER_LEN*sizeof(int16_t)));
+            result.append(py::bytes((char *)apu->noise_buffer_copy,BUFFER_LEN*sizeof(int16_t)));
+            result.append(py::bytes((char *)apu->dmc_buffer_copy,BUFFER_LEN*sizeof(int16_t)));
+        } else {
+            result.append(py::bytes((char *)apu->buffer_copy,BUFFER_LEN*sizeof(int16_t)));
+        }
     } else {
-        return py::bytes("");
+        result.append(py::bytes(""));
     }
+    return result;
 }
 
 NESUnit::~NESUnit() {
@@ -446,7 +458,7 @@ PYBIND11_MODULE(omnicom,m) {
     .def("OAM",&NESUnit::OAM)
     .def("getImg",&NESUnit::getImg)
     .def("colorLookup",&NESUnit::color_lookup)
-    .def("getAudio",&NESUnit::getAudio)
+    .def("getAudio",&NESUnit::getAudio, py::arg("split_channels") = false)
     .def("start",&NESUnit::start)
     .def("stop",&NESUnit::stop)
     .def("saveState",&NESUnit::save)

@@ -6,13 +6,29 @@ using namespace NES;
 
 APU::~APU() {
     delete[] buffer;
+    delete[] pulse1_buffer;
+    delete[] pulse2_buffer;
+    delete[] tri_buffer;
+    delete[] noise_buffer;
+    delete[] dmc_buffer;
+
     delete[] buffer_copy;
+    delete[] pulse1_buffer_copy;
+    delete[] pulse2_buffer_copy;
+    delete[] tri_buffer_copy;
+    delete[] noise_buffer_copy;
+    delete[] dmc_buffer_copy;
 }
 
 APU::APU() {
     queue_mutex.lock();
     for (int i=0; i<BUFFER_LEN; i++) {
         buffer[i] = 0;
+        pulse1_buffer[i] = 0;
+        pulse2_buffer[i] = 0;
+        tri_buffer[i] = 0;
+        noise_buffer[i] = 0;
+        dmc_buffer[i] = 0;
     }
 }
 
@@ -180,11 +196,21 @@ void APU::cycle() { // apu clock (every other cpu cycle)
     if (audio_frame<cycles*(sample_rate)/clock_speed) {
         if (audio_frame%BUFFER_LEN==0) {
             memcpy(buffer_copy,buffer,sizeof(int16_t)*BUFFER_LEN);
+            memcpy(pulse1_buffer_copy,pulse1_buffer,sizeof(int16_t)*BUFFER_LEN);
+            memcpy(pulse2_buffer_copy,pulse2_buffer,sizeof(int16_t)*BUFFER_LEN);
+            memcpy(tri_buffer_copy,tri_buffer,sizeof(int16_t)*BUFFER_LEN);
+            memcpy(noise_buffer_copy,noise_buffer,sizeof(int16_t)*BUFFER_LEN);
+            memcpy(dmc_buffer_copy,dmc_buffer,sizeof(int16_t)*BUFFER_LEN);
             queue_mutex.unlock();
             queue_audio_flag = true;
             mutex_locked = false;
         }
         buffer[audio_frame%BUFFER_LEN] = NES::mix(this);
+        pulse1_buffer[audio_frame%BUFFER_LEN] = (int16_t)(32767*pulse1_output());
+        pulse2_buffer[audio_frame%BUFFER_LEN] = (int16_t)(32767*pulse2_output());
+        tri_buffer[audio_frame%BUFFER_LEN] = (int16_t)(32767*tri_output());
+        noise_buffer[audio_frame%BUFFER_LEN] = (int16_t)(32767*noise_output());
+        dmc_buffer[audio_frame%BUFFER_LEN] = (int16_t)(32767*dmc_output());
         audio_frame++;
     }
 
