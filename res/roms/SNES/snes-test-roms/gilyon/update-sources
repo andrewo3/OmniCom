@@ -1,5 +1,0 @@
-#!/bin/sh
-
-cd "$(dirname "$0")/.."
-
-git subtree pull -P gilyon/snes-tests https://github.com/gilyon/snes-tests.git main

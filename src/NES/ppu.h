@@ -84,6 +84,8 @@ class PPU {
         int8_t* PPUADDR; //&memory[0x2006]
         int8_t* PPUDATA; //&memory[0x2007]
         int8_t* OAMDMA; //&memory[0x4014]
+
+        std::mutex image_mut;
     private:
         void* system[3];
         void map_memory(int16_t &addr);

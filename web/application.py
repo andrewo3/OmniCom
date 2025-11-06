@@ -54,6 +54,6 @@ def matches():
 
 if __name__ == "__main__":
     print(root)
-    #application.run(host='0.0.0.0',port=25565)
-    application.run(host='0.0.0.0',ssl_context=('cert/cert.pem','cert/key.pem'))
+    application.run(host='0.0.0.0',port=18734)
+    #application.run(host='0.0.0.0',ssl_context=('cert/cert.pem','cert/key.pem'))
     #application.run()

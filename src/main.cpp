@@ -85,7 +85,7 @@ int frames = 0;
 int desired_fps = 60;
 long long paused_time = 0;
 long long real_time = 0;
-float t_time, last_time;
+uint32_t t_time, last_time;
 
 char* filename;
 unsigned char * filtered;
@@ -157,12 +157,55 @@ int setRomData(std::string filename) {
 }
 
 extern "C" {
+void saveCurrentRom() {
+    #ifdef __EMSCRIPTEN__
+        emscripten_pause_main_loop();
+    #endif
+    emuSystem->Save(nullptr);
+    #ifdef __EMSCRIPTEN__
+        emscripten_resume_main_loop();
+    #endif
+    return;
+}
+}
+
+extern "C" {
 void changeRom(char* file) {
     #ifdef __EMSCRIPTEN__
         emscripten_pause_main_loop();
     #endif
+    //reset config dir
+    char* save_name = new char[strlen(file)+1];
+    memcpy(save_name,file,strlen(file));
+    save_name[strlen(file)] = '\0';
+    get_filename(&save_name);
+
+    char removed_spaces[strlen(save_name)];
+
+    for (int i=0; i<strlen(save_name); i++) {
+        removed_spaces[i] = save_name[i];
+        if (removed_spaces[i]==' ') {
+            removed_spaces[i] = '_';
+        }
+    }
+    removed_spaces[strlen(save_name)] = '\0';
+
+    default_config();
+    config_dir += sep;
+    config_dir += "Nes2Exec";
+    config_dir+=sep;
+    config_dir+=std::string(removed_spaces);
+    printf("New rom dir: %s\n",(config_dir).c_str());
+    if (!std::filesystem::exists(config_dir)) { //make specific game save folder
+        std::filesystem::create_directory(config_dir);
+    }
     setRomData((std::string(file)));
+
+    //change rom
     emuSystem->Stop();
+    #ifdef __EMSCRIPTEN__
+        emscripten_run_script("syncFileSystem(true);");
+    #endif
     emuSystem->loadRom(rom_len,rom_data);
     char* game_name = new char[strlen(file)+1];
     memcpy(game_name,file,strlen(file)+1);
@@ -170,47 +213,47 @@ void changeRom(char* file) {
     get_filename(&game_name);
     printf("new game name.\n");
     window->setTitle(std::string(game_name));
+
     emuSystem->Start();
+
+    //if web version, start loading from save
     #ifdef __EMSCRIPTEN__
-        emscripten_resume_main_loop();
+    emscripten_resume_main_loop();
     #endif
 }
 }
 
 void mainLoop(void* arg) {
     //logic is executed in nes thread
-    bool new_frame = emuSystem->Render(); //Execute GL render functions from system
-    SDL_ShowCursor(paused);
-    if (paused) {
-        window->drawPauseMenu(emuSystem);
-    }
+    t_time = SDL_GetTicks();
+    uint32_t elapsed = t_time - last_time; 
+    if (elapsed >= 1000/desired_fps) {
+        bool new_frame = emuSystem->Render(); //Execute GL render functions from system
+        SDL_ShowCursor(paused);
+        if (paused) {
+            window->drawPauseMenu(emuSystem);
+        }
 
-    //update screen
-    if (new_frame || paused) {
+        //update screen
         SDL_GL_SwapWindow(window->GetSDLWin());
+
+        // event loop
+        #ifdef __EMSCRIPTEN__
+        if (display_size_changed)
+        {
+            double w, h;
+            emscripten_get_element_css_size( "#canvas", &w, &h );
+            SDL_SetWindowSize( window->GetSDLWin(), (int)w, (int) h );
+
+            display_size_changed = 0;
+        }
+        #endif
+        //process events
+        emuSystem->Update();
+        last_time = t_time;
+    } else {
+        SDL_Delay(1000/desired_fps-elapsed);
     }
-    /*if (audio_queue.size() >= BUFFER_LEN) {
-        SDL_QueueAudio(audio_device,audio_queue.data(),sizeof(int16_t)*audio_queue.size());
-        audio_queue.clear();
-    }*/
-    
-
-
-    //ppu_ptr->image_mutex.unlock();
-    // event loop
-    #ifdef __EMSCRIPTEN__
-    if (display_size_changed)
-    {
-        double w, h;
-        emscripten_get_element_css_size( "#canvas", &w, &h );
-        SDL_SetWindowSize( window->GetSDLWin(), (int)w, (int) h );
-
-        display_size_changed = 0;
-    }
-    #endif
-    //process events
-    emuSystem->Update();
-    //SDL_Delay(1000/60);
 }
 
 int main(int argc, char ** argv) {
@@ -256,7 +299,7 @@ int main(int argc, char ** argv) {
     //make config dir (if it doesnt already exist)
     bool load = false;
     printf("Web: %i\n",web);
-    if (os != -1 && !web) {
+    if (os != -1 || web) {
         config_dir+=sep;
         config_dir+=std::string("Nes2Exec");
         if (!std::filesystem::exists(config_dir)) { //make Nes2Exec appdata folder
@@ -342,8 +385,8 @@ int main(int argc, char ** argv) {
     //Enter NES logic loop alongside window loop
     emuSystem->Start();
     printf("Emulator system started - running: %i\n",emuSystem->running);
-    t_time = SDL_GetTicks()/1000.0;
-    last_time = SDL_GetTicks()/1000.0;
+    t_time = SDL_GetTicks();
+    last_time = SDL_GetTicks();
     int16_t buffer[BUFFER_LEN*2];
     //main window loop
     //printf("audio device: %i\n",window->audio_device);

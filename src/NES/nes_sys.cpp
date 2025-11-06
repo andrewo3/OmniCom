@@ -73,7 +73,11 @@ void System::Cycle() {
 }
 
 void System::Save(FILE* save_file) {
-    cpu->save_state(save_file);
+    if (save_file != nullptr) {
+        cpu->save_state(save_file);
+    } else {
+        saveRAM();
+    }
 }
 
 void System::Load(FILE* load_file) {
@@ -117,6 +121,8 @@ void System::Stop() {
     paused = false;
     pause_cv.notify_all();
     paused_window = false;
+    pause_mut.unlock();
+    pause_cv.notify_all();
     running = false;
     int clock_speed = cpu->emulated_clock_speed(epoch_nano()-start_time-paused_time);
     printf("Cycles: %lli, Emulated Clock Speed: %i - Target: (approx.) 1789773 - %.02f%% similarity\n",cpu->cycles,clock_speed,clock_speed/1789773.0*100);
@@ -174,34 +180,22 @@ bool System::Render() {
     int h;
     SDL_GetWindowSize(window->GetSDLWin(),&w,&h);
     setGLViewport(w,h,(float)video_dim[0]/video_dim[1]);
-    if (!paused) {
-        draw_cv.wait(draw_mut);
-    }
-    if (!ppu->image_drawn || paused) { //if ppu hasnt registered image as being drawn yet
-        /*#ifndef __EMSCRIPTEN__
-            char * new_title = new char[255];
-            sprintf(new_title,"%s - %.02f FPS",filename,1/diff);
-            window->setTitle(std::string(new_title));
-            delete[] new_title;
-        #endif*/
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-    
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, video_dim[0],video_dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, ppu->getImg());
-        glUseProgram(shaderProgram);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    ppu->image_mut.lock();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, video_dim[0],video_dim[1], 0, GL_RGB, GL_UNSIGNED_BYTE, ppu->getImg());
+    ppu->image_mut.unlock();
+    glUseProgram(shaderProgram);
 
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLE_FAN,0,4);
-        glBindVertexArray(0);
-        glUseProgram(0);
-        ppu->image_drawn = true;
-        return 1;
-    }
-    draw_mut.unlock();
-    return 0;
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLE_FAN,0,4);
+    glBindVertexArray(0);
+    glUseProgram(0);
+    ppu->image_drawn = true;
+    return 1;
 }
 
 void System::Update() {

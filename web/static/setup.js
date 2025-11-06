@@ -96,7 +96,7 @@ function handleBodyClick(event) {
 }
 
 window.onerror = function() {
-    //location.reload();
+    location.reload();
 }
 
 // Add event listener for click events on the document body
@@ -161,13 +161,21 @@ function loadNewRom(data,name) {
     romChoices+=1;
 }
 
-
-//--drag rom into window--
 function module_init() {
+    //load past saved data from IDB
+    FS.mkdir('/persistent');
+    FS.mount(IDBFS, {}, '/persistent');
+
+    FS.syncfs(true, function(err) {
+        if (err) console.error("Sync from IDB failed", err);
+        else console.log("FS synced from IndexedDB");
+    });
+
     Module.canAcceptKeyboardInput = function() {
         return canvasClicked;
     };
-
+    
+    //--drag rom into window--
     let dropbox = document.getElementById("dropbox");
     function drag(e) {
         e.stopPropagation();

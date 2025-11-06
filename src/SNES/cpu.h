@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <vector>
 #include "rom.h"
 
 namespace SNES {
@@ -13,17 +14,27 @@ class CPU {
         //Constructor
         CPU();
         //Registers
-
+        uint8_t K = 0;
+        uint16_t S = 0;
+        uint8_t X = 0;
+        uint8_t Y = 0;
+        uint16_t PC;
         //Flags
-        uint8_t bank = 0;
+        /*
+        P bit 7: n flag
+        P bit 6: v flag
+        P bit 5: m flag (native mode)
+        P bit 4: x flag (native mode), b flag (emulation mode)
+        P bit 3: d flag
+        P bit 2: i flag
+        P bit 1: z flag
+        P bit 0: c flag*/
+        uint8_t P;
+        bool e; //emulation flag
+        //misc
         uint8_t memory[0x10000];
-        uint32_t PC;
-        uint16_t SP;
-        //vectors
-        //vec[1] = with emulation mode
-        //vec[0] = without
         bool new_func;
-        typedef void (*func_branch)();
+        typedef void (*func_branch)(uint8_t&, bool&); //pass flags into function
         typedef uint8_t* (*addrmode)(uint8_t*);
         std::map<uint32_t,func_branch> func_cache; 
         ROM* rom;
@@ -31,9 +42,16 @@ class CPU {
         void reset();
         uint8_t read(uint32_t addr);
     private:
-        uint8_t* PC_rel_long(uint8_t* arg);
-        uint8_t* stack_rel(uint8_t* arg);
-        uint8_t* implied(uint8_t* arg);
+        uint8_t* abs(uint8_t* arg);
+        uint8_t* absx(uint8_t* arg);
+        uint8_t* absy(uint8_t* arg);
+        bool get_flag(char flag);
+        void set_flag(char flag,bool set);
+        void SEI(std::vector<uint8_t>& wr);
+        void CLC(std::vector<uint8_t>& wr);
+        void PHK(std::vector<uint8_t>& wr);
+        void XCE(std::vector<uint8_t>& wr);
+        void build_function(std::vector<uint8_t>& wr);
 };
 
 

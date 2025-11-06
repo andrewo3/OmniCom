@@ -14,6 +14,9 @@
 #include "Shlobj.h"
 #include "Windows.h"
 #endif
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 GLfloat vertices[16] = {
         -1.0f, 1.0f,0.0f,0.0f,
@@ -102,6 +105,11 @@ void MenuButton(ImVec2 win_size, int number,const char* name) {
 
 int default_config() {
     int os = -1;
+    #ifdef __EMSCRIPTEN__
+        config_dir = "/persistent";
+        sep = '/';
+        return -1;
+    #endif
     #ifdef __APPLE__
         config_dir = std::string(std::getenv("HOME"))+"/Library/Containers";
         sep = '/';
@@ -175,29 +183,30 @@ void pause_menu(BaseSystem* system) {
     };
     switch (current_tab) {
         case 0:
-            if (!web) {
-                if (ImGui::Button("Load")) {
-                    printf("load game\n");
-                    std::string load_dir = config_dir+sep+std::string("state");
-                    if (std::filesystem::exists(load_dir)) {
-                        FILE* save_file = fopen(load_dir.c_str(),"rb");
-                        system->Load(save_file);
-                        //cpu->load_state(save_file);
-                        fclose(save_file);
-                    } else {
-                        printf("Nothing to load at: %s\n",load_dir.c_str());
-                    }
-                    
-                }
-                ImGui::SameLine(0);
-                if (ImGui::Button("Save")) {
-                    std::string load_dir = config_dir+sep+std::string("state");
-                    printf("save game at: %s\n",load_dir.c_str());
-                    FILE* save_file = fopen(load_dir.c_str(),"wb");
-                    system->Save(save_file);
-                    //cpu->save_state(save_file);
+            if (ImGui::Button("Load")) {
+                printf("load game\n");
+                std::string load_dir = config_dir+sep+std::string("state");
+                if (std::filesystem::exists(load_dir)) {
+                    FILE* save_file = fopen(load_dir.c_str(),"rb");
+                    system->Load(save_file);
+                    //cpu->load_state(save_file);
                     fclose(save_file);
+                } else {
+                    printf("Nothing to load at: %s\n",load_dir.c_str());
                 }
+                
+            }
+            ImGui::SameLine(0);
+            if (ImGui::Button("Save")) {
+                std::string load_dir = config_dir+sep+std::string("state");
+                printf("save game at: %s\n",load_dir.c_str());
+                FILE* save_file = fopen(load_dir.c_str(),"wb");
+                system->Save(save_file);
+                //cpu->save_state(save_file);
+                fclose(save_file);
+                #ifdef __EMSCRIPTEN__
+                    emscripten_run_script("syncFileSystem(false);");
+                #endif
             }
             
             break;

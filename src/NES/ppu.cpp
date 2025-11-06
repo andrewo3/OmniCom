@@ -318,7 +318,9 @@ void PPU::cycle() {
         //printf("vblank!\n");
         if (vblank==false && scycle==1 && scanline==241) { //start vblank as soon as you reach this
             vblank = true;
+            image_mut.lock();
             memcpy(current_img,internal_img,sizeof(uint8_t)*184320); //copy internal img to out image every frame update
+            image_mut.unlock();
             image_drawn = false;
             if (!nmi_suppress) {
                 nmi_occurred = true;
