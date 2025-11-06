@@ -32,6 +32,7 @@ jobs:
 
       - if: matrix.os != 'Linux'
         name: Install build dependencies not Linux
+        shell: bash
         run: |
           echo "CIBW_SKIP=pp*" >> $GITHUB_ENV
     
