@@ -122,6 +122,21 @@ class APU {
         void clock_linear();
         void clock_length();
         void clock_sweep();
+        float pulse1_output() {
+            return 0.00752*(enabled[0] ? pulse_out[0] : 0);
+        }
+        float pulse2_output() {
+            return 0.00752*(enabled[1] ? pulse_out[1] : 0);
+        }
+        float tri_output() {
+            return 0.00851*(enabled[2] ? tri_out : 0);
+        }
+        float noise_output() {
+            return 0.00494*(enabled[3] ? noise_out : 0);
+        }
+        float dmc_output() {
+            return 0.00335*(enabled[4] ? (dmc_out-64)*2 : 0);
+        }
     private:
         void func_frame_counter();
         uint16_t get_pulse_period(bool ind);
